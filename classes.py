@@ -7,6 +7,8 @@ connections and objects used to represent IRC servers, users, and channels.
 Here be dragons.
 """
 
+from __future__ import annotations
+
 import collections
 import collections.abc
 import functools
@@ -67,9 +69,11 @@ class TSObject():
 
 class User(TSObject):
     """PyLink IRC user class."""
-    def __init__(self, irc, nick, ts, uid, server, ident='null', host='null',
-                 realname='PyLink dummy client', realhost='null',
-                 ip='0.0.0.0', manipulatable=False, opertype='IRC Operator'):
+    def __init__(self, irc: PyLinkNetworkCore, nick: str, ts: int, uid: str, server: str,
+                 ident: str = 'null', host: str = 'null',
+                 realname: str = 'PyLink dummy client', realhost: str = 'null',
+                 ip: str = '0.0.0.0', manipulatable: bool = False,
+                 opertype: str = 'IRC Operator') -> None:
         super().__init__()
         self._nick = nick
         self.lower_nick = irc.to_lower(nick)
@@ -82,7 +86,7 @@ class User(TSObject):
         self.realhost = realhost
         self.ip = ip
         self.realname = realname
-        self.modes = set()  # Tracks user modes
+        self.modes: set[tuple[str, str | None]] = set()  # Tracks user modes
         self.server = server
         self._irc = irc
 
@@ -108,23 +112,23 @@ class User(TSObject):
         self.manipulatable = manipulatable
 
         # Cloaked host for IRCds that use it
-        self.cloaked_host = None
+        self.cloaked_host: str | None = None
 
         # Stores service bot name if applicable
-        self.service = None
+        self.service: str | None = None
 
         # Whether the user is using SSL/TLS (None = unknown)
-        self.ssl = None
+        self.ssl: bool | None = None
 
         # The user's TLS client certificate fingerprint, if known (None = unknown)
-        self.certfp = None
+        self.certfp: str | None = None
 
     @property
-    def nick(self):
+    def nick(self) -> str:
         return self._nick
 
     @nick.setter
-    def nick(self, newnick):
+    def nick(self, newnick: str) -> None:
         oldnick = self.lower_nick
         self._nick = newnick
         self.lower_nick = self._irc.to_lower(newnick)
@@ -141,7 +145,7 @@ class User(TSObject):
         # Update the new nick.
         self._irc.users.bynick.setdefault(self.lower_nick, []).append(self.uid)
 
-    def get_fields(self):
+    def get_fields(self) -> dict:
         """
         Returns all template/substitution-friendly fields for the User object in a read-only dictionary.
         """
@@ -167,7 +171,7 @@ class User(TSObject):
 
         return fields
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'User(%s/%s)' % (self.uid, self.nick)
 IrcUser = User
 
@@ -571,7 +575,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         globalopt = conf.conf.get(servicename, {}).get(global_option or option) or itertype()
         return utils.merge_iterables(globalopt, netopt)
 
-    def has_cap(self, capab):
+    def has_cap(self, capab: str) -> bool:
         """
         Returns whether this protocol module instance has the requested capability.
         """
@@ -683,7 +687,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
             return userobj
 
     ## State checking functions
-    def nick_to_uid(self, nick, multi=False, filterfunc=None):
+    def nick_to_uid(self, nick: str, multi: bool = False, filterfunc=None) -> str | list[str] | None:
         """Looks up the UID of a user with the given nick, or return None if no such nick exists.
 
         If multi is given, return all matches for nick instead of just the last result. (Return an empty list if no matches)
@@ -705,7 +709,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
             except IndexError:
                 return None
 
-    def is_internal_client(self, uid):
+    def is_internal_client(self, uid: str) -> bool:
         """
         Returns whether the given UID is a PyLink client.
 
@@ -716,17 +720,18 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
             return True
         return False
 
-    def is_internal_server(self, sid):
+    def is_internal_server(self, sid: str) -> bool:
         """Returns whether the given SID is an internal PyLink server."""
         return (sid in self.servers and self.servers[sid].internal)
 
-    def get_server(self, uid):
+    def get_server(self, uid: str) -> str | None:
         """Finds the ID of the server a user is on. Return None if the user does not exist."""
         userobj = self.users.get(uid)
         if userobj:
             return userobj.server
+        return None
 
-    def is_manipulatable_client(self, uid):
+    def is_manipulatable_client(self, uid: str) -> bool:
         """
         Returns whether the given client is marked manipulatable for interactions
         such as force-JOIN.
@@ -762,7 +767,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         self._ts_lock = threading.Lock()
 
     @functools.lru_cache(maxsize=8192)
-    def to_lower(self, text):
+    def to_lower(self, text: str) -> str:
         """
         Returns the lowercase representation of text. This respects IRC casemappings defined by the protocol module.
         """
@@ -780,7 +785,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
 
     _NICK_REGEX = r'^[A-Za-z\|\\_\[\]\{\}\^\`][A-Z0-9a-z\-\|\\_\[\]\{\}\^\`]*$'
     @classmethod
-    def is_nick(cls, s, nicklen=None):
+    def is_nick(cls, s: str, nicklen: int | None = None) -> bool:
         """
         Returns whether the string given is a valid nick.
 
@@ -791,7 +796,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         return bool(re.match(cls._NICK_REGEX, s))
 
     @staticmethod
-    def is_channel(obj):
+    def is_channel(obj: object) -> bool:
         """
         Returns whether the item given is a valid channel (for a mapping key).
 
@@ -808,13 +813,13 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
     _HOSTNAME_RE = re.compile(r'^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+'
                               r'([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])*$')
     @classmethod
-    def is_server_name(cls, text):
+    def is_server_name(cls, text: str) -> bool:
         """Returns whether the string given is a valid server name."""
         return bool(cls._HOSTNAME_RE.match(text))
 
     _HOSTMASK_RE = re.compile(r'^\S+!\S+@\S+$')
     @classmethod
-    def is_hostmask(cls, text):
+    def is_hostmask(cls, text: str) -> bool:
         """
         Returns whether the given text is a valid hostmask (nick!user@host)
 
@@ -1387,7 +1392,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         cls._log_debug_modes('wrap_modes: returning %s for %s', strings, orig_modes)
         return strings
 
-    def get_hostmask(self, user, realhost=False, ip=False):
+    def get_hostmask(self, user: str, realhost: bool = False, ip: bool = False) -> str:
         """
         Returns a representative hostmask / user friendly identifier for a user.
         On IRC, this is nick!user@host; other platforms may choose to define a different
@@ -1421,7 +1426,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
 
         return '%s!%s@%s' % (nick, ident, host)
 
-    def get_friendly_name(self, entityid):
+    def get_friendly_name(self, entityid: str) -> str:
         """
         Returns the display name of an entity:
 
@@ -2211,9 +2216,10 @@ class Server():
     desc: Sets the server description if relevant.
     """
 
-    def __init__(self, irc, uplink, name, internal=False, desc="(None given)"):
+    def __init__(self, irc: PyLinkNetworkCore, uplink: str | None, name: str,
+                 internal: bool = False, desc: str = "(None given)") -> None:
         self.uplink = uplink
-        self.users = set()
+        self.users: set[str] = set()
         self.internal = internal
         if isinstance(name, str):
             self.name = name.lower()
@@ -2232,7 +2238,7 @@ class Server():
         # Has the server finished bursting yet?
         self.has_eob = False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Server(%s)' % self.name
 
 IrcServer = Server
@@ -2240,14 +2246,14 @@ IrcServer = Server
 class Channel(TSObject, structures.CamelCaseToSnakeCase, structures.CopyWrapper):
     """PyLink IRC channel class."""
 
-    def __init__(self, irc, name=None):
+    def __init__(self, irc: PyLinkNetworkCore, name: str | None = None) -> None:
         super().__init__()
         # Initialize variables, such as the topic, user list, TS, who's opped, etc.
-        self.users = set()
-        self.modes = set()
+        self.users: set[str] = set()
+        self.modes: set[tuple[str, str | None]] = set()
         self.topic = ''
-        self.prefixmodes = {'op': set(), 'halfop': set(), 'voice': set(),
-                            'owner': set(), 'admin': set()}
+        self.prefixmodes: dict[str, set[str]] = {'op': set(), 'halfop': set(), 'voice': set(),
+                                                  'owner': set(), 'admin': set()}
         self._irc = irc
 
         # Determines whether a topic has been set here or not. Protocol modules
@@ -2257,29 +2263,29 @@ class Channel(TSObject, structures.CamelCaseToSnakeCase, structures.CopyWrapper)
         # Saves the channel name (may be useful to plugins, etc.)
         self.name = name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Channel(%s)' % self.name
 
-    def remove_user(self, target):
+    def remove_user(self, target: str) -> None:
         """Removes a user from a channel."""
         for s in self.prefixmodes.values():
             s.discard(target)
         self.users.discard(target)
     removeuser = remove_user
 
-    def is_voice(self, uid):
+    def is_voice(self, uid: str) -> bool:
         """Returns whether the given user is voice in the channel."""
         return uid in self.prefixmodes['voice']
 
-    def is_halfop(self, uid):
+    def is_halfop(self, uid: str) -> bool:
         """Returns whether the given user is halfop in the channel."""
         return uid in self.prefixmodes['halfop']
 
-    def is_op(self, uid):
+    def is_op(self, uid: str) -> bool:
         """Returns whether the given user is op in the channel."""
         return uid in self.prefixmodes['op']
 
-    def is_admin(self, uid):
+    def is_admin(self, uid: str) -> bool:
         """Returns whether the given user is admin (&) in the channel."""
         return uid in self.prefixmodes['admin']
 

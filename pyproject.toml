@@ -1,7 +1,69 @@
-# PEP 517/518 build configuration. The package metadata is still declared in
-# setup.py (which also generates __init__.py with the git-described version);
-# this file makes `pip install .` use the modern, isolated build path instead of
-# invoking setup.py directly (deprecated in recent pip).
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylinkirc"
+dynamic = ["version"]
+description = "PyLink IRC Services"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MPL-2.0"
+license-files = ["LICENSE.MPL2"]
+authors = [{name = "James Lu", email = "james@overdrivenetworks.com"}]
+keywords = ["IRC", "services", "relay"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Topic :: Communications :: Chat :: Internet Relay Chat",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "pyyaml>=5.1",
+    "cachetools>=3.0",
+]
+
+[project.optional-dependencies]
+password-hashing = ["passlib>=1.7.0"]
+cron-support = ["psutil"]
+relay-unicode = ["unidecode"]
+
+[project.urls]
+Homepage = "https://github.com/jlu5/PyLink"
+
+[project.scripts]
+pylink = "pylinkirc.launcher:main"
+
+[tool.setuptools]
+packages = ["pylinkirc", "pylinkirc.protocols", "pylinkirc.plugins", "pylinkirc.coremods"]
+package-dir = {pylinkirc = "."}
+script-files = ["pylink-mkpasswd"]
+
+[tool.setuptools.package-data]
+"*" = ["example-conf.yml", "VERSION", "README.md"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
+# Lenient to start: type-check annotated code without forcing annotations everywhere.
+check_untyped_defs = false
+warn_redundant_casts = true
+warn_unused_ignores = true
+exclude = ['test/parser-tests/']

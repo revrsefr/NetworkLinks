@@ -4,6 +4,8 @@ structures.py - PyLink data structures module.
 This module contains custom data structures that may be useful in various situations.
 """
 
+from __future__ import annotations
+
 import collections
 import collections.abc
 import json
@@ -42,11 +44,11 @@ class CopyWrapper():
     Base container class implementing copy methods.
     """
 
-    def copy(self):
+    def copy(self) -> CopyWrapper:
         """Returns a shallow copy of this object instance."""
         return copy(self)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict) -> CopyWrapper:
         """Returns a deep copy of the channel object."""
         newobj = copy(self)
         #log.debug('CopyWrapper: _BLACKLISTED_COPY_TYPES = %s', _BLACKLISTED_COPY_TYPES)
@@ -60,7 +62,7 @@ class CopyWrapper():
 
         return newobj
 
-    def deepcopy(self):
+    def deepcopy(self) -> CopyWrapper:
         """Returns a deep copy of this object instance."""
         return deepcopy(self)
 
@@ -208,7 +210,8 @@ class DataStore:
     Generic database class. Plugins should use a subclass of this such as JSONDataStore or
     PickleDataStore.
     """
-    def __init__(self, name, filename, save_frequency=None, default_db=None, data_dir=None):
+    def __init__(self, name: str, filename: str, save_frequency: int | None = None,
+                 default_db: dict | None = None, data_dir: str | None = None) -> None:
         if data_dir is None:
             data_dir = conf.conf['pylink'].get('data_dir', '')
 
@@ -237,14 +240,14 @@ class DataStore:
             # If autosaving is enabled, start the save_callback loop.
             self.save_callback(starting=True)
 
-    def load(self):
+    def load(self) -> None:
         """
         DataStore load stub. Database implementations should subclass DataStore
         and implement this.
         """
         raise NotImplementedError
 
-    def save_callback(self, starting=False):
+    def save_callback(self, starting: bool = False) -> None:
         """Start the DB save loop."""
         # don't actually save the first time
         if not starting:
@@ -255,14 +258,14 @@ class DataStore:
         self.exportdb_timer.name = 'DataStore {} save_callback loop'.format(self.name)
         self.exportdb_timer.start()
 
-    def save(self):
+    def save(self) -> None:
         """
         DataStore save stub. Database implementations should subclass DataStore
         and implement this.
         """
         raise NotImplementedError
 
-    def die(self):
+    def die(self) -> None:
         """
         Saves the database and stops any save loops.
         """
@@ -272,7 +275,7 @@ class DataStore:
         self.save()
 
 class JSONDataStore(DataStore):
-    def load(self):
+    def load(self) -> None:
         """Loads the database given via JSON."""
         with self.store_lock:
             try:
@@ -283,7 +286,7 @@ class JSONDataStore(DataStore):
                 log.info("(DataStore:%s) failed to load database %s; creating a new one in "
                          "memory", self.name, self.filename)
 
-    def save(self):
+    def save(self) -> None:
         """Saves the database given via JSON."""
         with self.store_lock:
             with open(self.tmp_filename, 'w') as f:
@@ -293,7 +296,7 @@ class JSONDataStore(DataStore):
                 os.rename(self.tmp_filename, self.filename)
 
 class PickleDataStore(DataStore):
-    def load(self):
+    def load(self) -> None:
         """Loads the database given via pickle."""
         with self.store_lock:
             try:
@@ -304,7 +307,7 @@ class PickleDataStore(DataStore):
                 log.info("(DataStore:%s) failed to load database %s; creating a new one in "
                          "memory", self.name, self.filename)
 
-    def save(self):
+    def save(self) -> None:
         """Saves the database given via pickle."""
         with self.store_lock:
             with open(self.tmp_filename, 'wb') as f:
