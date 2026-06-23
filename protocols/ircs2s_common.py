@@ -157,11 +157,9 @@ class IRCCommonProtocol(IRCNetwork):
         We pass the tags dict through as 'tags' so relay and other plugins
         can forward client-only tags (those starting with +) across networks.
         """
-        target = args[0]
-        tags = args.get('tags', {})
-
-        if not tags:
+        if not args:
             return
+        target = args[0]
 
         if source not in self.users and source not in self.servers:
             log.debug('(%s) handle_tagmsg: dropping TAGMSG from unknown source %s', self.name, source)
@@ -170,7 +168,9 @@ class IRCCommonProtocol(IRCNetwork):
         if not self.is_channel(target) and target not in self.users:
             return
 
-        return {'target': target, 'tags': tags}
+        # The message tags themselves are attached to the returned hook payload
+        # by handle_events(); here we only validate and forward the target.
+        return {'target': target}
 
     def handle_away(self, source, command, args):
         """Handles incoming AWAY messages."""
@@ -475,8 +475,10 @@ class IRCS2SProtocol(IRCCommonProtocol):
                 parts.append('%s=%s' % (name, self._escape_tag_value(str(value))))
             else:
                 parts.append(name)
-        target = self._expandPUID(target)
-        self._send_with_prefix(numeric, '@%s TAGMSG %s' % (';'.join(parts), target))
+        # IRCv3 requires message tags to precede the source prefix:
+        # @tag1=v;tag2 :source TAGMSG target
+        self.send('@%s :%s TAGMSG %s' % (';'.join(parts), self._expandPUID(numeric),
+                                         self._expandPUID(target)))
 
     def squit(self, source, target, text='No reason given'):
         """SQUITs a PyLink server."""

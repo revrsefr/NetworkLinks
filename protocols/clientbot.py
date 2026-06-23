@@ -1158,13 +1158,13 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         if not args:
             return
         target = args[0]
-        tags = args[1] if len(args) > 1 else {}
-        # For non-channel targets resolve to PUID
+        # For non-channel targets resolve the nick to a PUID so relay can route it.
         real_target = target.lstrip(''.join(self.prefixmodes.values()))
         if not self.is_channel(real_target):
             target = self._get_UID(target, spawn_new=False)
         if target:
-            return {'target': target, 'tags': tags}
+            # Message tags are attached to the hook payload by handle_events().
+            return {'target': target}
 
     def handle_quit(self, source, command, args):
         """Handles incoming QUITs."""
