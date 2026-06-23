@@ -1095,7 +1095,16 @@ class InspIRCdProtocol(TS6BaseProtocol):
                 else:
                     log.warning('(%s) Got unknown METADATA modules string: %r', self.name, args[-1])
         elif args[1] == 'ssl_cert' and uid in self.users:
-            self.users[uid].ssl = True
+            # <- :00A METADATA 46KAAAAAB ssl_cert :vTrE <fingerprint>
+            # InspIRCd's m_sslinfo sends the cert info as "<flags> <value>", where
+            # the flag letters describe the certificate and an uppercase 'E' means
+            # the trailing value is an error message rather than a fingerprint.
+            user = self.users[uid]
+            user.ssl = True
+            certdata = args[-1].split(' ', 1)
+            flags = certdata[0]
+            if len(certdata) == 2 and 'E' not in flags:
+                user.certfp = certdata[1].strip()
 
     def handle_version(self, numeric, command, args):
         """
