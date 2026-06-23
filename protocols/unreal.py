@@ -1,5 +1,5 @@
 """
-unreal.py: UnrealIRCd 4.x-5.x protocol module for PyLink.
+unreal.py: UnrealIRCd 4.x-6.x protocol module for PyLink.
 """
 
 import codecs
@@ -81,8 +81,10 @@ class UnrealProtocol(TS6BaseProtocol):
         # Set our case mapping (rfc1459 maps "\" and "|" together, for example)
         self.casemapping = 'ascii'
 
-        # Unreal protocol version
-        self.proto_ver = 4203
+        # Unreal protocol version. 6000 = UnrealIRCd 6.0; we still link to 4.x
+        # (min_proto_ver) since the S2S wire format is backwards compatible and
+        # features are negotiated per-token in PROTOCTL.
+        self.proto_ver = 6000
         self.min_proto_ver = 4000
 
         self.hook_map = {'UMODE2': 'MODE', 'SVSKILL': 'KILL', 'SVSMODE': 'MODE',
@@ -434,7 +436,11 @@ class UnrealProtocol(TS6BaseProtocol):
         # ESVID - Supports account names in services stamps instead of just the signon time.
         #         AFAIK this doesn't actually affect services' behaviour?
         # EXTSWHOIS - support multiple SWHOIS lines (purely informational for us)
-        f('PROTOCTL SJOIN SJ3 NOQUIT NICKv2 VL UMODE2 PROTOCTL NICKIP EAUTH=%s SID=%s VHP ESVID EXTSWHOIS' % (self.serverdata["hostname"], self.sid))
+        # MTAGS - support IRCv3 message tags over S2S (UnrealIRCd 5.0+). The
+        #         inherited handle_events() already parses inbound @tags, and it
+        #         lets us send server-time/TAGMSG to the uplink. We only enable
+        #         outbound tagging once the peer also advertises MTAGS.
+        f('PROTOCTL SJOIN SJ3 NOQUIT NICKv2 VL UMODE2 NICKIP EAUTH=%s SID=%s VHP ESVID EXTSWHOIS MTAGS' % (self.serverdata["hostname"], self.sid))
         sdesc = self.serverdata.get('serverdesc') or conf.conf['pylink']['serverdesc']
         f('SERVER %s 1 U%s-h6e-%s :%s' % (host, self.proto_ver, self.sid, sdesc))
 
@@ -600,7 +606,11 @@ class UnrealProtocol(TS6BaseProtocol):
         # <- PROTOCTL CHANMODES=beI,kLf,lH,psmntirzMQNRTOVKDdGPZSCc USERMODES=iowrsxzdHtIDZRqpWGTSB BOOTED=1574020755 PREFIX=(qaohv)~&@%+ SID=001 MLOCK TS=1574020823 EXTSWHOIS
         # <- PROTOCTL NICKCHARS= CHANNELCHARS=utf8
         for cap in args:
-            if cap.startswith('SID'):
+            if cap == 'MTAGS':
+                # The uplink supports IRCv3 message tags over S2S, so we may send
+                # them (server-time, TAGMSG) as well as receive them.
+                self.protocol_caps.add('has-message-tags')
+            elif cap.startswith('SID'):
                 self.uplink = cap.split('=', 1)[1]
             elif cap.startswith('CHANMODES'):
                 # Parse all the supported channel modes.

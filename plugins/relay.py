@@ -1945,6 +1945,7 @@ utils.add_hook(handle_kick, 'KICK')
 
 def handle_chgclient(irc, source, command, args):
     target = args['target']
+    field = text = None
     if args.get('newhost'):
         field = 'HOST'
         text = args['newhost']

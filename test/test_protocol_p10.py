@@ -3,8 +3,37 @@ Tests for protocols/p10
 """
 
 import unittest
+from unittest import mock
 
+from pylinkirc import conf
 from pylinkirc.protocols import p10
+
+import protocol_test_fixture as ptf
+
+
+class P10PostConnectTest(unittest.TestCase):
+    def setUp(self):
+        self.serverdata = {'sendpass': 'x', 'hostname': 'pylink.test',
+                           'sid': 1, 'serverdesc': 'test', 'sidrange': '1-100'}
+        # The constructor builds a SID generator from serverdata['sidrange'], so
+        # supply a valid config during construction.
+        with mock.patch.dict(conf.conf['servers'], {'test': self.serverdata}):
+            self.p = p10.P10Protocol('test')
+        self.p.connect = lambda self: None
+        self.p.socket = ptf.DummySocket()
+        self.p.send = lambda data, queue=True: None
+        self.p.serverdata = self.serverdata
+
+    def test_unsupported_p10_ircd_raises_configuration_error(self):
+        # Regression: an unknown p10_ircd used to leave 'cmodes' unassigned and
+        # crash with UnboundLocalError; it must now be a clear config error.
+        self.p.serverdata['p10_ircd'] = 'bogus'
+        with self.assertRaises(conf.ConfigurationError):
+            self.p.post_connect()
+
+    def test_supported_p10_ircd_does_not_raise(self):
+        self.p.serverdata['p10_ircd'] = 'ircu'
+        self.p.post_connect()
 
 class P10UIDGeneratorTest(unittest.TestCase):
     def setUp(self):
