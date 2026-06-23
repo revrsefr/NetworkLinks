@@ -35,6 +35,12 @@ class P10PostConnectTest(unittest.TestCase):
         self.p.serverdata['p10_ircd'] = 'ircu'
         self.p.post_connect()
 
+    def test_servlist_and_servset_tokens_distinct(self):
+        # Regression: a duplicate 'SERVSET' key previously clobbered the SERVLIST
+        # token mapping.
+        self.assertEqual(self.p.COMMAND_TOKENS['SERVLIST'], 'SERVLIST')
+        self.assertEqual(self.p.COMMAND_TOKENS['SERVSET'], 'SERVSET')
+
 class P10UIDGeneratorTest(unittest.TestCase):
     def setUp(self):
         self.uidgen = p10.P10UIDGenerator('HI')
