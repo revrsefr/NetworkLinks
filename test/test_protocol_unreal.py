@@ -30,6 +30,22 @@ class UnrealProtocolTest(ptf.BaseProtocolTest):
             self.p.handle_server('unreal.test', 'SERVER',
                                  ['unreal.test', '1', 'U5002-Fhin6OoEM UnrealIRCd test'])
 
+    def test_handle_uid_decodes_ip_and_cloak(self):
+        # <- :001 UID <nick> <hop> <ts> <ident> <realhost> <uid> <acct> <modes>
+        #            <displayed-host> <cloaked-host> <base64 ip> :<realname>
+        self.p.servers['001'] = Server(self.p, None, 'unreal.test', internal=False)
+        self.p.handle_uid('001', 'UID',
+            ['alice', '0', '1441306929', 'aliceuser', 'realhost.net', '001AAAAAA',
+             '0', '+iwx', 'displayed.host', 'cloaked.host', 'fwAAAQ==', 'Real Name'])
+        u = self.p.users['001AAAAAA']
+        self.assertEqual(u.nick, 'alice')
+        self.assertEqual(u.ident, 'aliceuser')
+        self.assertEqual(u.realhost, 'realhost.net')
+        self.assertEqual(u.cloaked_host, 'cloaked.host')
+        self.assertEqual(u.ip, '127.0.0.1')   # base64 "fwAAAQ==" -> 127.0.0.1
+        self.assertEqual(u.realname, 'Real Name')
+        self.assertIn('001AAAAAA', self.p.servers['001'].users)
+
     def test_md_certfp_is_tracked(self):
         u = self._make_user('crypto', 'uid1')
         self.p.handle_md('001', 'MD', ['client', 'uid1', 'certfp', 'deadbeefcafe1234'])
