@@ -1,0 +1,7 @@
+# PEP 517/518 build configuration. The package metadata is still declared in
+# setup.py (which also generates __init__.py with the git-described version);
+# this file makes `pip install .` use the modern, isolated build path instead of
+# invoking setup.py directly (deprecated in recent pip).
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"

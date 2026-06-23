@@ -128,29 +128,49 @@ class IRCCommonProtocol(IRCNetwork):
     @classmethod
     def parse_message_tags(cls, data):
         """
-        Parses IRCv3.2 message tags from a message, as described at http://ircv3.net/specs/core/message-tags-3.2.html
+        Parses IRCv3 message tags per https://ircv3.net/specs/extensions/message-tags
 
-        data is a list of command arguments, split by spaces.
+        data is a list of command arguments split by spaces.
+        The escape order matters: protect \\\\ first so subsequent replacements
+        cannot mis-interpret the second backslash of a literal \\\\.
         """
-        # Example query:
-        # @aaa=bbb;ccc;example.com/ddd=eee :nick!ident@host.com PRIVMSG me :Hello
         if data[0].startswith('@'):
             tagdata = data[0].lstrip('@').split(';')
             for idx, tag in enumerate(tagdata):
+                tag = tag.replace('\\\\', '\x00')  # protect \\ before other escapes
                 tag = tag.replace('\\s', ' ')
                 tag = tag.replace('\\r', '\r')
                 tag = tag.replace('\\n', '\n')
                 tag = tag.replace('\\:', ';')
-
-                # We want to drop lone \'s but keep \\ as \ ...
-                tag = tag.replace('\\\\', '\x00')
-                tag = tag.replace('\\', '')
-                tag = tag.replace('\x00', '\\')
+                tag = tag.replace('\\', '')        # strip remaining lone backslashes
+                tag = tag.replace('\x00', '\\')    # restore \\
                 tagdata[idx] = tag
 
             results = cls.parse_isupport(tagdata, fallback='')
             return results
         return {}
+
+    def handle_tagmsg(self, source, command, args):
+        """
+        Handles incoming TAGMSG (IRCv3 message-tags extension).
+        TAGMSG carries only message tags and a target — no text body.
+        We pass the tags dict through as 'tags' so relay and other plugins
+        can forward client-only tags (those starting with +) across networks.
+        """
+        target = args[0]
+        tags = args.get('tags', {})
+
+        if not tags:
+            return
+
+        if source not in self.users and source not in self.servers:
+            log.debug('(%s) handle_tagmsg: dropping TAGMSG from unknown source %s', self.name, source)
+            return
+
+        if not self.is_channel(target) and target not in self.users:
+            return
+
+        return {'target': target, 'tags': tags}
 
     def handle_away(self, source, command, args):
         """Handles incoming AWAY messages."""
@@ -429,6 +449,34 @@ class IRCS2SProtocol(IRCCommonProtocol):
         target = self._expandPUID(target)
 
         self._send_with_prefix(numeric, 'NOTICE %s :%s' % (target, text))
+
+    @staticmethod
+    def _escape_tag_value(value):
+        """IRCv3-escapes a message-tag value (the inverse of parse_message_tags)."""
+        return (value.replace('\\', '\\\\').replace(';', '\\:').replace(' ', '\\s')
+                .replace('\r', '\\r').replace('\n', '\\n'))
+
+    def tagmsg(self, numeric, target, tags):
+        """Sends a TAGMSG (IRCv3 message-tags) from a PyLink client.
+
+        `tags` is a dict of tag name -> value. Only client-only tags (names
+        starting with '+') are relayable across networks; callers should filter
+        accordingly. No-op if there are no tags to send."""
+        if not self.has_cap('has-message-tags'):
+            return
+        if (not self.is_internal_client(numeric)) and (not self.is_internal_server(numeric)):
+            raise LookupError('No such PyLink client/server exists.')
+        if not tags:
+            return
+
+        parts = []
+        for name, value in tags.items():
+            if value:
+                parts.append('%s=%s' % (name, self._escape_tag_value(str(value))))
+            else:
+                parts.append(name)
+        target = self._expandPUID(target)
+        self._send_with_prefix(numeric, '@%s TAGMSG %s' % (';'.join(parts), target))
 
     def squit(self, source, target, text='No reason given'):
         """SQUITs a PyLink server."""

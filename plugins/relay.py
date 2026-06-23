@@ -1681,6 +1681,45 @@ def handle_messages(irc, numeric, command, args):
 for cmd in ('PRIVMSG', 'NOTICE', 'PYLINK_SELF_NOTICE', 'PYLINK_SELF_PRIVMSG'):
     utils.add_hook(handle_messages, cmd, priority=500)
 
+def handle_tagmsg(irc, numeric, command, args):
+    """Relays IRCv3 TAGMSG (client-only message tags) across linked channels.
+
+    Only client-only tags (names starting with '+', e.g. +typing, +draft/react,
+    vendor tags like +tchatou.fr/gs) are forwarded; server-added tags (account,
+    time, msgid) are re-stamped by each destination server. Best-effort: any
+    failure is swallowed so it can never disrupt normal message relay."""
+    target = args.get('target')
+    tags = args.get('tags') or {}
+    # Keep only client-only tags — those are the ones meant to traverse networks.
+    client_tags = {k: v for k, v in tags.items() if k.startswith('+')}
+    if not client_tags or not target:
+        return
+    if irc.is_internal_client(numeric):
+        return
+    if not irc.has_cap('can-spawn-clients') and not world.plugins.get('relay_clientbot'):
+        return
+
+    if irc.is_channel(target):
+        def _loop(irc, remoteirc, numeric, target, client_tags):
+            if not remoteirc.has_cap('has-message-tags'):
+                return
+            real_target = get_remote_channel(irc, remoteirc, target)
+            if not real_target or not irc.connected.is_set():
+                return
+            user = get_remote_user(irc, remoteirc, numeric, spawn_if_missing=False)
+            if not user:
+                return
+            try:
+                remoteirc.tagmsg(user, real_target, client_tags)
+            except (LookupError, NotImplementedError):
+                return
+            except Exception:
+                log.exception("(%s) relay: error forwarding TAGMSG to %s", irc.name, remoteirc.name)
+        iterate_all(irc, _loop, extra_args=(numeric, target, client_tags))
+
+for cmd in ('TAGMSG', 'PYLINK_SELF_TAGMSG'):
+    utils.add_hook(handle_tagmsg, cmd, priority=500)
+
 def handle_kick(irc, source, command, args):
     channel = args['channel']
     target = args['target']
@@ -2674,7 +2713,11 @@ def linked(irc, source, args):
         if v['links']:
             # Sort, join up and output all the linked channel names. Silently drop
             # entries for disconnected networks.
-            s += ' '.join([''.join(link) for link in sorted(v['links']) if link[0] in world.networkobjects
+            # Sort with a string key so a malformed entry (e.g. a non-str element)
+            # can't crash the whole command with a TypeError (upstream issue #674).
+            s += ' '.join([''.join(map(str, link))
+                           for link in sorted(v['links'], key=lambda link: (str(link[0]), str(link[1])))
+                           if link[0] in world.networkobjects
                            and world.networkobjects[link[0]].connected.is_set()])
 
         else:  # Unless it's empty; then, well... just say no relays yet.

@@ -24,7 +24,8 @@ class InspIRCdProtocol(TS6BaseProtocol):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.protocol_caps |= {'slash-in-nicks', 'slash-in-hosts', 'underscore-in-hosts'}
+        self.protocol_caps |= {'slash-in-nicks', 'slash-in-hosts', 'underscore-in-hosts',
+                               'has-message-tags'}
 
         # This is only the default value - on InspIRCd 3 it will be negotiated on connect in CAPAB CAPABILITIES
         self.casemapping = 'rfc1459'

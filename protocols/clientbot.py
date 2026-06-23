@@ -20,9 +20,27 @@ __all__ = ['ClientbotBaseProtocol', 'ClientbotWrapperProtocol']
 
 FALLBACK_REALNAME = 'PyLink Relay Mirror Client'
 
-# IRCv3 capabilities to request when available
-IRCV3_CAPABILITIES = {'multi-prefix', 'sasl', 'away-notify', 'userhost-in-names', 'chghost', 'account-notify',
-                      'account-tag', 'extended-join'}
+# IRCv3 capabilities to request when available.
+# Kept as a frozenset so plugins can read it safely.
+IRCV3_CAPABILITIES = frozenset({
+    # Core presence / user state
+    'multi-prefix', 'userhost-in-names', 'away-notify', 'chghost',
+    'account-notify', 'account-tag', 'extended-join', 'invite-notify',
+    'setname',
+    # Message metadata
+    'message-tags',   # enables TAGMSG + tags on all messages
+    'server-time',    # time= tag on messages (preserves timestamps across relay)
+    'echo-message',   # echoes our own messages back, avoids optimistic duplication
+    'labeled-response',  # correlate requests with their responses
+    'batch',          # batch message delivery (e.g. WHO responses, chathistory)
+    # Extended monitoring / notification
+    'cap-notify',     # notified of caps added/removed at runtime
+    'extended-monitor',  # richer MONITOR (away, account, realname)
+    # Error handling
+    'standard-replies',  # FAIL/WARN/NOTE machine-readable errors
+    # SASL (kept last so cap-end timing is unaffected)
+    'sasl',
+})
 
 class ClientbotBaseProtocol(PyLinkNetworkCoreWithUtils):
     def __init__(self, *args, **kwargs):
@@ -351,6 +369,22 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
             # Pass the message on as a hook
             super().message(source, target, text, notice=notice)
 
+    @staticmethod
+    def _escape_tag_value(value):
+        """IRCv3-escapes a message-tag value."""
+        return (value.replace('\\', '\\\\').replace(';', '\\:').replace(' ', '\\s')
+                .replace('\r', '\\r').replace('\n', '\\n'))
+
+    def tagmsg(self, source, target, tags):
+        """Sends a TAGMSG as the Clientbot, if the message-tags cap was negotiated."""
+        if 'message-tags' not in self.ircv3_caps or not tags:
+            return
+        parts = []
+        for name, value in tags.items():
+            parts.append('%s=%s' % (name, self._escape_tag_value(str(value))) if value else name)
+        # Clientbot sends as itself (its real connection), so no source prefix.
+        self.send('@%s TAGMSG %s' % (';'.join(parts), self._expandPUID(target)))
+
     def mode(self, source, channel, modes, ts=None):
         """Sends channel MODE changes."""
         if self.is_channel(channel):
@@ -629,6 +663,11 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
             newcaps = set(args[-1].split())
             log.debug('(%s) Received ACK for IRCv3 capabilities %s', self.name, newcaps)
             self.ircv3_caps |= newcaps
+
+            # Reflect negotiated message-tags into protocol_caps so relay knows
+            # it can forward TAGMSG to this network.
+            if 'message-tags' in self.ircv3_caps:
+                self.protocol_caps.add('has-message-tags')
 
             # Only send CAP END immediately if SASL is disabled. Otherwise, wait for the 90x responses
             # to do so.
@@ -1110,6 +1149,22 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         if target:
             return {'target': target, 'text': args[1]}
     handle_notice = handle_privmsg
+
+    def handle_tagmsg(self, source, command, args):
+        """
+        Handles TAGMSG (IRCv3 message-tags). TAGMSG carries only tags and a target, no text.
+        We translate the target nick to a PUID where necessary so relay can forward it.
+        """
+        if not args:
+            return
+        target = args[0]
+        tags = args[1] if len(args) > 1 else {}
+        # For non-channel targets resolve to PUID
+        real_target = target.lstrip(''.join(self.prefixmodes.values()))
+        if not self.is_channel(real_target):
+            target = self._get_UID(target, spawn_new=False)
+        if target:
+            return {'target': target, 'tags': tags}
 
     def handle_quit(self, source, command, args):
         """Handles incoming QUITs."""
