@@ -1,6 +1,9 @@
 # relay.py: PyLink Relay plugin
 import base64
 import inspect
+import json
+import os
+import pickle
 import string
 import threading
 import time
@@ -37,8 +40,93 @@ __claim_bounce_timeout = conf.conf.get('relay', {}).get('claim_bounce_timeout', 
 claim_bounce_cache = cachetools.TTLCache(float('inf'), __claim_bounce_timeout)
 claim_bounce_cache_lock = threading.Lock()
 
+RELAY_DB_VERSION = 1
+
+class RelayDataStore(structures.JSONDataStore):
+    """JSON-backed store for the relay links database.
+
+    The in-memory format keys each entry by a (network, channel) tuple and uses
+    sets for 'links', 'blocked_nets' and 'allowed_nets' — none of which JSON can
+    represent directly. Entries are therefore flattened to a list of channel
+    objects on disk and rebuilt on load. A pre-3.x pickle database found at the
+    same path is migrated to JSON transparently the first time it is loaded
+    (the original is kept alongside it as <name>.pickle.bak).
+    """
+    _SET_KEYS = ('blocked_nets', 'allowed_nets')
+
+    @classmethod
+    def _encode(cls, store):
+        channels = []
+        for (network, channel), entry in store.items():
+            out = dict(entry)
+            out['network'] = network
+            out['channel'] = channel
+            out['links'] = sorted(list(link) for link in entry.get('links', ()))
+            for key in cls._SET_KEYS:
+                if key in entry:
+                    out[key] = sorted(entry[key])
+            channels.append(out)
+        return {'version': RELAY_DB_VERSION, 'channels': channels}
+
+    @classmethod
+    def _decode(cls, data):
+        store = {}
+        for entry in data.get('channels', []):
+            entry = dict(entry)
+            network = entry.pop('network')
+            channel = entry.pop('channel')
+            entry['links'] = {tuple(link) for link in entry.get('links', [])}
+            for key in cls._SET_KEYS:
+                if key in entry:
+                    entry[key] = set(entry[key])
+            store[(network, channel)] = entry
+        return store
+
+    def load(self):
+        with self.store_lock:
+            try:
+                with open(self.filename, 'r') as f:
+                    data = json.load(f)
+            except (ValueError, IOError, OSError, UnicodeDecodeError):
+                data = None
+
+            if data is not None:
+                self.store.clear()
+                self.store.update(self._decode(data))
+                return
+
+            # No readable JSON DB: try migrating a legacy pickle DB at the same path.
+            try:
+                with open(self.filename, 'rb') as f:
+                    legacy = pickle.load(f)
+            except (pickle.UnpicklingError, ValueError, EOFError, IOError, OSError,
+                    AttributeError, ImportError, IndexError):
+                legacy = None
+
+            if isinstance(legacy, dict):
+                # Preserve the original pickle before the first JSON save overwrites it.
+                try:
+                    with open(self.filename, 'rb') as src, \
+                            open(self.filename + '.pickle.bak', 'wb') as dst:
+                        dst.write(src.read())
+                except OSError:
+                    pass
+                log.info("(DataStore:%s) migrating legacy pickle database %s to JSON",
+                         self.name, self.filename)
+                self.store.clear()
+                self.store.update(legacy)
+            else:
+                log.info("(DataStore:%s) failed to load database %s; creating a new one "
+                         "in memory", self.name, self.filename)
+
+    def save(self):
+        with self.store_lock:
+            with open(self.tmp_filename, 'w') as f:
+                json.dump(self._encode(self.store), f, indent=4)
+            os.rename(self.tmp_filename, self.filename)
+
 dbname = conf.get_database_name('pylinkrelay')
-datastore = structures.PickleDataStore('pylinkrelay', dbname)
+datastore = RelayDataStore('pylinkrelay', dbname)
 db = datastore.store
 
 default_permissions = {"*!*@*": ['relay.linked'],
