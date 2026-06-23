@@ -65,6 +65,16 @@ class RelaySendTest(unittest.TestCase):
         self.assertEqual(r.calls[0][3], 'untouched')
 
 
+class ChgClientTest(unittest.TestCase):
+    def test_no_change_fields_does_not_crash(self):
+        # Regression: 'field' used to be referenced before assignment when a
+        # CHG* hook carried none of newhost/newident/newgecos (e.g. a cleared
+        # value), raising UnboundLocalError. It must now simply do nothing.
+        class FakeIrc:
+            name = 'test'
+        relay.handle_chgclient(FakeIrc(), 'src', 'CHGNAME', {'target': 'UID'})
+
+
 class WrapMessageTest(unittest.TestCase):
     """The real protocol wrap_message must split long text within the line budget."""
     def setUp(self):
