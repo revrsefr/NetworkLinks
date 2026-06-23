@@ -125,7 +125,7 @@ class P10Protocol(IRCS2SProtocol):
         'RI': 'RPING',
         'RO': 'RPONG',
         'S': 'SERVER',
-        'SERVSET': 'SERVLIST',
+        'SERVLIST': 'SERVLIST',
         'SERVSET': 'SERVSET',
         'SET': 'SET',
         'SE': 'SETTIME',
