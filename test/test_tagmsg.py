@@ -92,6 +92,33 @@ class InspIRCdTagmsgTest(_Base):
         self.p.tagmsg('INTBOT', '#chan', {})
         self.assertEqual(len(self.sent), before)
 
+    def test_message_with_server_time_tag(self):
+        self._setup_users()
+        self.p.message('INTBOT', '#chan', 'hello', tags={'time': '2026-06-23T18:40:54.011Z'})
+        raw = self._sent().strip()
+        # Tags precede the source prefix.
+        self.assertEqual(raw, '@time=2026-06-23T18:40:54.011Z :INTBOT PRIVMSG #chan :hello')
+
+    def test_notice_with_server_time_tag(self):
+        self._setup_users()
+        self.p.notice('INTBOT', '#chan', 'hi', tags={'time': '2026-06-23T18:40:54.011Z'})
+        raw = self._sent().strip()
+        self.assertEqual(raw, '@time=2026-06-23T18:40:54.011Z :INTBOT NOTICE #chan :hi')
+
+    def test_message_without_tags_is_untagged(self):
+        self._setup_users()
+        self.p.message('INTBOT', '#chan', 'hello')
+        raw = self._sent().strip()
+        self.assertFalse(raw.startswith('@'), raw)
+        self.assertEqual(raw, ':INTBOT PRIVMSG #chan :hello')
+
+    def test_message_tags_suppressed_without_cap(self):
+        self._setup_users()
+        self.p.protocol_caps.discard('has-message-tags')
+        self.p.message('INTBOT', '#chan', 'hello', tags={'time': '2026-06-23T18:40:54.011Z'})
+        raw = self._sent().strip()
+        self.assertEqual(raw, ':INTBOT PRIVMSG #chan :hello')
+
 
 class ClientbotTagmsgTest(_Base):
     proto_class = clientbot.ClientbotWrapperProtocol

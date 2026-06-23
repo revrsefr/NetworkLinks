@@ -429,18 +429,43 @@ class IRCS2SProtocol(IRCCommonProtocol):
         else:
             raise LookupError("No such PyLink client exists.")
 
-    def message(self, numeric, target, text):
-        """Sends a PRIVMSG from a PyLink client."""
+    def _build_tag_prefix(self, tags):
+        """Builds an IRCv3 message-tag prefix ('@a=1;b ', with a trailing space)
+        from a dict, or '' if there are no tags or message-tags was not
+        negotiated on this link."""
+        if not tags or not self.has_cap('has-message-tags'):
+            return ''
+        parts = []
+        for name, value in tags.items():
+            if value:
+                parts.append('%s=%s' % (name, self._escape_tag_value(str(value))))
+            else:
+                parts.append(name)
+        return ('@%s ' % ';'.join(parts)) if parts else ''
+
+    def message(self, numeric, target, text, tags=None):
+        """Sends a PRIVMSG from a PyLink client.
+
+        `tags` is an optional dict of IRCv3 message tags (e.g. {'time': ...} for
+        server-time); they are only emitted if message-tags was negotiated."""
         if not self.is_internal_client(numeric):
             raise LookupError('No such PyLink client exists.')
 
         # Mangle message targets for IRCds that require it.
         target = self._expandPUID(target)
 
-        self._send_with_prefix(numeric, 'PRIVMSG %s :%s' % (target, text))
+        tagstr = self._build_tag_prefix(tags)
+        if tagstr:
+            # Tags must precede the source prefix: @tags :source PRIVMSG target :text
+            self.send('%s:%s PRIVMSG %s :%s' % (tagstr, self._expandPUID(numeric), target, text))
+        else:
+            self._send_with_prefix(numeric, 'PRIVMSG %s :%s' % (target, text))
 
-    def notice(self, numeric, target, text):
-        """Sends a NOTICE from a PyLink client or server."""
+    def notice(self, numeric, target, text, tags=None):
+        """Sends a NOTICE from a PyLink client or server.
+
+        `tags` is an optional dict of IRCv3 message tags, emitted only if
+        message-tags was negotiated."""
         if (not self.is_internal_client(numeric)) and \
                 (not self.is_internal_server(numeric)):
             raise LookupError('No such PyLink client/server exists.')
@@ -448,7 +473,11 @@ class IRCS2SProtocol(IRCCommonProtocol):
         # Mangle message targets for IRCds that require it.
         target = self._expandPUID(target)
 
-        self._send_with_prefix(numeric, 'NOTICE %s :%s' % (target, text))
+        tagstr = self._build_tag_prefix(tags)
+        if tagstr:
+            self.send('%s:%s NOTICE %s :%s' % (tagstr, self._expandPUID(numeric), target, text))
+        else:
+            self._send_with_prefix(numeric, 'NOTICE %s :%s' % (target, text))
 
     @staticmethod
     def _escape_tag_value(value):

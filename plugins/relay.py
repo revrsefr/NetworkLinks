@@ -1601,6 +1601,8 @@ def handle_messages(irc, numeric, command, args):
 
     target = args['target']
     text = args['text']
+    # Preserve the original IRCv3 server-time when relaying, where supported.
+    msgtime = (args.get('tags') or {}).get('time')
     if irc.is_internal_client(numeric) and irc.is_internal_client(target):
         # Drop attempted PMs between internal clients (this shouldn't happen,
         # but whatever).
@@ -1709,11 +1711,16 @@ def handle_messages(irc, numeric, command, args):
                           "the remote does not support STATUSMSG.", irc.name,
                           remoteirc.name, real_target)
                 return
+            # Forward server-time only to S2S networks that negotiated
+            # message-tags; a Clientbot link can't legitimately set it.
+            extra = {'tags': {'time': msgtime}} if (msgtime and
+                     remoteirc.has_cap('has-message-tags') and
+                     remoteirc.has_cap('can-spawn-clients')) else {}
             try:
                 if notice:
-                    remoteirc.notice(user, real_target, real_text)
+                    remoteirc.notice(user, real_target, real_text, **extra)
                 else:
-                    remoteirc.message(user, real_target, real_text)
+                    remoteirc.message(user, real_target, real_text, **extra)
             except LookupError:
                 # Our relay clone disappeared while we were trying to send the message.
                 # This is normally due to a nick conflict with the IRCd.
@@ -1753,11 +1760,14 @@ def handle_messages(irc, numeric, command, args):
 
         user = get_remote_user(irc, remoteirc, numeric, spawn_if_missing=False)
 
+        extra = {'tags': {'time': msgtime}} if (msgtime and
+                 remoteirc.has_cap('has-message-tags') and
+                 remoteirc.has_cap('can-spawn-clients')) else {}
         try:
             if notice:
-                remoteirc.notice(user, real_target, text)
+                remoteirc.notice(user, real_target, text, **extra)
             else:
-                remoteirc.message(user, real_target, text)
+                remoteirc.message(user, real_target, text, **extra)
         except LookupError:
             # Our relay clone disappeared while we were trying to send the message.
             # This is normally due to a nick conflict with the IRCd.
