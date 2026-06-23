@@ -1595,6 +1595,21 @@ def _get_lowest_prefix(prefixes):
         log.warning('relay._get_lowest_prefix: unknown prefixes string %r', prefixes)
         return ''
 
+def _relay_send(remoteirc, user, target, text, notice, tags):
+    """Relays a message to `target` on remoteirc, wrapping it into multiple
+    lines so long text isn't truncated by the send-buffer cutoff (issue #656).
+    `tags` is forwarded to each line (e.g. server-time)."""
+    try:
+        lines = remoteirc.wrap_message(user, target, text)
+    except (NotImplementedError, KeyError, LookupError):
+        lines = None
+    extra = {'tags': tags} if tags else {}
+    for line in (lines or [text]):
+        if notice:
+            remoteirc.notice(user, target, line, **extra)
+        else:
+            remoteirc.message(user, target, line, **extra)
+
 def handle_messages(irc, numeric, command, args):
     command = command.upper()
     notice = 'NOTICE' in command or command.startswith('WALL')
@@ -1713,14 +1728,11 @@ def handle_messages(irc, numeric, command, args):
                 return
             # Forward server-time only to S2S networks that negotiated
             # message-tags; a Clientbot link can't legitimately set it.
-            extra = {'tags': {'time': msgtime}} if (msgtime and
-                     remoteirc.has_cap('has-message-tags') and
-                     remoteirc.has_cap('can-spawn-clients')) else {}
+            sendtags = {'time': msgtime} if (msgtime and
+                        remoteirc.has_cap('has-message-tags') and
+                        remoteirc.has_cap('can-spawn-clients')) else None
             try:
-                if notice:
-                    remoteirc.notice(user, real_target, real_text, **extra)
-                else:
-                    remoteirc.message(user, real_target, real_text, **extra)
+                _relay_send(remoteirc, user, real_target, real_text, notice, sendtags)
             except LookupError:
                 # Our relay clone disappeared while we were trying to send the message.
                 # This is normally due to a nick conflict with the IRCd.
@@ -1760,14 +1772,11 @@ def handle_messages(irc, numeric, command, args):
 
         user = get_remote_user(irc, remoteirc, numeric, spawn_if_missing=False)
 
-        extra = {'tags': {'time': msgtime}} if (msgtime and
-                 remoteirc.has_cap('has-message-tags') and
-                 remoteirc.has_cap('can-spawn-clients')) else {}
+        sendtags = {'time': msgtime} if (msgtime and
+                    remoteirc.has_cap('has-message-tags') and
+                    remoteirc.has_cap('can-spawn-clients')) else None
         try:
-            if notice:
-                remoteirc.notice(user, real_target, text, **extra)
-            else:
-                remoteirc.message(user, real_target, text, **extra)
+            _relay_send(remoteirc, user, real_target, text, notice, sendtags)
         except LookupError:
             # Our relay clone disappeared while we were trying to send the message.
             # This is normally due to a nick conflict with the IRCd.
