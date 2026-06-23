@@ -30,6 +30,23 @@ class UnrealProtocolTest(ptf.BaseProtocolTest):
             self.p.handle_server('unreal.test', 'SERVER',
                                  ['unreal.test', '1', 'U5002-Fhin6OoEM UnrealIRCd test'])
 
+    def test_md_certfp_is_tracked(self):
+        u = self._make_user('crypto', 'uid1')
+        self.p.handle_md('001', 'MD', ['client', 'uid1', 'certfp', 'deadbeefcafe1234'])
+        self.assertEqual(u.certfp, 'deadbeefcafe1234')
+        self.assertTrue(u.ssl)
+
+    def test_md_empty_certfp_clears(self):
+        u = self._make_user('crypto', 'uid1')
+        u.certfp = 'old'
+        self.p.handle_md('001', 'MD', ['client', 'uid1', 'certfp', ''])
+        self.assertIsNone(u.certfp)
+
+    def test_md_unknown_object_is_ignored(self):
+        # Must not raise for objects/vars we don't track.
+        self.p.handle_md('001', 'MD', ['channel', '#x', 'something', 'value'])
+        self.p.handle_md('001', 'MD', ['client', 'nosuchuid', 'certfp', 'x'])
+
     def test_sjsby_ban_prefix_is_stripped(self):
         # SJSBY prefixes list entries with <setat,setby>; the ban mask must still
         # be parsed correctly with that metadata removed.

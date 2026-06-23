@@ -538,6 +538,24 @@ class UnrealProtocol(TS6BaseProtocol):
         return {'uid': uid, 'ts': ts, 'nick': nick, 'realhost': realhost, 'host': host,
                 'ident': ident, 'ip': ip, 'parse_as': 'UID', 'secure': has_ssl}
 
+    def handle_md(self, numeric, command, args):
+        """Handles the MD (module data) command, used to attach metadata to objects."""
+        # <- :maintest.test.net MD client Syzop certfp :1234567890abcdef...
+        # args: <type> <object> <varname> [:<value>]; an empty value clears it.
+        if len(args) < 3:
+            return
+        objtype, target, varname = args[0], args[1], args[2]
+        value = args[3] if len(args) > 3 else ''
+
+        if objtype == 'client':
+            uid = self._get_UID(target)
+            if uid in self.users and varname == 'certfp':
+                # Track the user's TLS client certificate fingerprint (and that
+                # they're on a secure connection).
+                self.users[uid].certfp = value or None
+                if value:
+                    self.users[uid].ssl = True
+
     def handle_pass(self, numeric, command, args):
         # <- PASS :abcdefg
         if args[0] != self.serverdata['recvpass']:
