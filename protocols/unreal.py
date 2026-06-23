@@ -1,5 +1,8 @@
 """
-unreal.py: UnrealIRCd 4.x-6.x protocol module for PyLink.
+unreal.py: UnrealIRCd 6.x protocol module for PyLink.
+
+This module targets UnrealIRCd 6 only (protocol 6000+); support for the legacy
+3.2/4.x/5.x link protocol has been removed.
 """
 
 import codecs
@@ -81,11 +84,10 @@ class UnrealProtocol(TS6BaseProtocol):
         # Set our case mapping (rfc1459 maps "\" and "|" together, for example)
         self.casemapping = 'ascii'
 
-        # Unreal protocol version. 6000 = UnrealIRCd 6.0; we still link to 4.x
-        # (min_proto_ver) since the S2S wire format is backwards compatible and
-        # features are negotiated per-token in PROTOCTL.
+        # Unreal protocol version. 6000 = UnrealIRCd 6.0; we require 6.0+ and
+        # reject older servers (their legacy link protocol is no longer supported).
         self.proto_ver = 6000
-        self.min_proto_ver = 4000
+        self.min_proto_ver = 6000
 
         self.hook_map = {'UMODE2': 'MODE', 'SVSKILL': 'KILL', 'SVSMODE': 'MODE',
                          'SVS2MODE': 'MODE', 'SJOIN': 'JOIN', 'SETHOST': 'CHGHOST',
@@ -410,37 +412,32 @@ class UnrealProtocol(TS6BaseProtocol):
         ts = self.start_ts
         self.prefixmodes = {'q': '~', 'a': '&', 'o': '@', 'h': '%', 'v': '+'}
 
-        # Track usages of legacy (Unreal 3.2) nicks.
-        self.legacy_uidgen = PUIDGenerator('U32user')
-
         f = self.send
         host = self.serverdata["hostname"]
 
         f('PASS :%s' % self.serverdata["sendpass"])
-        # https://github.com/unrealircd/unrealircd/blob/2f8cb55e/doc/technical/protoctl.txt
-        # We support the following protocol features:
-        # SJOIN - supports SJOIN for user introduction
-        # SJ3 - extended SJOIN
-        # NOQUIT - QUIT messages aren't sent for all users in a netsplit
-        # NICKv2 - Extended NICK command, sending MODE and CHGHOST info with it
-        # SID - Use UIDs and SIDs (Unreal 4)
-        # VL - Sends version string in below SERVER message
-        # UMODE2 - used for users setting modes on themselves (one less argument needed)
-        # EAUTH - Early auth? (Unreal 4 linking protocol)
-        # NICKIP - Extends the NICK command used for introduction (for Unreal 3.2 servers)
-        #          to include user IPs.
-        # VHP - Sends cloaked hosts of UnrealIRCd 3.2 users as the hostname. This is important
-        #       because UnrealIRCd 3.2 only has one vHost field in its NICK command, and not two
-        #       like UnrealIRCd 4.0 (cloaked host + displayed host). Without VHP, cloaking does
-        #       not work for any UnrealIRCd 3.2 users.
-        # ESVID - Supports account names in services stamps instead of just the signon time.
-        #         AFAIK this doesn't actually affect services' behaviour?
-        # EXTSWHOIS - support multiple SWHOIS lines (purely informational for us)
-        # MTAGS - support IRCv3 message tags over S2S (UnrealIRCd 5.0+). The
-        #         inherited handle_events() already parses inbound @tags, and it
-        #         lets us send server-time/TAGMSG to the uplink. We only enable
-        #         outbound tagging once the peer also advertises MTAGS.
-        f('PROTOCTL SJOIN SJ3 NOQUIT NICKv2 VL UMODE2 NICKIP EAUTH=%s SID=%s VHP ESVID EXTSWHOIS MTAGS' % (self.serverdata["hostname"], self.sid))
+        # https://www.unrealircd.org/docs/Server_protocol:PROTOCTL_command
+        # UnrealIRCd 6 PROTOCTL tokens we support:
+        # NOQUIT    - QUIT messages aren't sent for all users in a netsplit
+        # NICKv2    - extended NICK command (modes/CHGHOST info with it)
+        # SJOIN/SJ3 - SJOIN-based user/channel bursting
+        # UMODE2    - users setting modes on themselves (one less argument)
+        # VL        - send the version string in the SERVER message
+        # SID       - use UIDs and SIDs
+        # EAUTH     - server link authentication
+        # NICKIP    - include user IPs in the UID introduction
+        # ESVID     - account names in services stamps
+        # EXTSWHOIS - multiple SWHOIS lines (informational)
+        # MTAGS     - IRCv3 message tags over S2S. The inherited handle_events()
+        #             parses inbound @tags; outbound tagging (server-time/TAGMSG)
+        #             is enabled only once the peer also advertises MTAGS.
+        # SJSBY     - SJOIN list entries carry <setat,setby> (parsed in handle_sjoin)
+        # NEXTBANS  - named/extended bans (stored verbatim as opaque masks)
+        # TKLEXT2   - extended TKL format (we don't parse inbound TKL)
+        # CLK       - cloaked-host key info; MLOCK - mode-lock propagation
+        f('PROTOCTL NOQUIT NICKv2 SJOIN SJ3 UMODE2 VL SID NICKIP ESVID EXTSWHOIS '
+          'MTAGS SJSBY NEXTBANS TKLEXT TKLEXT2 CLK MLOCK '
+          'EAUTH=%s SID=%s' % (host, self.sid))
         sdesc = self.serverdata.get('serverdesc') or conf.conf['pylink']['serverdesc']
         f('SERVER %s 1 U%s-h6e-%s :%s' % (host, self.proto_ver, self.sid, sdesc))
 
@@ -572,19 +569,14 @@ class UnrealProtocol(TS6BaseProtocol):
             try:
                 protover = int(vline[0].strip('U'))
             except ValueError:
-                raise ProtocolError("Protocol version too old! (needs at least %s "
-                                    "(Unreal 4.x), got something invalid; "
-                                    "is VL being sent?)" % self.min_proto_ver)
+                raise ProtocolError("Invalid protocol version received; is VL being sent? "
+                                    "(this module requires UnrealIRCd 6, protocol %s+)"
+                                    % self.min_proto_ver)
 
             if protover < self.min_proto_ver:
-                raise ProtocolError("Protocol version too old! (needs at least %s "
-                                    "(Unreal 4.x), got %s)" % (self.min_proto_ver, protover))
+                raise ProtocolError("Protocol version too old! This module requires UnrealIRCd 6 "
+                                    "(protocol %s+), but got %s." % (self.min_proto_ver, protover))
             self.servers[numeric] = Server(self, None, sname, desc=sdesc)
-
-            # Prior to 4203, Unreal did not send PROTOCTL USERMODES (see handle_protoctl() )
-            if protover < 4203:
-                self.umodes.update(self._KNOWN_UMODES)
-                self.umodes['*D'] = ''.join(self._KNOWN_UMODES.values())
         else:
             # Legacy (non-SID) servers can still be introduced using the SERVER command.
             # <- :services.int SERVER a.bc 2 :(H) [jlu5] a
@@ -682,6 +674,12 @@ class UnrealProtocol(TS6BaseProtocol):
             pass
 
         for userpair in userlist:
+            # With SJSBY, list-mode entries are prefixed with <setat,setby>, e.g.
+            # "<1548605202,UserOne>&*!*@host". We don't track who set a ban, so
+            # strip that metadata and keep the mask.
+            if userpair.startswith('<'):
+                _, _, userpair = userpair.partition('>')
+
             # &, ", and ' entries are used for bursting bans:
             # https://www.unrealircd.org/files/docs/technical/serverprotocol.html#S5_1
             if userpair.startswith("&"):
@@ -701,7 +699,7 @@ class UnrealProtocol(TS6BaseProtocol):
                     # <- :002 SJOIN 1486361658 #idlerpg :@
                     continue
 
-                user = self._get_UID(user)  # Normalize nicks to UIDs for Unreal 3.2 links
+                user = self._get_UID(user)  # Resolve to a UID (members are sent as UIDs)
                 if user not in self.users:
                     # Work around a potential race when sending kills on join
                     log.debug("(%s) Ignoring user %s in SJOIN to %s, they don't exist anymore", self.name, user, channel)
@@ -735,42 +733,10 @@ class UnrealProtocol(TS6BaseProtocol):
                 'ts': their_ts, 'channeldata': chandata}
 
     def handle_nick(self, numeric, command, args):
-        """Handles NICK changes, and legacy NICK introductions from pre-4.0 servers."""
-        if len(args) > 2:
-            # Handle legacy NICK introduction here.
-            # I don't want to rewrite all the user introduction stuff, so I'll just reorder the arguments
-            # so that handle_uid can handle this instead.
-            # But since legacy nicks don't have any UIDs attached, we'll have to store the users
-            # internally using pseudo UIDs. In other words, we need to convert from this:
-            #   <- NICK Global 3 1456843578 services novernet.com services.novernet.com 0 +ioS * :Global Noticer
-            #   & nick hopcount timestamp username hostname server service-identifier-token :realname
-            #   With NICKIP and VHP enabled:
-            #   <- NICK legacy32 2 1470699865 jlu5 localhost unreal32.midnight.vpn jlu5 +iowx hidden-1C620195 AAAAAAAAAAAAAAAAAAAAAQ== :realname
-            # to this:
-            #   <- :001 UID jlu5 0 1441306929 jlu5 localhost 0018S7901 0 +iowx * hidden-1C620195 fwAAAQ== :realname
-            log.debug('(%s) got legacy NICK args: %s', self.name, ' '.join(args))
-
-            new_args = args[:]  # Clone the old args list
-            servername = new_args[5].lower()  # Get the name of the users' server.
-
-            # Fake a UID and put it where it belongs in the new-style UID command. These take the
-            # NICK@COUNTER, where COUNTER is an int starting at 0 and incremented every time a new
-            # user joins.
-            fake_uid = self.legacy_uidgen.next_uid(prefix=args[0])
-            new_args[5] = fake_uid
-
-            # This adds a dummy cloaked host (equal the real host) to put the displayed host in the
-            # right position. As long as the VHP capability is respected, this will propagate +x cloaked
-            # hosts from UnrealIRCd 3.2 users. Otherwise, +x host cloaking won't work!
-            new_args.insert(-2, args[4])
-
-            log.debug('(%s) translating legacy NICK args to: %s', self.name, ' '.join(new_args))
-
-            return self.handle_uid(servername, 'UID_LEGACY', new_args)
-        else:
-            # Normal NICK change, just let ts6_common handle it.
-            # :70MAAAAAA NICK jlu5-devel 1434744242
-            return super().handle_nick(numeric, command, args)
+        """Handles NICK changes."""
+        # UnrealIRCd 6 introduces users via UID; NICK is only ever a nick change:
+        # :70MAAAAAA NICK jlu5-devel 1434744242
+        return super().handle_nick(numeric, command, args)
 
     def handle_mode(self, numeric, command, args):
         # <- :unreal.midnight.vpn MODE #test +bb test!*@* *!*@bad.net
