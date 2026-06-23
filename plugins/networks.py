@@ -54,7 +54,7 @@ def autoconnect(irc, source, args):
         irc.error('No such network "%s" (case sensitive).' % netname)
         return
     except ValueError:
-        irc.error('Invalid argument "%s" for <seconds>.' % seconds)
+        irc.error('Invalid argument "%s" for <seconds>.' % args[1])
         return
     network.serverdata['autoconnect'] = seconds
     irc.reply("Done.")

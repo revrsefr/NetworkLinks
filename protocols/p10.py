@@ -908,6 +908,9 @@ class P10Protocol(IRCS2SProtocol):
             self.umodes.update({'servprotect': 'k', 'sno_debug': 'g', 'cloak': 'x',
                                     'deaf': 'd', 'registered': 'r', 'locop': 'O',
                                     '*A': '', '*B': '', '*C': '', '*D': 'imnpstrkgxdO'})
+        else:
+            raise conf.ConfigurationError("Unsupported 'p10_ircd' value %r; supported values "
+                                          "are 'nefarious', 'snircd', and 'ircu'." % p10_ircd)
 
         if self.serverdata.get('use_halfop'):
             cmodes['halfop'] = 'h'
