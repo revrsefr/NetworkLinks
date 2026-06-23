@@ -210,6 +210,17 @@ def cb_relay_core(irc, source, command, args):
                     cargs['nicks'] = ', '.join(nicklist)
                     cargs['colored_nicks'] = ', '.join(colored_nicks)
 
+                # If RELAYMSG is available and enabled, relay plain channel
+                # messages as a distinct pseudo-user (sender/network) instead of
+                # the "<sender>" text prefix. Opt-in, since it needs the bot to
+                # hold the server's relaymsg permission; falls back otherwise.
+                if (real_command == 'MESSAGE' and not private
+                        and not args.get('is_notice')
+                        and irc.is_channel(target)
+                        and irc.get_service_option('relay', 'clientbot_use_relaymsg', False)
+                        and irc.relaymsg(target, sourcename, args['text'], tag=sourcenet)):
+                    continue
+
                 text = text_template.safe_substitute(cargs)
                 # PMs are always sent as notice - this prevents unknown command loops with bots.
                 irc.msg(target, text, loopback=False, notice=private)

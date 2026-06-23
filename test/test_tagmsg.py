@@ -138,6 +138,23 @@ class ClientbotTagmsgTest(_Base):
         self.assertIn(' TAGMSG #chan', raw)
         self.assertNotIn(':somebody', raw)
 
+    def test_relaymsg_unavailable_without_isupport(self):
+        # No RELAYMSG ISUPPORT token -> returns False and sends nothing.
+        before = len(self.sent)
+        self.assertFalse(self.p.relaymsg('#chan', 'alice', 'hi', tag='libera'))
+        self.assertEqual(len(self.sent), before)
+
+    def test_relaymsg_wire_format(self):
+        self.p._caps['RELAYMSG'] = '/'
+        self.assertTrue(self.p.relaymsg('#chan', 'alice', 'hello there', tag='libera'))
+        self.assertEqual(self._sent().strip(), 'RELAYMSG #chan alice/libera :hello there')
+
+    def test_relaymsg_strips_stray_separator_from_nick(self):
+        self.p._caps['RELAYMSG'] = '/'
+        self.p.relaymsg('#chan', 'a/b/c', 'x', tag='net')
+        # The only separator must be the tag boundary we add.
+        self.assertEqual(self._sent().strip(), 'RELAYMSG #chan abc/net :x')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -385,6 +385,22 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         # Clientbot sends as itself (its real connection), so no source prefix.
         self.send('@%s TAGMSG %s' % (';'.join(parts), self._expandPUID(target)))
 
+    def relaymsg(self, channel, nick, text, tag):
+        """Sends `text` to `channel` as the pseudo-user "<nick><sep><tag>" using the
+        RELAYMSG command, if the server advertises it (the ISUPPORT RELAYMSG token
+        carries the separator). Returns True if the message was relayed this way.
+
+        RELAYMSG requires the bot to hold the server-side relaymsg permission, so
+        callers should provide their own fallback for when this returns False."""
+        sep = self._caps.get('RELAYMSG')
+        if not sep:
+            return False
+        # The display name must contain exactly the server's separator; strip any
+        # stray copies from the nick so the tag boundary stays unambiguous.
+        displayname = '%s%s%s' % (nick.replace(sep, ''), sep, tag)
+        self.send('RELAYMSG %s %s :%s' % (self._expandPUID(channel), displayname, text))
+        return True
+
     def mode(self, source, channel, modes, ts=None):
         """Sends channel MODE changes."""
         if self.is_channel(channel):
