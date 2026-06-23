@@ -116,6 +116,9 @@ class User(TSObject):
         # Whether the user is using SSL/TLS (None = unknown)
         self.ssl = None
 
+        # The user's TLS client certificate fingerprint, if known (None = unknown)
+        self.certfp = None
+
     @property
     def nick(self):
         return self._nick

@@ -128,29 +128,49 @@ class IRCCommonProtocol(IRCNetwork):
     @classmethod
     def parse_message_tags(cls, data):
         """
-        Parses IRCv3.2 message tags from a message, as described at http://ircv3.net/specs/core/message-tags-3.2.html
+        Parses IRCv3 message tags per https://ircv3.net/specs/extensions/message-tags
 
-        data is a list of command arguments, split by spaces.
+        data is a list of command arguments split by spaces.
+        The escape order matters: protect \\\\ first so subsequent replacements
+        cannot mis-interpret the second backslash of a literal \\\\.
         """
-        # Example query:
-        # @aaa=bbb;ccc;example.com/ddd=eee :nick!ident@host.com PRIVMSG me :Hello
         if data[0].startswith('@'):
             tagdata = data[0].lstrip('@').split(';')
             for idx, tag in enumerate(tagdata):
+                tag = tag.replace('\\\\', '\x00')  # protect \\ before other escapes
                 tag = tag.replace('\\s', ' ')
                 tag = tag.replace('\\r', '\r')
                 tag = tag.replace('\\n', '\n')
                 tag = tag.replace('\\:', ';')
-
-                # We want to drop lone \'s but keep \\ as \ ...
-                tag = tag.replace('\\\\', '\x00')
-                tag = tag.replace('\\', '')
-                tag = tag.replace('\x00', '\\')
+                tag = tag.replace('\\', '')        # strip remaining lone backslashes
+                tag = tag.replace('\x00', '\\')    # restore \\
                 tagdata[idx] = tag
 
             results = cls.parse_isupport(tagdata, fallback='')
             return results
         return {}
+
+    def handle_tagmsg(self, source, command, args):
+        """
+        Handles incoming TAGMSG (IRCv3 message-tags extension).
+        TAGMSG carries only message tags and a target — no text body.
+        We pass the tags dict through as 'tags' so relay and other plugins
+        can forward client-only tags (those starting with +) across networks.
+        """
+        if not args:
+            return
+        target = args[0]
+
+        if source not in self.users and source not in self.servers:
+            log.debug('(%s) handle_tagmsg: dropping TAGMSG from unknown source %s', self.name, source)
+            return
+
+        if not self.is_channel(target) and target not in self.users:
+            return
+
+        # The message tags themselves are attached to the returned hook payload
+        # by handle_events(); here we only validate and forward the target.
+        return {'target': target}
 
     def handle_away(self, source, command, args):
         """Handles incoming AWAY messages."""
@@ -409,18 +429,43 @@ class IRCS2SProtocol(IRCCommonProtocol):
         else:
             raise LookupError("No such PyLink client exists.")
 
-    def message(self, numeric, target, text):
-        """Sends a PRIVMSG from a PyLink client."""
+    def _build_tag_prefix(self, tags):
+        """Builds an IRCv3 message-tag prefix ('@a=1;b ', with a trailing space)
+        from a dict, or '' if there are no tags or message-tags was not
+        negotiated on this link."""
+        if not tags or not self.has_cap('has-message-tags'):
+            return ''
+        parts = []
+        for name, value in tags.items():
+            if value:
+                parts.append('%s=%s' % (name, self._escape_tag_value(str(value))))
+            else:
+                parts.append(name)
+        return ('@%s ' % ';'.join(parts)) if parts else ''
+
+    def message(self, numeric, target, text, tags=None):
+        """Sends a PRIVMSG from a PyLink client.
+
+        `tags` is an optional dict of IRCv3 message tags (e.g. {'time': ...} for
+        server-time); they are only emitted if message-tags was negotiated."""
         if not self.is_internal_client(numeric):
             raise LookupError('No such PyLink client exists.')
 
         # Mangle message targets for IRCds that require it.
         target = self._expandPUID(target)
 
-        self._send_with_prefix(numeric, 'PRIVMSG %s :%s' % (target, text))
+        tagstr = self._build_tag_prefix(tags)
+        if tagstr:
+            # Tags must precede the source prefix: @tags :source PRIVMSG target :text
+            self.send('%s:%s PRIVMSG %s :%s' % (tagstr, self._expandPUID(numeric), target, text))
+        else:
+            self._send_with_prefix(numeric, 'PRIVMSG %s :%s' % (target, text))
 
-    def notice(self, numeric, target, text):
-        """Sends a NOTICE from a PyLink client or server."""
+    def notice(self, numeric, target, text, tags=None):
+        """Sends a NOTICE from a PyLink client or server.
+
+        `tags` is an optional dict of IRCv3 message tags, emitted only if
+        message-tags was negotiated."""
         if (not self.is_internal_client(numeric)) and \
                 (not self.is_internal_server(numeric)):
             raise LookupError('No such PyLink client/server exists.')
@@ -428,7 +473,41 @@ class IRCS2SProtocol(IRCCommonProtocol):
         # Mangle message targets for IRCds that require it.
         target = self._expandPUID(target)
 
-        self._send_with_prefix(numeric, 'NOTICE %s :%s' % (target, text))
+        tagstr = self._build_tag_prefix(tags)
+        if tagstr:
+            self.send('%s:%s NOTICE %s :%s' % (tagstr, self._expandPUID(numeric), target, text))
+        else:
+            self._send_with_prefix(numeric, 'NOTICE %s :%s' % (target, text))
+
+    @staticmethod
+    def _escape_tag_value(value):
+        """IRCv3-escapes a message-tag value (the inverse of parse_message_tags)."""
+        return (value.replace('\\', '\\\\').replace(';', '\\:').replace(' ', '\\s')
+                .replace('\r', '\\r').replace('\n', '\\n'))
+
+    def tagmsg(self, numeric, target, tags):
+        """Sends a TAGMSG (IRCv3 message-tags) from a PyLink client.
+
+        `tags` is a dict of tag name -> value. Only client-only tags (names
+        starting with '+') are relayable across networks; callers should filter
+        accordingly. No-op if there are no tags to send."""
+        if not self.has_cap('has-message-tags'):
+            return
+        if (not self.is_internal_client(numeric)) and (not self.is_internal_server(numeric)):
+            raise LookupError('No such PyLink client/server exists.')
+        if not tags:
+            return
+
+        parts = []
+        for name, value in tags.items():
+            if value:
+                parts.append('%s=%s' % (name, self._escape_tag_value(str(value))))
+            else:
+                parts.append(name)
+        # IRCv3 requires message tags to precede the source prefix:
+        # @tag1=v;tag2 :source TAGMSG target
+        self.send('@%s :%s TAGMSG %s' % (';'.join(parts), self._expandPUID(numeric),
+                                         self._expandPUID(target)))
 
     def squit(self, source, target, text='No reason given'):
         """SQUITs a PyLink server."""

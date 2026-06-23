@@ -1,6 +1,9 @@
 # relay.py: PyLink Relay plugin
 import base64
 import inspect
+import json
+import os
+import pickle
 import string
 import threading
 import time
@@ -37,8 +40,93 @@ __claim_bounce_timeout = conf.conf.get('relay', {}).get('claim_bounce_timeout', 
 claim_bounce_cache = cachetools.TTLCache(float('inf'), __claim_bounce_timeout)
 claim_bounce_cache_lock = threading.Lock()
 
+RELAY_DB_VERSION = 1
+
+class RelayDataStore(structures.JSONDataStore):
+    """JSON-backed store for the relay links database.
+
+    The in-memory format keys each entry by a (network, channel) tuple and uses
+    sets for 'links', 'blocked_nets' and 'allowed_nets' — none of which JSON can
+    represent directly. Entries are therefore flattened to a list of channel
+    objects on disk and rebuilt on load. A pre-3.x pickle database found at the
+    same path is migrated to JSON transparently the first time it is loaded
+    (the original is kept alongside it as <name>.pickle.bak).
+    """
+    _SET_KEYS = ('blocked_nets', 'allowed_nets')
+
+    @classmethod
+    def _encode(cls, store):
+        channels = []
+        for (network, channel), entry in store.items():
+            out = dict(entry)
+            out['network'] = network
+            out['channel'] = channel
+            out['links'] = sorted(list(link) for link in entry.get('links', ()))
+            for key in cls._SET_KEYS:
+                if key in entry:
+                    out[key] = sorted(entry[key])
+            channels.append(out)
+        return {'version': RELAY_DB_VERSION, 'channels': channels}
+
+    @classmethod
+    def _decode(cls, data):
+        store = {}
+        for entry in data.get('channels', []):
+            entry = dict(entry)
+            network = entry.pop('network')
+            channel = entry.pop('channel')
+            entry['links'] = {tuple(link) for link in entry.get('links', [])}
+            for key in cls._SET_KEYS:
+                if key in entry:
+                    entry[key] = set(entry[key])
+            store[(network, channel)] = entry
+        return store
+
+    def load(self):
+        with self.store_lock:
+            try:
+                with open(self.filename, 'r') as f:
+                    data = json.load(f)
+            except (ValueError, IOError, OSError, UnicodeDecodeError):
+                data = None
+
+            if data is not None:
+                self.store.clear()
+                self.store.update(self._decode(data))
+                return
+
+            # No readable JSON DB: try migrating a legacy pickle DB at the same path.
+            try:
+                with open(self.filename, 'rb') as f:
+                    legacy = pickle.load(f)
+            except (pickle.UnpicklingError, ValueError, EOFError, IOError, OSError,
+                    AttributeError, ImportError, IndexError):
+                legacy = None
+
+            if isinstance(legacy, dict):
+                # Preserve the original pickle before the first JSON save overwrites it.
+                try:
+                    with open(self.filename, 'rb') as src, \
+                            open(self.filename + '.pickle.bak', 'wb') as dst:
+                        dst.write(src.read())
+                except OSError:
+                    pass
+                log.info("(DataStore:%s) migrating legacy pickle database %s to JSON",
+                         self.name, self.filename)
+                self.store.clear()
+                self.store.update(legacy)
+            else:
+                log.info("(DataStore:%s) failed to load database %s; creating a new one "
+                         "in memory", self.name, self.filename)
+
+    def save(self):
+        with self.store_lock:
+            with open(self.tmp_filename, 'w') as f:
+                json.dump(self._encode(self.store), f, indent=4)
+            os.rename(self.tmp_filename, self.filename)
+
 dbname = conf.get_database_name('pylinkrelay')
-datastore = structures.PickleDataStore('pylinkrelay', dbname)
+datastore = RelayDataStore('pylinkrelay', dbname)
 db = datastore.store
 
 default_permissions = {"*!*@*": ['relay.linked'],
@@ -1507,12 +1595,29 @@ def _get_lowest_prefix(prefixes):
         log.warning('relay._get_lowest_prefix: unknown prefixes string %r', prefixes)
         return ''
 
+def _relay_send(remoteirc, user, target, text, notice, tags):
+    """Relays a message to `target` on remoteirc, wrapping it into multiple
+    lines so long text isn't truncated by the send-buffer cutoff (issue #656).
+    `tags` is forwarded to each line (e.g. server-time)."""
+    try:
+        lines = remoteirc.wrap_message(user, target, text)
+    except (NotImplementedError, KeyError, LookupError):
+        lines = None
+    extra = {'tags': tags} if tags else {}
+    for line in (lines or [text]):
+        if notice:
+            remoteirc.notice(user, target, line, **extra)
+        else:
+            remoteirc.message(user, target, line, **extra)
+
 def handle_messages(irc, numeric, command, args):
     command = command.upper()
     notice = 'NOTICE' in command or command.startswith('WALL')
 
     target = args['target']
     text = args['text']
+    # Preserve the original IRCv3 server-time when relaying, where supported.
+    msgtime = (args.get('tags') or {}).get('time')
     if irc.is_internal_client(numeric) and irc.is_internal_client(target):
         # Drop attempted PMs between internal clients (this shouldn't happen,
         # but whatever).
@@ -1621,11 +1726,13 @@ def handle_messages(irc, numeric, command, args):
                           "the remote does not support STATUSMSG.", irc.name,
                           remoteirc.name, real_target)
                 return
+            # Forward server-time only to S2S networks that negotiated
+            # message-tags; a Clientbot link can't legitimately set it.
+            sendtags = {'time': msgtime} if (msgtime and
+                        remoteirc.has_cap('has-message-tags') and
+                        remoteirc.has_cap('can-spawn-clients')) else None
             try:
-                if notice:
-                    remoteirc.notice(user, real_target, real_text)
-                else:
-                    remoteirc.message(user, real_target, real_text)
+                _relay_send(remoteirc, user, real_target, real_text, notice, sendtags)
             except LookupError:
                 # Our relay clone disappeared while we were trying to send the message.
                 # This is normally due to a nick conflict with the IRCd.
@@ -1665,11 +1772,11 @@ def handle_messages(irc, numeric, command, args):
 
         user = get_remote_user(irc, remoteirc, numeric, spawn_if_missing=False)
 
+        sendtags = {'time': msgtime} if (msgtime and
+                    remoteirc.has_cap('has-message-tags') and
+                    remoteirc.has_cap('can-spawn-clients')) else None
         try:
-            if notice:
-                remoteirc.notice(user, real_target, text)
-            else:
-                remoteirc.message(user, real_target, text)
+            _relay_send(remoteirc, user, real_target, text, notice, sendtags)
         except LookupError:
             # Our relay clone disappeared while we were trying to send the message.
             # This is normally due to a nick conflict with the IRCd.
@@ -1680,6 +1787,45 @@ def handle_messages(irc, numeric, command, args):
 
 for cmd in ('PRIVMSG', 'NOTICE', 'PYLINK_SELF_NOTICE', 'PYLINK_SELF_PRIVMSG'):
     utils.add_hook(handle_messages, cmd, priority=500)
+
+def handle_tagmsg(irc, numeric, command, args):
+    """Relays IRCv3 TAGMSG (client-only message tags) across linked channels.
+
+    Only client-only tags (names starting with '+', e.g. +typing, +draft/react,
+    vendor tags like +tchatou.fr/gs) are forwarded; server-added tags (account,
+    time, msgid) are re-stamped by each destination server. Best-effort: any
+    failure is swallowed so it can never disrupt normal message relay."""
+    target = args.get('target')
+    tags = args.get('tags') or {}
+    # Keep only client-only tags — those are the ones meant to traverse networks.
+    client_tags = {k: v for k, v in tags.items() if k.startswith('+')}
+    if not client_tags or not target:
+        return
+    if irc.is_internal_client(numeric):
+        return
+    if not irc.has_cap('can-spawn-clients') and not world.plugins.get('relay_clientbot'):
+        return
+
+    if irc.is_channel(target):
+        def _loop(irc, remoteirc, numeric, target, client_tags):
+            if not remoteirc.has_cap('has-message-tags'):
+                return
+            real_target = get_remote_channel(irc, remoteirc, target)
+            if not real_target or not irc.connected.is_set():
+                return
+            user = get_remote_user(irc, remoteirc, numeric, spawn_if_missing=False)
+            if not user:
+                return
+            try:
+                remoteirc.tagmsg(user, real_target, client_tags)
+            except (LookupError, NotImplementedError):
+                return
+            except Exception:
+                log.exception("(%s) relay: error forwarding TAGMSG to %s", irc.name, remoteirc.name)
+        iterate_all(irc, _loop, extra_args=(numeric, target, client_tags))
+
+for cmd in ('TAGMSG', 'PYLINK_SELF_TAGMSG'):
+    utils.add_hook(handle_tagmsg, cmd, priority=500)
 
 def handle_kick(irc, source, command, args):
     channel = args['channel']
@@ -2674,7 +2820,11 @@ def linked(irc, source, args):
         if v['links']:
             # Sort, join up and output all the linked channel names. Silently drop
             # entries for disconnected networks.
-            s += ' '.join([''.join(link) for link in sorted(v['links']) if link[0] in world.networkobjects
+            # Sort with a string key so a malformed entry (e.g. a non-str element)
+            # can't crash the whole command with a TypeError (upstream issue #674).
+            s += ' '.join([''.join(map(str, link))
+                           for link in sorted(v['links'], key=lambda link: (str(link[0]), str(link[1])))
+                           if link[0] in world.networkobjects
                            and world.networkobjects[link[0]].connected.is_set()])
 
         else:  # Unless it's empty; then, well... just say no relays yet.
