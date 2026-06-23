@@ -575,7 +575,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         globalopt = conf.conf.get(servicename, {}).get(global_option or option) or itertype()
         return utils.merge_iterables(globalopt, netopt)
 
-    def has_cap(self, capab):
+    def has_cap(self, capab: str) -> bool:
         """
         Returns whether this protocol module instance has the requested capability.
         """
@@ -687,7 +687,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
             return userobj
 
     ## State checking functions
-    def nick_to_uid(self, nick, multi=False, filterfunc=None):
+    def nick_to_uid(self, nick: str, multi: bool = False, filterfunc=None) -> str | list[str] | None:
         """Looks up the UID of a user with the given nick, or return None if no such nick exists.
 
         If multi is given, return all matches for nick instead of just the last result. (Return an empty list if no matches)
@@ -709,7 +709,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
             except IndexError:
                 return None
 
-    def is_internal_client(self, uid):
+    def is_internal_client(self, uid: str) -> bool:
         """
         Returns whether the given UID is a PyLink client.
 
@@ -720,17 +720,18 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
             return True
         return False
 
-    def is_internal_server(self, sid):
+    def is_internal_server(self, sid: str) -> bool:
         """Returns whether the given SID is an internal PyLink server."""
         return (sid in self.servers and self.servers[sid].internal)
 
-    def get_server(self, uid):
+    def get_server(self, uid: str) -> str | None:
         """Finds the ID of the server a user is on. Return None if the user does not exist."""
         userobj = self.users.get(uid)
         if userobj:
             return userobj.server
+        return None
 
-    def is_manipulatable_client(self, uid):
+    def is_manipulatable_client(self, uid: str) -> bool:
         """
         Returns whether the given client is marked manipulatable for interactions
         such as force-JOIN.
@@ -766,7 +767,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         self._ts_lock = threading.Lock()
 
     @functools.lru_cache(maxsize=8192)
-    def to_lower(self, text):
+    def to_lower(self, text: str) -> str:
         """
         Returns the lowercase representation of text. This respects IRC casemappings defined by the protocol module.
         """
@@ -784,7 +785,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
 
     _NICK_REGEX = r'^[A-Za-z\|\\_\[\]\{\}\^\`][A-Z0-9a-z\-\|\\_\[\]\{\}\^\`]*$'
     @classmethod
-    def is_nick(cls, s, nicklen=None):
+    def is_nick(cls, s: str, nicklen: int | None = None) -> bool:
         """
         Returns whether the string given is a valid nick.
 
@@ -795,7 +796,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         return bool(re.match(cls._NICK_REGEX, s))
 
     @staticmethod
-    def is_channel(obj):
+    def is_channel(obj: object) -> bool:
         """
         Returns whether the item given is a valid channel (for a mapping key).
 
@@ -812,13 +813,13 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
     _HOSTNAME_RE = re.compile(r'^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+'
                               r'([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])*$')
     @classmethod
-    def is_server_name(cls, text):
+    def is_server_name(cls, text: str) -> bool:
         """Returns whether the string given is a valid server name."""
         return bool(cls._HOSTNAME_RE.match(text))
 
     _HOSTMASK_RE = re.compile(r'^\S+!\S+@\S+$')
     @classmethod
-    def is_hostmask(cls, text):
+    def is_hostmask(cls, text: str) -> bool:
         """
         Returns whether the given text is a valid hostmask (nick!user@host)
 
@@ -1391,7 +1392,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         cls._log_debug_modes('wrap_modes: returning %s for %s', strings, orig_modes)
         return strings
 
-    def get_hostmask(self, user, realhost=False, ip=False):
+    def get_hostmask(self, user: str, realhost: bool = False, ip: bool = False) -> str:
         """
         Returns a representative hostmask / user friendly identifier for a user.
         On IRC, this is nick!user@host; other platforms may choose to define a different
@@ -1425,7 +1426,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
 
         return '%s!%s@%s' % (nick, ident, host)
 
-    def get_friendly_name(self, entityid):
+    def get_friendly_name(self, entityid: str) -> str:
         """
         Returns the display name of an entity:
 
