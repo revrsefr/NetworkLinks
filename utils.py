@@ -5,6 +5,8 @@ This module contains various utility functions related to IRC and/or the PyLink
 framework.
 """
 
+from __future__ import annotations
+
 import argparse
 import collections
 import functools
@@ -54,7 +56,7 @@ def add_cmd(func, name=None, **kwargs):
     world.services['pylink'].add_cmd(func, name=name, **kwargs)
     return func
 
-def add_hook(func, command, priority=100):
+def add_hook(func, command: str, priority: int = 100):
     """
     Binds a hook function to the given command name.
 
@@ -65,7 +67,7 @@ def add_hook(func, command, priority=100):
     world.hooks[command].sort(key=lambda pair: pair[0], reverse=True)
     return func
 
-def expand_path(path):
+def expand_path(path: str) -> str:
     """
     Returns a path expanded with environment variables and home folders (~) expanded, in that order."""
     return os.path.expanduser(os.path.expandvars(path))
@@ -96,7 +98,7 @@ def _get_protocol_module(name):
     return importlib.import_module(PROTOCOL_PREFIX + name)
 getProtocolModule = _get_protocol_module
 
-def split_hostmask(mask):
+def split_hostmask(mask: str) -> list:
     """
     Returns a nick!user@host hostmask split into three fields: nick, user, and host.
     """
@@ -714,7 +716,7 @@ class IRCParser(argparse.ArgumentParser):
 _strip_color_regex = re.compile(r'\x03(\d{1,2}(,\d{1,2})?)?')
 _irc_formatting_chars = "\x02\x1D\x1F\x1E\x11\x16\x0F\x03"
 
-def strip_irc_formatting(text):
+def strip_irc_formatting(text: str) -> str:
     """Returns text with IRC formatting (colors, underlines, bold, italics, reverse) removed."""
     text = _strip_color_regex.sub('', text)
     for char in _irc_formatting_chars:
@@ -772,7 +774,7 @@ def remove_range(rangestr, mylist):
 
     return list(filter(lambda x: x is not None, mylist))
 
-def get_hostname_type(address):
+def get_hostname_type(address: str) -> int:
     """
     Returns whether the given address is an IPv4 address (1), IPv6 address (2), or neither
     (0; assumed to be a hostname instead).
@@ -790,7 +792,7 @@ def get_hostname_type(address):
             raise ValueError("Got unknown value %r from ipaddress.ip_address()" % address)
 
 _duration_re = re.compile(r"^((?P<week>\d+)w)?((?P<day>\d+)d)?((?P<hour>\d+)h)?((?P<minute>\d+)m)?((?P<second>\d+)s)?$")
-def parse_duration(text):
+def parse_duration(text: str) -> int:
     """
     Takes in a duration string and returns the equivalent amount of seconds.
 
@@ -835,7 +837,7 @@ def parse_duration(text):
     return result
 
 @functools.lru_cache(maxsize=1024)
-def _glob2re(glob):
+def _glob2re(glob: str) -> str:
     """Converts an IRC-style glob to a regular expression."""
     patt = ['^']
 
@@ -850,7 +852,7 @@ def _glob2re(glob):
     patt.append('$')
     return ''.join(patt)
 
-def match_text(glob, text, filterfunc=str.lower):
+def match_text(glob: str, text: str, filterfunc=str.lower) -> bool:
     """
     Returns whether glob matches text. If filterfunc is specified, run filterfunc on glob and text
     before preforming matches.
@@ -859,7 +861,7 @@ def match_text(glob, text, filterfunc=str.lower):
         glob = filterfunc(glob)
         text = filterfunc(text)
 
-    return re.match(_glob2re(glob), text)
+    return bool(re.match(_glob2re(glob), text))
 
 def merge_iterables(A, B):
     """
