@@ -347,6 +347,15 @@ class UnrealProtocol(TS6BaseProtocol):
         currtime = int(time.time())
         self._send_with_prefix(real_source, 'TKL + G %s %s %s %s %s :%s' % (user, host, setter, currtime+duration if duration != 0 else 0, currtime, reason))
 
+    def del_server_ban(self, source, user='*', host='*'):
+        """Removes a server ban (G-line)."""
+        if source in self.users:
+            real_source = self.get_server(source)
+        else:
+            real_source = source
+        setter = self.get_hostmask(source) if source in self.users else self.get_friendly_name(source)
+        self._send_with_prefix(real_source, 'TKL - G %s %s %s' % (user, host, setter))
+
     def update_client(self, target, field, text):
         """Updates the ident, host, or realname of any connected client."""
         field = field.upper()
