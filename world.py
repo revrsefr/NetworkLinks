@@ -5,6 +5,7 @@ world.py: Stores global variables for PyLink, including lists of active IRC obje
 import threading
 import time
 from collections import defaultdict, deque
+from typing import Any
 
 __all__ = ['testing', 'hooks', 'networkobjects', 'plugins', 'services',
            'exttarget_handlers', 'started', 'start_ts', 'shutting_down',
@@ -13,6 +14,9 @@ __all__ = ['testing', 'hooks', 'networkobjects', 'plugins', 'services',
 # This indicates whether we're running in tests mode. What it actually does
 # though is control whether IRC connections should be threaded or not.
 testing = False
+
+# The console log handler, assigned by log.py at import time.
+console_handler: Any = None
 
 # Statekeeping for our hooks list, IRC objects, loaded plugins, and initialized
 # service bots.

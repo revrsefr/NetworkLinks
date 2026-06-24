@@ -53,6 +53,8 @@ conf: dict[str, Any] = {'bot':
         }
 conf['pylink'] = conf['bot']
 confname = 'unconfigured'
+# Path to the loaded config file; set by load_conf().
+fname = ''
 
 def validate(condition, errmsg):
     """Raises ConfigurationError with errmsg unless the given condition is met."""

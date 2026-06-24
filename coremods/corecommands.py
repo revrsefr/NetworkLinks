@@ -2,6 +2,8 @@
 corecommands.py - Implements core PyLink commands.
 """
 
+from __future__ import annotations
+
 import gc
 import sys
 
@@ -16,7 +18,7 @@ __all__ = []
 # but still generic functions can be reloaded.
 
 @utils.add_cmd
-def shutdown(irc, source, args):
+def shutdown(irc, source: str, args: list):
     """takes no arguments.
 
     Exits PyLink by disconnecting all networks."""
@@ -25,7 +27,7 @@ def shutdown(irc, source, args):
     control.shutdown(irc=irc)
 
 @utils.add_cmd
-def load(irc, source, args):
+def load(irc, source: str, args: list):
     """<plugin name>.
 
     Loads a plugin from the plugin folder."""
@@ -57,7 +59,7 @@ def load(irc, source, args):
     irc.reply("Loaded plugin %r." % name)
 
 @utils.add_cmd
-def unload(irc, source, args):
+def unload(irc, source: str, args: list):
     """<plugin name>.
 
     Unloads a currently loaded plugin."""
@@ -128,7 +130,7 @@ def unload(irc, source, args):
         irc.reply("Unknown plugin %r." % name)
 
 @utils.add_cmd
-def reload(irc, source, args):
+def reload(irc, source: str, args: list):
     """<plugin name>.
 
     Loads a plugin from the plugin folder."""
@@ -143,7 +145,7 @@ def reload(irc, source, args):
         load(irc, source, args)
 
 @utils.add_cmd
-def rehash(irc, source, args):
+def rehash(irc, source: str, args: list):
     """takes no arguments.
 
     Reloads the configuration file for PyLink, (dis)connecting added/removed networks.
@@ -159,7 +161,7 @@ def rehash(irc, source, args):
         irc.reply("Done.")
 
 @utils.add_cmd
-def clearqueue(irc, source, args):
+def clearqueue(irc, source: str, args: list):
     """takes no arguments.
 
     Clears the outgoing text queue for the current connection."""
