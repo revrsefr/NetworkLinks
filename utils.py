@@ -196,6 +196,12 @@ class ServiceBot():
         joinmodes = irc.get_service_option(self.name, 'joinmodes', default='')
         joinmodes = ''.join([m for m in joinmodes if m in irc.prefixmodes])
 
+        # Channel keys for joining +k channels (mainly useful on Clientbot, where
+        # the bot joins as a real user). Keyed off channel name, looked up from
+        # either a per-service 'channel_keys' option or a network-wide one.
+        channel_keys = dict(irc.serverdata.get('channel_keys') or {})
+        channel_keys.update(irc.get_service_option(self.name, 'channel_keys', default={}) or {})
+
         for channel in channels:
             if irc.is_channel(channel):
                 if channel in irc.channels:
@@ -211,7 +217,7 @@ class ServiceBot():
                 if joinmodes:  # Modes on join were specified; use SJOIN to burst our service
                     irc.sjoin(irc.sid, channel, [(joinmodes, uid)])
                 else:
-                    irc.join(uid, channel)
+                    irc.join(uid, channel, key=channel_keys.get(channel))
 
                 irc.call_hooks([irc.sid, 'NETLINK_SERVICE_JOIN', {'channel': channel, 'users': [uid]}])
             else:
@@ -792,9 +798,10 @@ def get_hostname_type(address: str) -> int:
             raise ValueError("Got unknown value %r from ipaddress.ip_address()" % address)
 
 _duration_re = re.compile(r"^((?P<week>\d+)w)?((?P<day>\d+)d)?((?P<hour>\d+)h)?((?P<minute>\d+)m)?((?P<second>\d+)s)?$")
-def parse_duration(text: str) -> int:
+def parse_duration(text) -> int:
     """
-    Takes in a duration string and returns the equivalent amount of seconds.
+    Takes in a duration string (or a plain number) and returns the equivalent
+    amount of seconds.
 
     Time strings are in the following format:
     - '123'         => 123 seconds
@@ -804,7 +811,15 @@ def parse_duration(text: str) -> int:
     - '72h'         => 72 hours
     - '1h5s'        => 1 hour and 5 seconds
     and so on...
+
+    Plain ints (and int-valued floats) are accepted and returned as-is, so this
+    is safe to wrap around config values that may be given as either a number or
+    a duration string.
     """
+    # Accept already-numeric input (e.g. an int straight from the config).
+    if isinstance(text, (int, float)):
+        return int(text)
+
     # If we get an already valid number, just return it
     if text.isdigit():
         return int(text)

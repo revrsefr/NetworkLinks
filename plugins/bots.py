@@ -61,16 +61,20 @@ def quit(irc, source: str, args: list):
     irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_QUIT', {'text': quitmsg, 'parse_as': 'QUIT'}])
 
 def joinclient(irc, source: str, args: list):
-    """[<target>] <channel1>[,<channel2>,<channel3>,...]
+    """[<target>] <channel1>[,<channel2>,<channel3>,...] [<key1>[,<key2>,...]]
 
     Joins <target>, the nick of a NetLink client, to a comma-separated list of channels.
     If <target> is not given, it defaults to the main NetLink client.
 
     For the channel arguments, prefixes can also be specified to join the given client with
     (e.g. @#channel will join the client with op, while ~@#channel will join it with +qo.
+
+    An optional comma-separated list of channel keys can be given as the final argument,
+    aligned with the channel list, to join key-protected (+k) channels (Clientbot only).
     """
     permissions.check_permissions(irc, source, ['bots.join', 'bots.joinclient'])
 
+    keys_arg = ''
     try:
         # Check if the first argument is an existing NetLink client. If it is not,
         # then assume that the first argument was actually the channels being joined.
@@ -80,29 +84,36 @@ def joinclient(irc, source: str, args: list):
             raise IndexError
 
         clist = args[1]
+        if len(args) > 2:
+            keys_arg = args[2]
     except IndexError:  # No valid nick was given; shift arguments one to the left.
         u = irc.pseudoclient.uid
         try:
             clist = args[0]
         except IndexError:
-            irc.error("Not enough arguments. Needs 1-2: nick (optional), comma separated list of channels.")
+            irc.error("Not enough arguments. Needs 1-3: nick (optional), comma separated list of "
+                      "channels, comma separated list of keys (optional).")
             return
+        if len(args) > 1:
+            keys_arg = args[1]
 
     clist = clist.split(',')
     if not clist:
         irc.error("No valid channels given.")
         return
+    keys = keys_arg.split(',') if keys_arg else []
 
     if not (irc.is_manipulatable_client(u) or irc.get_service_bot(u)):
         irc.error("Cannot force join a protected NetLink services client.")
         return
 
     prefix_to_mode = {v: k for k, v in irc.prefixmodes.items()}
-    for channel in clist:
+    for idx, channel in enumerate(clist):
         real_channel = channel.lstrip(''.join(prefix_to_mode))
         # XXX we need a better way to do this, but only the other option I can think of is regex...
         prefixes = channel[:len(channel)-len(real_channel)]
         joinmodes = ''.join(prefix_to_mode[prefix] for prefix in prefixes)
+        key = keys[idx] if idx < len(keys) and keys[idx] else None
 
         if not irc.is_channel(real_channel):
             irc.error("Invalid channel name %r." % real_channel)
@@ -112,7 +123,7 @@ def joinclient(irc, source: str, args: list):
         if prefixes:
             irc.sjoin(irc.sid, real_channel, [(joinmodes, u)])
         else:
-            irc.join(u, real_channel)
+            irc.join(u, real_channel, key=key)
 
         try:
             modes = irc.channels[real_channel].modes

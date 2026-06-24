@@ -133,8 +133,11 @@ class InspIRCdProtocol(TS6BaseProtocol):
             self._oper_up(uid, opertype)
         return u
 
-    def join(self, client, channel):
-        """Joins a NetLink client to a channel."""
+    def join(self, client, channel, key=None):
+        """Joins a NetLink client to a channel.
+
+        'key' is accepted for API consistency but unused: services join via a
+        server-to-server FJOIN, which is not subject to channel keys."""
         # InspIRCd doesn't distinguish between burst joins and regular joins,
         # so what we're actually doing here is sending FJOIN from the server,
         # on behalf of the clients that are joining.

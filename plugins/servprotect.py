@@ -16,7 +16,8 @@ except ImportError:
 # check for definitions
 servprotect_conf = conf.conf.get('servprotect', {})
 length = servprotect_conf.get('length', 10)
-age = servprotect_conf.get('age', 10)
+# 'age' is the time window before the counters reset; accept a duration string.
+age = utils.parse_duration(servprotect_conf.get('age', 10))
 
 def _new_cache_dict():
     return TTLCache(length, age)

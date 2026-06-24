@@ -165,8 +165,11 @@ class UnrealProtocol(TS6BaseProtocol):
 
         return u
 
-    def join(self, client, channel):
-        """Joins a NetLink client to a channel."""
+    def join(self, client, channel, key=None):
+        """Joins a NetLink client to a channel.
+
+        'key' is accepted for API consistency but unused: services join via a
+        server-to-server SJOIN, which is not subject to channel keys."""
         if not self.is_internal_client(client):
             raise LookupError('No such NetLink client exists.')
 

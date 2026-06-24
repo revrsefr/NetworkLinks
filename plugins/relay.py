@@ -38,7 +38,7 @@ spawnlocks = defaultdict(threading.Lock)
 spawnlocks_servers = defaultdict(threading.Lock)
 
 # Claim bounce cache to prevent kick/mode/topic loops
-__claim_bounce_timeout = conf.conf.get('relay', {}).get('claim_bounce_timeout', 5)
+__claim_bounce_timeout = utils.parse_duration(conf.conf.get('relay', {}).get('claim_bounce_timeout', 5))
 claim_bounce_cache = cachetools.TTLCache(float('inf'), __claim_bounce_timeout)
 claim_bounce_cache_lock = threading.Lock()
 
@@ -407,7 +407,7 @@ def spawn_relay_server(irc, remoteirc):
             needs_delayed_eob = hasattr(irc, '_endburst_delay')
             if needs_delayed_eob:
                 old_eob_delay = irc._endburst_delay
-                irc._endburst_delay = irc.serverdata.get('relay_endburst_delay', 10)
+                irc._endburst_delay = utils.parse_duration(irc.serverdata.get('relay_endburst_delay', 10))
 
             sid = irc.spawn_server('%s.%s' % (remoteirc.name, suffix),
                                               desc="NetLink Relay network - %s" %

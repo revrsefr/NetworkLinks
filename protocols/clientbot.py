@@ -78,8 +78,11 @@ class ClientbotBaseProtocol(NetLinkNetworkCoreWithUtils):
 
             self.users[source].away = text
 
-    def join(self, client, channel):
-        """STUB: sends a virtual join (CLIENTBOT_JOIN) from the client to channel."""
+    def join(self, client, channel, key=None):
+        """STUB: sends a virtual join (CLIENTBOT_JOIN) from the client to channel.
+
+        'key' is accepted for API consistency but ignored: virtual joins never
+        reach a real server."""
         self._channels[channel].users.add(client)
         self.users[client].channels.add(channel)
 
@@ -315,14 +318,20 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         """Invites a user to a channel."""
         self.send('INVITE %s %s' % (self.get_friendly_name(target), channel))
 
-    def join(self, client, channel):
-        """STUB: Joins a user to a channel."""
+    def join(self, client, channel, key=None):
+        """STUB: Joins a user to a channel.
 
+        For Clientbot, only joins for the main NetLink client are actually
+        forwarded upstream; a channel key may be given to join keyed (+k) channels.
+        """
         # Only joins for the main NetLink client are actually forwarded. Others are ignored.
         # Note: we do not automatically add our main client to the channel state, as we
         # rely on the /NAMES reply to sync it up properly.
         if self.pseudoclient and client == self.pseudoclient.uid:
-            self.send('JOIN %s' % channel)
+            if key:
+                self.send('JOIN %s %s' % (channel, key))
+            else:
+                self.send('JOIN %s' % channel)
         else:
             # Pass on a virtual JOIN as a hook
             super().join(client, channel)

@@ -55,7 +55,7 @@ def cb_relay_core(irc, source: str, command: str, args: dict):
         relay_conf = conf.conf.get('relay') or {}
 
         # Be less floody on startup: don't relay non-PRIVMSGs for the first X seconds after connect.
-        startup_delay = relay_conf.get('clientbot_startup_delay', 20)
+        startup_delay = utils.parse_duration(relay_conf.get('clientbot_startup_delay', 20))
 
         target = args.get('target')
         if isinstance(target, str):
