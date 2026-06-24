@@ -11,7 +11,7 @@ import string
 import threading
 import time
 
-from netlink import utils, world
+from netlink import conf, utils, world
 from netlink.classes import *
 from netlink.log import log
 from netlink.protocols.ircs2s_common import *
@@ -192,8 +192,9 @@ class ClientbotBaseProtocol(NetLinkNetworkCoreWithUtils):
     def _stub(self, *args):
         """Stub outgoing command function (does nothing)."""
         return
-    # Note: invite() and mode() are implemented in ClientbotWrapperProtocol below
-    invite = mode = topic = topic_burst = _stub  # XXX: incomplete
+    # Note: invite(), mode(), topic() and topic_burst() are implemented in
+    # ClientbotWrapperProtocol below.
+    invite = mode = topic = topic_burst = _stub
 
     def _stub_raise(self, *args):
         """Stub outgoing command function (raises an error)."""
@@ -317,6 +318,31 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
     def invite(self, client, target, channel):
         """Invites a user to a channel."""
         self.send('INVITE %s %s' % (self.get_friendly_name(target), channel))
+
+    def _relay_topics_enabled(self):
+        """Whether to push relayed topic changes upstream on this Clientbot network."""
+        if 'relay_clientbot_topics' in self.serverdata:
+            return self.serverdata['relay_clientbot_topics']
+        return bool((conf.conf.get('relay') or {}).get('clientbot_relay_topics'))
+
+    def topic(self, source, channel, text):
+        """Sends a channel topic change upstream.
+
+        Relaying topics onto a Clientbot network is opt-in, since the bot needs
+        +t access on the channel and doing so overwrites the upstream topic.
+        Enable it per-network with the 'relay_clientbot_topics' option, or
+        globally with relay::clientbot_relay_topics. When disabled, we only
+        update internal channel state so relay's loop-prevention stays accurate.
+        """
+        if self._relay_topics_enabled() and self.pseudoclient:
+            self.send('TOPIC %s :%s' % (channel, text))
+        chan = self._channels.get(channel)
+        if chan is not None:
+            chan.topic = text
+            chan.topicset = True
+
+    # Bursting a topic (e.g. on relay link) follows the same opt-in path.
+    topic_burst = topic
 
     def join(self, client, channel, key=None):
         """STUB: Joins a user to a channel.
