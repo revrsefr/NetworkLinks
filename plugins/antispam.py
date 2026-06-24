@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from netlink import conf, utils
+from netlink.coremods import permissions
 from netlink.log import log
+
+# Text filter globs added at runtime via the 'spamfilter' command. Merged with
+# the config/serverdata lists in handle_textfilter.
+RUNTIME_TEXTFILTERS = set()
 
 mydesc = ("Provides anti-spam functionality.")
 sbot = utils.register_service("antispam", default_nick="AntiSpam", desc=mydesc)
@@ -341,9 +346,10 @@ def handle_textfilter(irc, source: str, command: str, args: dict):
             log.debug("(%s) antispam.textfilters: skipping processing; %r is not a channel and watch_pms is disabled", irc.name, target)
             return
 
-    # Merge together global and local textfilter lists.
+    # Merge together global, per-network, and runtime (added via IRC) textfilter lists.
     txf_globs = set(conf.conf.get('antispam', {}).get('textfilter_globs', [])) | \
-                set(irc.serverdata.get('antispam_textfilter_globs', []))
+                set(irc.serverdata.get('antispam_textfilter_globs', [])) | \
+                RUNTIME_TEXTFILTERS
 
     punishment = txf_settings.get('punishment', TEXTFILTER_DEFAULTS['punishment']).lower()
     reason = txf_settings.get('reason', TEXTFILTER_DEFAULTS['reason'])
@@ -409,3 +415,35 @@ def handle_partquit(irc, source: str, command: str, args: dict):
             break
 utils.add_hook(handle_partquit, 'PART', priority=999)
 utils.add_hook(handle_partquit, 'QUIT', priority=999)
+
+
+@utils.add_cmd
+def spamfilter(irc, source: str, args: list):
+    """<add|del|list> [<glob>]
+
+    Manages NetLink's antispam text filters at runtime. Globs added here are
+    matched against channel (and PM, if watch_pms is on) messages, punishing the
+    sender per the antispam::textfilter config."""
+    permissions.check_permissions(irc, source, ['antispam.spamfilter'])
+    sub = args[0].lower() if args else 'list'
+
+    if sub in ('list', 'ls'):
+        if not RUNTIME_TEXTFILTERS:
+            irc.reply("No runtime text filters set.")
+        else:
+            irc.reply("Runtime text filters: %s" % ', '.join(sorted(RUNTIME_TEXTFILTERS)))
+        return
+
+    glob = ' '.join(args[1:]).strip()
+    if not glob:
+        irc.error("Not enough arguments. Needs: %s <glob>" % sub)
+        return
+
+    if sub == 'add':
+        RUNTIME_TEXTFILTERS.add(glob)
+        irc.reply("Done.")
+    elif sub in ('del', 'rm', 'remove'):
+        RUNTIME_TEXTFILTERS.discard(glob)
+        irc.reply("Done.")
+    else:
+        irc.error("Unknown subcommand %r. Use add, del, or list." % sub)
