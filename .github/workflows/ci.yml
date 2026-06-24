@@ -51,6 +51,8 @@ jobs:
             "$RUNNER_TEMP/mp/pylinkirc/structures.py" \
             "$RUNNER_TEMP/mp/pylinkirc/conf.py" \
             "$RUNNER_TEMP/mp/pylinkirc/world.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/protocols/ircs2s_common.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/protocols/ts6_common.py" \
             "$RUNNER_TEMP/mp/pylinkirc/protocols/inspircd.py" \
             "$RUNNER_TEMP/mp/pylinkirc/protocols/unreal.py" \
             "$RUNNER_TEMP/mp/pylinkirc/coremods/login.py" \
