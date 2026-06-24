@@ -326,22 +326,13 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         return bool((conf.conf.get('relay') or {}).get('clientbot_relay_topics'))
 
     def topic(self, source, channel, text):
-        """Sends a channel topic change upstream.
-
-        Relaying topics onto a Clientbot network is opt-in, since the bot needs
-        +t access on the channel and doing so overwrites the upstream topic.
-        Enable it per-network with the 'relay_clientbot_topics' option, or
-        globally with relay::clientbot_relay_topics. When disabled, we only
-        update internal channel state so relay's loop-prevention stays accurate.
-        """
+        """Sends a channel topic change upstream (opt-in; needs +t access)."""
         if self._relay_topics_enabled() and self.pseudoclient:
             self.send('TOPIC %s :%s' % (channel, text))
         chan = self._channels.get(channel)
         if chan is not None:
             chan.topic = text
             chan.topicset = True
-
-    # Bursting a topic (e.g. on relay link) follows the same opt-in path.
     topic_burst = topic
 
     def join(self, client, channel, key=None):
