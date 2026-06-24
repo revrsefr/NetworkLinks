@@ -4,10 +4,16 @@ login.py - Implement core login abstraction.
 
 from __future__ import annotations
 
+import hmac
+
 from pylinkirc import conf, utils
 from pylinkirc.log import log
 
 __all__ = ['pwd_context', 'check_login', 'verify_hash']
+
+# Tracks accounts already warned about insecure plaintext passwords, so the
+# warning is logged once instead of on every login attempt.
+_warned_plaintext: set = set()
 
 
 # PyLink's global password context
@@ -63,7 +69,13 @@ def check_login(user: str, password: str) -> bool:
         if account.get('encrypted', False):
             return verify_hash(password, passhash)
         else:
-            return password == passhash
+            # Plaintext password: warn once that this is insecure, and use a
+            # constant-time comparison to avoid leaking length/content via timing.
+            if user not in _warned_plaintext:
+                log.warning("Account %r uses a plaintext password; set 'encrypted: true' and "
+                            "rehash it with pylink-mkpasswd to store it securely.", user)
+                _warned_plaintext.add(user)
+            return hmac.compare_digest(str(password), str(passhash))
 
     return False
 
