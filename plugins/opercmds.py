@@ -323,6 +323,27 @@ def masskillre(irc, source: str, args: list):
 utils.add_cmd(masskillre, aliases=('rkill',))
 
 @utils.add_cmd
+def delgline(irc, source: str, args: list):
+    """<user@host>
+
+    Removes a server ban (G-line) on the given mask."""
+    permissions.check_permissions(irc, source, ['opercmds.delgline'])
+    try:
+        mask = args[0]
+    except IndexError:
+        irc.error("Not enough arguments. Needs 1: user@host mask.")
+        return
+    if not hasattr(irc, 'del_server_ban'):
+        irc.error("Server bans aren't supported on this network.")
+        return
+    user, sep, host = mask.partition('@')
+    if not sep:
+        user, host = '*', mask
+    irc.del_server_ban(irc.pseudoclient.uid, user=user, host=host)
+    irc.reply("Done.")
+utils.add_cmd(delgline, aliases=('delakill',))
+
+@utils.add_cmd
 def jupe(irc, source: str, args: list):
     """<server> [<reason>]
 
