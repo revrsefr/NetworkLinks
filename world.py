@@ -20,13 +20,13 @@ console_handler: Any = None
 
 # Statekeeping for our hooks list, IRC objects, loaded plugins, and initialized
 # service bots.
-hooks = defaultdict(list)
-networkobjects = {}
-plugins = {}
-services = {}
+hooks: defaultdict = defaultdict(list)
+networkobjects: dict = {}
+plugins: dict = {}
+services: dict = {}
 
 # Registered extarget handlers. This maps exttarget names (strings) to handling functions.
-exttarget_handlers = {}
+exttarget_handlers: dict = {}
 
 # Trigger to be set when all IRC objects are initially created.
 started = threading.Event()
@@ -45,7 +45,7 @@ fallback_hostname = 'pylink.int'
 
 # Defines messages to be logged as soon as the log system is set up, for modules like conf that are
 # initialized before log. This is processed (and then not used again) when the log module loads.
-_log_queue = deque()
+_log_queue: deque = deque()
 
 # Determines whether we have a PID file that needs to be removed.
 _should_remove_pid = False
