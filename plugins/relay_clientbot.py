@@ -1,4 +1,6 @@
 # relay_clientbot.py: Clientbot extensions for Relay
+from __future__ import annotations
+
 import shlex
 import string
 import time
@@ -23,7 +25,7 @@ default_styles = {'MESSAGE': '\x02[$netname]\x02 <$mode_prefix$colored_sender> $
                   'PNOTICE': '<$sender> $text',
                   }
 
-def color_text(s):
+def color_text(s: str) -> str:
     """
     Returns a colorized version of the given text based on a simple hash algorithm.
     """
@@ -34,7 +36,7 @@ def color_text(s):
     num = hash_output % len(colors)
     return "\x03%s%s\x03" % (colors[num], s)
 
-def cb_relay_core(irc, source, command, args):
+def cb_relay_core(irc, source: str, command: str, args: dict):
     """
     This function takes Clientbot events and formats them as text to the target channel / user.
     """
@@ -236,7 +238,7 @@ utils.add_hook(cb_relay_core, 'CLIENTBOT_SQUIT')
 utils.add_hook(cb_relay_core, 'RELAY_RAW_MODE')
 
 @utils.add_cmd
-def rpm(irc, source, args):
+def rpm(irc, source: str, args: list):
     """<target nick/UID> <text>
 
     Sends PMs to users over Relay, if Clientbot PMs are enabled.
@@ -260,7 +262,7 @@ def rpm(irc, source, args):
     elif not text:
         irc.error('No text given.')
         return
-    elif not conf.conf.get('relay').get('allow_clientbot_pms'):
+    elif not (conf.conf.get('relay') or {}).get('allow_clientbot_pms'):
         irc.error('Private messages with users connected via Clientbot have been '
                   'administratively disabled.')
         return
