@@ -500,6 +500,10 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self._send_with_prefix(source, 'ADDLINE G %s@%s %s %s %s :%s' % (user, host, self.get_friendly_name(source)[:64],
                                                                          int(time.time()), duration, reason))
 
+    def del_server_ban(self, source, user='*', host='*'):
+        """Removes a server ban (G-line)."""
+        self._send_with_prefix(source, 'DELLINE G %s@%s' % (user, host))
+
     ### Core / command handlers
 
     def _post_disconnect(self):
