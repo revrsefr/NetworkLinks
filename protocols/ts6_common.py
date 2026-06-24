@@ -7,10 +7,10 @@ from __future__ import annotations
 import string
 import time
 
-from pylinkirc import conf, structures
-from pylinkirc.classes import *
-from pylinkirc.log import log
-from pylinkirc.protocols.ircs2s_common import *
+from netlink import conf, structures
+from netlink.classes import *
+from netlink.log import log
+from netlink.protocols.ircs2s_common import *
 
 __all__ = ['TS6BaseProtocol']
 
@@ -118,11 +118,11 @@ class TS6BaseProtocol(IRCS2SProtocol):
     ### OUTGOING COMMANDS
 
     def kill(self, numeric, target, reason):
-        """Sends a kill from a PyLink client/server."""
+        """Sends a kill from a NetLink client/server."""
 
         if (not self.is_internal_client(numeric)) and \
                 (not self.is_internal_server(numeric)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
 
         # From TS6 docs:
         # KILL:
@@ -151,9 +151,9 @@ class TS6BaseProtocol(IRCS2SProtocol):
         self._remove_client(target)
 
     def nick(self, numeric, newnick):
-        """Changes the nick of a PyLink client."""
+        """Changes the nick of a NetLink client."""
         if not self.is_internal_client(numeric):
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
 
         self._send_with_prefix(numeric, 'NICK %s %s' % (newnick, int(time.time())))
 
@@ -164,15 +164,15 @@ class TS6BaseProtocol(IRCS2SProtocol):
 
     def spawn_server(self, name, sid=None, uplink=None, desc=None):
         """
-        Spawns a server off a PyLink server. desc (server description)
-        defaults to the one in the config. uplink defaults to the main PyLink
+        Spawns a server off a NetLink server. desc (server description)
+        defaults to the one in the config. uplink defaults to the main NetLink
         server, and sid (the server ID) is automatically generated if not
         given.
         """
         # -> :0AL SID test.server 1 0XY :some silly pseudoserver
         uplink = uplink or self.sid
         name = name.lower()
-        desc = desc or self.serverdata.get('serverdesc') or conf.conf['pylink']['serverdesc']
+        desc = desc or self.serverdata.get('serverdesc') or conf.conf['netlink']['serverdesc']
 
         if sid is None:  # No sid given; generate one!
             sid = self.sidgen.next_sid()
@@ -183,7 +183,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
             if name == server.name:
                 raise ValueError('A server named %r already exists!' % name)
         if not self.is_internal_server(uplink):
-            raise ValueError('Server %r is not a PyLink server!' % uplink)
+            raise ValueError('Server %r is not a NetLink server!' % uplink)
         if not self.is_server_name(name):
             raise ValueError('Invalid server name %r' % name)
 
@@ -192,7 +192,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
         return sid
 
     def away(self, source, text):
-        """Sends an AWAY message from a PyLink client. <text> can be an empty string
+        """Sends an AWAY message from a NetLink client. <text> can be an empty string
         to unset AWAY status."""
         if text:
             self._send_with_prefix(source, 'AWAY :%s' % text)
@@ -234,7 +234,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
         # collision. On TS6 IRCds, this will simply set the collided user's
         # nick to its UID.
 
-        # <- :70MAAAAAA PRIVMSG 0AL000001 :nickclient PyLink Derp_
+        # <- :70MAAAAAA PRIVMSG 0AL000001 :nickclient NetLink Derp_
         # -> :0AL000001 NICK Derp_ 1433728673
         # <- :70M SAVE 0AL000001 1433728673
         user = args[0]

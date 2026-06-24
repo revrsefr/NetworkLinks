@@ -1,4 +1,4 @@
-"""Build hook for PyLink IRC Services.
+"""Build hook for NetLink IRC Services.
 
 Project metadata now lives in pyproject.toml (PEP 621). This module remains only
 to generate the version file (__init__.py) with the git-described build version,
@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 if sys.version_info < (3, 9):
-    raise RuntimeError("PyLink requires Python 3.9 or higher.")
+    raise RuntimeError("NetLink requires Python 3.9 or higher.")
 
 from setuptools import setup
 

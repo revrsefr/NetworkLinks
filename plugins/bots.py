@@ -1,18 +1,18 @@
 """
-bots.py: Spawn virtual users/bots on a PyLink server and make them interact
+bots.py: Spawn virtual users/bots on a NetLink server and make them interact
 with things.
 """
 
 from __future__ import annotations
-from pylinkirc import utils
-from pylinkirc.coremods import permissions
+from netlink import utils
+from netlink.coremods import permissions
 
 
 @utils.add_cmd
 def spawnclient(irc, source: str, args: list):
     """<nick> <ident> <host>
 
-    Spawns the specified client on the PyLink server.
+    Spawns the specified client on the NetLink server.
     Note: this doesn't check the validity of any fields you give it!"""
 
     if not irc.has_cap('can-spawn-clients'):
@@ -32,7 +32,7 @@ def spawnclient(irc, source: str, args: list):
 def quit(irc, source: str, args: list):
     """<target> [<reason>]
 
-    Quits the PyLink client with nick <target>, if one exists."""
+    Quits the NetLink client with nick <target>, if one exists."""
     permissions.check_permissions(irc, source, ['bots.quit'])
 
     try:
@@ -47,24 +47,24 @@ def quit(irc, source: str, args: list):
         return
 
     if irc.pseudoclient.uid == u:
-        irc.error("Cannot quit the main PyLink client!")
+        irc.error("Cannot quit the main NetLink client!")
         return
 
     quitmsg = ' '.join(args[1:]) or 'Client Quit'
 
     if not irc.is_manipulatable_client(u):
-        irc.error("Cannot force quit a protected PyLink services client.")
+        irc.error("Cannot force quit a protected NetLink services client.")
         return
 
     irc.quit(u, quitmsg)
     irc.reply("Done.")
-    irc.call_hooks([u, 'PYLINK_BOTSPLUGIN_QUIT', {'text': quitmsg, 'parse_as': 'QUIT'}])
+    irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_QUIT', {'text': quitmsg, 'parse_as': 'QUIT'}])
 
 def joinclient(irc, source: str, args: list):
     """[<target>] <channel1>[,<channel2>,<channel3>,...]
 
-    Joins <target>, the nick of a PyLink client, to a comma-separated list of channels.
-    If <target> is not given, it defaults to the main PyLink client.
+    Joins <target>, the nick of a NetLink client, to a comma-separated list of channels.
+    If <target> is not given, it defaults to the main NetLink client.
 
     For the channel arguments, prefixes can also be specified to join the given client with
     (e.g. @#channel will join the client with op, while ~@#channel will join it with +qo.
@@ -72,7 +72,7 @@ def joinclient(irc, source: str, args: list):
     permissions.check_permissions(irc, source, ['bots.join', 'bots.joinclient'])
 
     try:
-        # Check if the first argument is an existing PyLink client. If it is not,
+        # Check if the first argument is an existing NetLink client. If it is not,
         # then assume that the first argument was actually the channels being joined.
         u = irc.nick_to_uid(args[0], filterfunc=irc.is_internal_client)
 
@@ -94,7 +94,7 @@ def joinclient(irc, source: str, args: list):
         return
 
     if not (irc.is_manipulatable_client(u) or irc.get_service_bot(u)):
-        irc.error("Cannot force join a protected PyLink services client.")
+        irc.error("Cannot force join a protected NetLink services client.")
         return
 
     prefix_to_mode = {v: k for k, v in irc.prefixmodes.items()}
@@ -120,7 +120,7 @@ def joinclient(irc, source: str, args: list):
             modes = []
 
         # Signal the join to other plugins
-        irc.call_hooks([u, 'PYLINK_BOTSPLUGIN_JOIN', {'channel': real_channel, 'users': [u],
+        irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_JOIN', {'channel': real_channel, 'users': [u],
                                                      'modes': modes, 'parse_as': 'JOIN'}])
     irc.reply("Done.")
 utils.add_cmd(joinclient, name='join')
@@ -129,7 +129,7 @@ utils.add_cmd(joinclient, name='join')
 def nick(irc, source: str, args: list):
     """[<target>] <newnick>
 
-    Changes the nick of <target>, a PyLink client, to <newnick>. If <target> is not given, it defaults to the main PyLink client."""
+    Changes the nick of <target>, a NetLink client, to <newnick>. If <target> is not given, it defaults to the main NetLink client."""
 
     permissions.check_permissions(irc, source, ['bots.nick'])
 
@@ -153,19 +153,19 @@ def nick(irc, source: str, args: list):
         return
 
     elif not (irc.is_manipulatable_client(u) or irc.get_service_bot(u)):
-        irc.error("Cannot force nick changes for a protected PyLink services client.")
+        irc.error("Cannot force nick changes for a protected NetLink services client.")
         return
 
     irc.nick(u, newnick)
     irc.reply("Done.")
     # Signal the nick change to other plugins
-    irc.call_hooks([u, 'PYLINK_BOTSPLUGIN_NICK', {'newnick': newnick, 'oldnick': nick, 'parse_as': 'NICK'}])
+    irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_NICK', {'newnick': newnick, 'oldnick': nick, 'parse_as': 'NICK'}])
 
 @utils.add_cmd
 def part(irc, source: str, args: list):
     """[<target>] <channel1>,[<channel2>],... [<reason>]
 
-    Parts <target>, the nick of a PyLink client, from a comma-separated list of channels. If <target> is not given, it defaults to the main PyLink client."""
+    Parts <target>, the nick of a NetLink client, from a comma-separated list of channels. If <target> is not given, it defaults to the main NetLink client."""
     permissions.check_permissions(irc, source, ['bots.part'])
 
     try:
@@ -174,7 +174,7 @@ def part(irc, source: str, args: list):
         # For the part message, join all remaining arguments into one text string
         reason = ' '.join(args[2:])
 
-        # First, check if the first argument is an existing PyLink client. If it is not,
+        # First, check if the first argument is an existing NetLink client. If it is not,
         # then assume that the first argument was actually the channels being parted.
         u = irc.nick_to_uid(nick, filterfunc=irc.is_internal_client)
         if u is None:  # First argument isn't one of our clients
@@ -196,7 +196,7 @@ def part(irc, source: str, args: list):
         return
 
     if not (irc.is_manipulatable_client(u) or irc.get_service_bot(u)):
-        irc.error("Cannot force part a protected PyLink services client.")
+        irc.error("Cannot force part a protected NetLink services client.")
         return
 
     for channel in clist:
@@ -206,12 +206,12 @@ def part(irc, source: str, args: list):
         irc.part(u, channel, reason)
 
     irc.reply("Done.")
-    irc.call_hooks([u, 'PYLINK_BOTSPLUGIN_PART', {'channels': clist, 'text': reason, 'parse_as': 'PART'}])
+    irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_PART', {'channels': clist, 'text': reason, 'parse_as': 'PART'}])
 
 def msg(irc, source: str, args: list):
     """[<source>] <target> <text>
 
-    Sends message <text> from <source>, where <source> is the nick of a PyLink client. If <source> is not given, it defaults to the main PyLink client."""
+    Sends message <text> from <source>, where <source> is the nick of a NetLink client. If <source> is not given, it defaults to the main NetLink client."""
     permissions.check_permissions(irc, source, ['bots.msg'])
 
     # Because we want the source nick to be optional, this argument parsing gets a bit tricky.
@@ -220,7 +220,7 @@ def msg(irc, source: str, args: list):
         target = args[1]
         text = ' '.join(args[2:])
 
-        # First, check if the first argument is an existing PyLink client. If it is not,
+        # First, check if the first argument is an existing NetLink client. If it is not,
         # then assume that the first argument was actually the message TARGET.
         sourceuid = irc.nick_to_uid(msgsource, filterfunc=irc.is_internal_client)
 
@@ -265,5 +265,5 @@ def msg(irc, source: str, args: list):
 
     irc.message(sourceuid, real_target, text)
     irc.reply("Done.")
-    irc.call_hooks([sourceuid, 'PYLINK_BOTSPLUGIN_MSG', {'target': real_target, 'text': text, 'parse_as': 'PRIVMSG'}])
+    irc.call_hooks([sourceuid, 'NETLINK_BOTSPLUGIN_MSG', {'target': real_target, 'text': text, 'parse_as': 'PRIVMSG'}])
 utils.add_cmd(msg, aliases=('say',))

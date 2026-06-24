@@ -11,8 +11,8 @@ import yaml
 PARSER_DATA_PATH = Path(__file__).parent.resolve() / 'parser-tests' / 'tests'
 print(PARSER_DATA_PATH)
 
-from pylinkirc import utils
-from pylinkirc.protocols.ircs2s_common import IRCCommonProtocol
+from netlink import utils
+from netlink.protocols.ircs2s_common import IRCCommonProtocol
 
 class MessageParserTest(unittest.TestCase):
     @classmethod
@@ -101,7 +101,7 @@ class MessageParserTest(unittest.TestCase):
                                  "Failed test for %r; should be %s" % (test['host'], test['valid']))
 
 
-    # N.B. skipping msg-join tests because PyLink doesn't think about messages that way
+    # N.B. skipping msg-join tests because NetLink doesn't think about messages that way
 
     ### Custom test cases
     def testMessageSplitSpaces(self):

@@ -4,9 +4,9 @@ Tests for IRCv3 TAGMSG (message-tags) handling and forwarding.
 import time
 import unittest
 
-from pylinkirc import conf
-from pylinkirc.classes import User, Server
-from pylinkirc.protocols import inspircd
+from netlink import conf
+from netlink.classes import User, Server
+from netlink.protocols import inspircd
 
 import protocol_test_fixture as ptf
 

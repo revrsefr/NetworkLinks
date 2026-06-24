@@ -5,10 +5,10 @@ import importlib
 import threading
 import types
 
-import pylinkirc
-from pylinkirc import utils, world
-from pylinkirc.coremods import control, permissions
-from pylinkirc.log import log
+import netlink
+from netlink import utils, world
+from netlink.coremods import control, permissions
+from netlink.log import log
 
 REMOTE_IN_USE = threading.Event()
 
@@ -16,7 +16,7 @@ REMOTE_IN_USE = threading.Event()
 def disconnect(irc, source: str, args: list):
     """<network>
 
-    Disconnects the network <network>. When all networks are disconnected, PyLink will automatically exit.
+    Disconnects the network <network>. When all networks are disconnected, NetLink will automatically exit.
 
     To reconnect a network disconnected using this command, use REHASH to reload the networks list."""
     permissions.check_permissions(irc, source, ['networks.disconnect'])
@@ -62,7 +62,7 @@ def autoconnect(irc, source: str, args: list):
     irc.reply("Done.")
 
 remote_parser = utils.IRCParser()
-remote_parser.add_argument('--service', type=str, default='pylink')
+remote_parser.add_argument('--service', type=str, default='netlink')
 remote_parser.add_argument('network')
 remote_parser.add_argument('command', nargs=utils.IRCParser.REMAINDER)
 @utils.add_cmd
@@ -91,7 +91,7 @@ def remote(irc, source: str, args: list):
         'networks.remote.%s.%s.%s' % (netname, args.service, args.command[0])
     ])
 
-    # XXX: things like 'remote network1 remote network2 echo hi' will crash PyLink if the source network is network1...
+    # XXX: things like 'remote network1 remote network2 echo hi' will crash NetLink if the source network is network1...
     global REMOTE_IN_USE
     if REMOTE_IN_USE.is_set():
         irc.error("The 'remote' command can not be nested.")
@@ -154,7 +154,7 @@ def remote(irc, source: str, args: list):
     old_reply = remoteirc._reply
 
     with remoteirc._reply_lock:
-        try:  # Remotely call the command (use the PyLink client as a dummy user).
+        try:  # Remotely call the command (use the NetLink client as a dummy user).
             # Override the remote irc.reply() to send replies HERE.
             log.debug('(%s) networks.remote: overriding reply() of IRC object %s', irc.name, netname)
             remoteirc._reply = types.MethodType(_remote_reply, remoteirc)
@@ -185,10 +185,10 @@ def reloadproto(irc, source: str, args: list):
         return
 
     # Reload the dependency libraries first
-    importlib.reload(pylinkirc.classes)
-    log.debug('networks.reloadproto: reloading %s', pylinkirc.classes)
+    importlib.reload(netlink.classes)
+    log.debug('networks.reloadproto: reloading %s', netlink.classes)
 
-    for common_name in pylinkirc.protocols.common_modules:
+    for common_name in netlink.protocols.common_modules:
         module = utils._get_protocol_module(common_name)
         log.debug('networks.reloadproto: reloading %s', module)
         importlib.reload(module)

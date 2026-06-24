@@ -1,8 +1,8 @@
 # fantasy.py: Adds FANTASY command support, to allow calling commands in channels
 
 from __future__ import annotations
-from pylinkirc import conf, utils, world
-from pylinkirc.log import log
+from netlink import conf, utils, world
+from netlink.log import log
 
 
 def handle_fantasy(irc, source: str, command: str, args: dict):
@@ -19,9 +19,9 @@ def handle_fantasy(irc, source: str, command: str, args: dict):
         # The following conditions must be met for an incoming message for
         # fantasy to trigger:
         #   1) The message target is a channel.
-        #   2) A PyLink service client exists in the channel.
+        #   2) A NetLink service client exists in the channel.
         #   3) The message starts with one of our fantasy prefixes.
-        #   4) The sender is NOT a PyLink client (this prevents infinite
+        #   4) The sender is NOT a NetLink client (this prevents infinite
         #      message loops).
         for botname, sbot in world.services.copy().items():
             if botname not in world.services:  # Bot was removed during iteration
@@ -29,10 +29,10 @@ def handle_fantasy(irc, source: str, command: str, args: dict):
 
             # Check respond to nick options in this order:
             # 1) The service specific "respond_to_nick" option
-            # 2) The global "pylink::respond_to_nick" option
+            # 2) The global "netlink::respond_to_nick" option
             # 3) The (deprecated) global "bot::respondtonick" option.
             respondtonick = conf.conf.get(botname, {}).get('respond_to_nick',
-                conf.conf['pylink'].get("respond_to_nick", conf.conf['pylink'].get("respondtonick")))
+                conf.conf['netlink'].get("respond_to_nick", conf.conf['netlink'].get("respondtonick")))
 
             log.debug('(%s) fantasy: checking bot %s', irc.name, botname)
             servuid = sbot.uids.get(irc.name)
@@ -41,7 +41,7 @@ def handle_fantasy(irc, source: str, command: str, args: dict):
                 # Look up a string prefix for this bot in either its own configuration block, or
                 # in bot::prefixes::<botname>.
                 prefixes = [conf.conf.get(botname, {}).get('prefix',
-                            conf.conf['pylink'].get('prefixes', {}).get(botname))]
+                            conf.conf['netlink'].get('prefixes', {}).get(botname))]
 
                 # If responding to nick is enabled, add variations of the current nick
                 # to the prefix list: "<nick>,", "<nick>:", and "@<nick>" (for Discord and other protocols)
@@ -62,7 +62,7 @@ def handle_fantasy(irc, source: str, command: str, args: dict):
                         text = orig_text[len(prefix):]
 
                         # HACK: don't trigger on commands like "& help" to prevent false positives.
-                        # Weird spacing like "PyLink:   help" and "/msg PyLink   help" should still
+                        # Weird spacing like "NetLink:   help" and "/msg NetLink   help" should still
                         # work though.
                         if text.startswith(' ') and prefix not in nick_prefixes:
                             log.debug('(%s) fantasy: skipping trigger with text prefix followed by space', irc.name)

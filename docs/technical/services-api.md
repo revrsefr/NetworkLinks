@@ -1,6 +1,6 @@
-# PyLink Services Bot API
+# NetLink Services Bot API
 
-The goal of PyLink's Services API is to make writing custom services easier. It is able to automatically spawn service bots on connect, handle rejoins on kill and kick, and expose a way for plugins to bind commands to various services bots. It also handles U-line servprotect modes when enabled and supported on a particular network (i.e. the `protect_services` option).
+The goal of NetLink's Services API is to make writing custom services easier. It is able to automatically spawn service bots on connect, handle rejoins on kill and kick, and expose a way for plugins to bind commands to various services bots. It also handles U-line servprotect modes when enabled and supported on a particular network (i.e. the `protect_services` option).
 
 ## Basic service creation
 
@@ -8,7 +8,7 @@ Services can be registered and created using code similar to the following in a 
 
 ```python
 
-from pylinkirc import utils, world
+from netlink import utils, world
 
 # Description is optional (though recommended), and usually around a sentence or two.
 desc = "Optional description of servicenick, in sentence form."
@@ -25,12 +25,12 @@ myservice = utils.register_service('myservice', desc=desc)
 - `default_help` - Determines whether the default HELP command should be used for the service. Defaults to True.
 - `default_list` - Determines whether the default LIST command should be used for the service. Defaults to True.
 - `default_nick` - Sets the default nick this service should use if the user doesn't provide it. Defaults to the same as the service name.
-- `manipulatable` - Determines whether the bot is marked manipulatable. Only manipulatable clients can be force joined, etc. using PyLink commands. Defaults to False.
+- `manipulatable` - Determines whether the bot is marked manipulatable. Only manipulatable clients can be force joined, etc. using NetLink commands. Defaults to False.
 - `desc` - Sets the command description of the service. This is shown in the default HELP command if enabled.
 
 **NOTE**: It is convention for the service name in `utils.register_service('SERVICE')` to match your plugin name, as the services API implicitly loads [configuration options](../advanced-services-config.md) from config blocks named `SERVICE:` (which you may want to put plugin options in as well).
 
-Implementation note: if the `spawn_service` option is disabled (either globally or for your service bot), `register_service` will return the main PyLink `ServiceBot` instance (i.e. `world.services['pylink']`), which you can modify as usual. `unregister_service` calls to your service name will be silently ignored as no `ServiceBot` instance is actually registered for that name. Altogether, this allows service-spawning plugins to function normally regardless of the `spawn_service` value.
+Implementation note: if the `spawn_service` option is disabled (either globally or for your service bot), `register_service` will return the main NetLink `ServiceBot` instance (i.e. `world.services['netlink']`), which you can modify as usual. `unregister_service` calls to your service name will be silently ignored as no `ServiceBot` instance is actually registered for that name. Altogether, this allows service-spawning plugins to function normally regardless of the `spawn_service` value.
 
 ### Getting the UID of a bot
 
@@ -49,7 +49,7 @@ Should your service bot define any persistent channels, you will also want to cl
 
 ## Persistent channel joining
 
-Since PyLink 2.0-alpha3, persistent channels are handled in a plugin specific manner. For any service bot on any network, a plugin can register a list of channels that the bot should join persistently (i.e. through kicks and kills). Instead of removing channels from service bots directly, plugins then "request" parts through the services API, which succeed only if no other plugins still mark the channel as persistent. This rework fixes [edge-case desyncs](https://github.com/jlu5/PyLink/issues/265) in earlier versions when multiple plugins change a service bot's channel list, and replaces the `ServiceBot.extra_channels` attribute (which is no longer supported).
+Since NetLink 2.0-alpha3, persistent channels are handled in a plugin specific manner. For any service bot on any network, a plugin can register a list of channels that the bot should join persistently (i.e. through kicks and kills). Instead of removing channels from service bots directly, plugins then "request" parts through the services API, which succeed only if no other plugins still mark the channel as persistent. This rework fixes [edge-case desyncs](https://github.com/revrsefr/NetworkLinks/issues/265) in earlier versions when multiple plugins change a service bot's channel list, and replaces the `ServiceBot.extra_channels` attribute (which is no longer supported).
 
 Note: Autojoin channels defined in a network's server block are always treated as persistent on that network.
 
@@ -71,13 +71,13 @@ Channels, persistent and otherwise are managed through the following functions i
 
 ### A note on dynamicness
 
-As of PyLink 2.0-alpha3, persistent channels are also "dynamic" in the sense that PyLink service bots will part channels marked persistent when they become empty, and rejoin when they are recreated. This feature will hopefully be more fine-tunable in future releases.
+As of NetLink 2.0-alpha3, persistent channels are also "dynamic" in the sense that NetLink service bots will part channels marked persistent when they become empty, and rejoin when they are recreated. This feature will hopefully be more fine-tunable in future releases.
 
-Dynamic channels are disabled on networks with the [`visible-state-only` protocol capability](pmodule-spec.md#pylink-protocol-capabilities) (e.g. Clientbot), where it is impossible to monitor the state of channels the bot is not in.
+Dynamic channels are disabled on networks with the [`visible-state-only` protocol capability](pmodule-spec.md#netlink-protocol-capabilities) (e.g. Clientbot), where it is impossible to monitor the state of channels the bot is not in.
 
 ## Service bots and commands
 
-Commands for service bots and commands for the main PyLink bot have two main differences.
+Commands for service bots and commands for the main NetLink bot have two main differences.
 
 1) Commands for service bots are bound using `myservice.add_cmd(cmdfunc, 'cmdname')` instead of `utils.add_cmd(...)`
 
@@ -89,7 +89,7 @@ Commands for service bots can also be marked as *featured*, which shows it with 
 
 ### Command aliases
 
-Since PyLink 2.0-alpha1, `ServiceBot.add_cmd(...)` and `utils.add_cmd(...)` support assigning aliases to a command by defining the `aliases` argument. Command aliases do not show in `LIST`, allowing command listings to be much cleaner. Instead, they are only mentioned when `HELP` is called on an alias command name or its parent.
+Since NetLink 2.0-alpha1, `ServiceBot.add_cmd(...)` and `utils.add_cmd(...)` support assigning aliases to a command by defining the `aliases` argument. Command aliases do not show in `LIST`, allowing command listings to be much cleaner. Instead, they are only mentioned when `HELP` is called on an alias command name or its parent.
 
 Example:
 

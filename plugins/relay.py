@@ -1,4 +1,4 @@
-# relay.py: PyLink Relay plugin
+# relay.py: NetLink Relay plugin
 
 from __future__ import annotations
 import base64
@@ -11,9 +11,9 @@ import threading
 import time
 from collections import defaultdict
 
-from pylinkirc import conf, structures, utils, world
-from pylinkirc.coremods import permissions
-from pylinkirc.log import log
+from netlink import conf, structures, utils, world
+from netlink.coremods import permissions
+from netlink.log import log
 
 CHANNEL_DELINKED_MSG = "Channel delinked."
 RELAY_UNLOADED_MSG = "Relay plugin unloaded."
@@ -21,7 +21,7 @@ RELAY_UNLOADED_MSG = "Relay plugin unloaded."
 try:
     import cachetools
 except ImportError as e:
-    raise ImportError("PyLink Relay requires cachetools as of PyLink 3.0: https://pypi.org/project/cachetools/") from e
+    raise ImportError("NetLink Relay requires cachetools as of NetLink 3.0: https://pypi.org/project/cachetools/") from e
 
 try:
     import unidecode
@@ -127,8 +127,8 @@ class RelayDataStore(structures.JSONDataStore):
                 json.dump(self._encode(self.store), f, indent=4)
             os.rename(self.tmp_filename, self.filename)
 
-dbname = conf.get_database_name('pylinkrelay')
-datastore = RelayDataStore('pylinkrelay', dbname)
+dbname = conf.get_database_name('netlinkrelay')
+datastore = RelayDataStore('netlinkrelay', dbname)
 db = datastore.store
 
 default_permissions = {"*!*@*": ['relay.linked'],
@@ -187,7 +187,7 @@ def main(irc=None):
     log.debug('relay.main: finished initialization sequence')
 
 def die(irc=None):
-    """Deinitialize PyLink Relay by quitting all relay clients and saving the
+    """Deinitialize NetLink Relay by quitting all relay clients and saving the
     relay DB."""
 
     if not world.shutting_down.is_set():
@@ -214,7 +214,7 @@ def die(irc=None):
 
     # 5) Clear all persistent channels set up by relay.
     try:
-        world.services['pylink'].clear_persistent_channels(None, 'relay',
+        world.services['netlink'].clear_persistent_channels(None, 'relay',
                                                            part_reason=RELAY_UNLOADED_MSG)
     except KeyError:
         log.debug('relay.die: failed to clear persistent channels:', exc_info=True)
@@ -410,7 +410,7 @@ def spawn_relay_server(irc, remoteirc):
                 irc._endburst_delay = irc.serverdata.get('relay_endburst_delay', 10)
 
             sid = irc.spawn_server('%s.%s' % (remoteirc.name, suffix),
-                                              desc="PyLink Relay network - %s" %
+                                              desc="NetLink Relay network - %s" %
                                               (remoteirc.get_full_network_name()))
 
             # Set _endburst_delay back to its last value.
@@ -726,8 +726,8 @@ def initialize_channel(irc, channel):
             c = irc._channels[channel]
             relay_joins(irc, channel, c.users, c.ts)
 
-        if 'pylink' in world.services:
-            world.services['pylink'].add_persistent_channel(irc, 'relay', channel)
+        if 'netlink' in world.services:
+            world.services['netlink'].add_persistent_channel(irc, 'relay', channel)
 
 def remove_channel(irc, channel):
     """Destroys a relay channel by parting all of its users."""
@@ -735,7 +735,7 @@ def remove_channel(irc, channel):
         return
 
     try:
-        world.services['pylink'].remove_persistent_channel(irc, 'relay', channel, part_reason=CHANNEL_DELINKED_MSG)
+        world.services['netlink'].remove_persistent_channel(irc, 'relay', channel, part_reason=CHANNEL_DELINKED_MSG)
     except KeyError:
         log.warning('(%s) relay: failed to remove persistent channel %r on delink', irc.name, channel, exc_info=True)
 
@@ -797,7 +797,7 @@ def check_claim(irc, channel, sender, chanobj=None):
     4) The originating network is in the CLAIM list for the relay in question.
     5) The sender is halfop or above in the channel but NOT a U-line
        (this is because we allow u-lines to override with ops to prevent mode floods).
-    6) The sender is a PyLink client/server (checks are suppressed in this case).
+    6) The sender is a NetLink client/server (checks are suppressed in this case).
     """
     relay = get_relay(irc, channel)
     try:
@@ -1034,7 +1034,7 @@ def relay_joins(irc, channel, users, ts, targetirc=None, **kwargs):
                 # A regular JOIN only needs the user and the channel. TS, source SID, etc., can all be omitted.
                 remoteirc.join(queued_users[0][1], remotechan)
 
-            remoteirc.call_hooks([rsid, 'PYLINK_RELAY_JOIN', {'channel': remotechan, 'users': [u[-1] for u in queued_users]}])
+            remoteirc.call_hooks([rsid, 'NETLINK_RELAY_JOIN', {'channel': remotechan, 'users': [u[-1] for u in queued_users]}])
 
     if targetirc:
         _relay_joins_loop(irc, targetirc, channel, users, ts, **kwargs)
@@ -1217,7 +1217,7 @@ def get_supported_cmodes(irc, remoteirc, channel, modes):
                               irc.name, modechar, arg, remoteirc.name)
 
                     if (not irc.has_cap('can-spawn-clients')) and irc.pseudoclient and arg == irc.pseudoclient.uid:
-                        # Skip modesync on the main PyLink client.
+                        # Skip modesync on the main NetLink client.
                         log.debug("(%s) relay.get_supported_cmodes: filtering prefix change (%r, %r) on Clientbot relayer",
                                   irc.name, name, arg)
                         break
@@ -1395,7 +1395,7 @@ def handle_relay_whois(irc, source: str, command: str, args: dict):
         realuser = realirc.users[uid]
         netname = realirc.get_full_network_name()
 
-        wreply(320, ":is a remote user connected via PyLink Relay. Home network: %s; "
+        wreply(320, ":is a remote user connected via NetLink Relay. Home network: %s; "
                     "Home nick: %s" % (netname, realuser.nick))
 
         if _check_send_key('whois_show_accounts') and realuser.services_account:
@@ -1408,7 +1408,7 @@ def handle_relay_whois(irc, source: str, command: str, args: dict):
             realserver = realirc.servers[realserver]
             wreply(312, "%s :%s" % (realserver.name, realserver.desc))
 
-utils.add_hook(handle_relay_whois, 'PYLINK_CUSTOM_WHOIS')
+utils.add_hook(handle_relay_whois, 'NETLINK_CUSTOM_WHOIS')
 
 def handle_operup(irc, numeric: str, command: str, args: dict):
     """
@@ -1478,7 +1478,7 @@ def handle_join(irc, numeric: str, command: str, args: dict):
 
     relay_joins(irc, channel, users, ts, burst=False)
 utils.add_hook(handle_join, 'JOIN')
-utils.add_hook(handle_join, 'PYLINK_SERVICE_JOIN')
+utils.add_hook(handle_join, 'NETLINK_SERVICE_JOIN')
 
 def handle_quit(irc, numeric: str, command: str, args: dict):
     # Lock the user spawning mechanism before proceeding, since we're going to be
@@ -1557,7 +1557,7 @@ utils.add_hook(handle_nick, 'NICK')
 def handle_part(irc, numeric: str, command: str, args: dict):
     channels = args['channels']
     text = args['text']
-    # Don't allow the PyLink client PARTing to be relayed.
+    # Don't allow the NetLink client PARTing to be relayed.
     if numeric == irc.pseudoclient.uid:
         # For clientbot: treat forced parts to the bot as clearchan, and attempt to rejoin only
         # if it affected a relay.
@@ -1787,7 +1787,7 @@ def handle_messages(irc, numeric: str, command: str, args: dict):
                         remoteirc.name, user)
             return
 
-for cmd in ('PRIVMSG', 'NOTICE', 'PYLINK_SELF_NOTICE', 'PYLINK_SELF_PRIVMSG'):
+for cmd in ('PRIVMSG', 'NOTICE', 'NETLINK_SELF_NOTICE', 'NETLINK_SELF_PRIVMSG'):
     utils.add_hook(handle_messages, cmd, priority=500)
 
 def handle_tagmsg(irc, numeric: str, command: str, args: dict):
@@ -1826,7 +1826,7 @@ def handle_tagmsg(irc, numeric: str, command: str, args: dict):
                 log.exception("(%s) relay: error forwarding TAGMSG to %s", irc.name, remoteirc.name)
         iterate_all(irc, _loop, extra_args=(numeric, target, client_tags))
 
-for cmd in ('TAGMSG', 'PYLINK_SELF_TAGMSG'):
+for cmd in ('TAGMSG', 'NETLINK_SELF_TAGMSG'):
     utils.add_hook(handle_tagmsg, cmd, priority=500)
 
 def handle_kick(irc, source: str, command: str, args: dict):
@@ -1836,7 +1836,7 @@ def handle_kick(irc, source: str, command: str, args: dict):
     kicker = source
     relay = get_relay(irc, channel)
 
-    # Special case for clientbot: treat kicks to the PyLink service bot as channel clear.
+    # Special case for clientbot: treat kicks to the NetLink service bot as channel clear.
     if (not irc.has_cap('can-spawn-clients')) and irc.pseudoclient and target == irc.pseudoclient.uid:
         for user in irc.channels[channel].users:
             if (not irc.is_internal_client(user)) and (not is_relay_client(irc, user)):
@@ -1902,7 +1902,7 @@ def handle_kick(irc, source: str, command: str, args: dict):
                 except AttributeError:
                     text = "(<unknown kicker>) %s" % args['text']
 
-            rsid = rsid or remoteirc.sid  # Fall back to the main PyLink SID if get_relay_server_sid() fails
+            rsid = rsid or remoteirc.sid  # Fall back to the main NetLink SID if get_relay_server_sid() fails
             remoteirc.kick(rsid, remotechan, real_target, text)
 
         # If the target isn't on any channels, quit them.
@@ -2302,7 +2302,7 @@ def handle_services_login(irc, numeric: str, command: str, args: dict):
     """
     iterate_all_present(irc, numeric,
                         lambda irc, remoteirc, user:
-                            remoteirc.call_hooks([user, 'PYLINK_RELAY_SERVICES_LOGIN', args]))
+                            remoteirc.call_hooks([user, 'NETLINK_RELAY_SERVICES_LOGIN', args]))
 
 utils.add_hook(handle_services_login, 'CLIENT_SERVICES_LOGIN')
 
@@ -2364,7 +2364,7 @@ def handle_disconnect(irc, numeric: str, command: str, args: dict):
 
                         # Also remove any services bots that joined because of relay.
                         for sname, sbot in world.services.items():
-                            if sname == 'pylink':
+                            if sname == 'netlink':
                                 # We always keep the relay service on the channel
                                 # for consistency.
                                 continue
@@ -2377,7 +2377,7 @@ def handle_disconnect(irc, numeric: str, command: str, args: dict):
                                 log.debug('(%s) Removed service %r from %s%s as the home network disconnected',
                                           irc.name, sname, leaf[0], leaf[1])
 
-utils.add_hook(handle_disconnect, "PYLINK_DISCONNECT")
+utils.add_hook(handle_disconnect, "NETLINK_DISCONNECT")
 
 def forcetag_nick(irc, target):
     """
@@ -2420,7 +2420,7 @@ def handle_save(irc, numeric: str, command: str, args: dict):
         # available normalized nick.
         forcetag_nick(irc, target)
     else:
-        # Somebody else on the network (not a PyLink client) had a nick collision;
+        # Somebody else on the network (not a NetLink client) had a nick collision;
         # relay this as a nick change appropriately.
         handle_nick(irc, target, 'SAVE', {'oldnick': None, 'newnick': target})
 
@@ -2476,7 +2476,7 @@ utils.add_hook(handle_knock, 'KNOCK')
 def create(irc, source: str, args: list):
     """<channel>
 
-    Opens up the given channel over PyLink Relay."""
+    Opens up the given channel over NetLink Relay."""
     try:
         channel = irc.to_lower(args[0])
     except IndexError:
@@ -2528,7 +2528,7 @@ def stop_relay(entry):
 def destroy(irc, source: str, args: list):
     """[<home network>] <channel>
 
-    Removes the given channel from the PyLink Relay, delinking all networks linked to it. If the home network is given and you are logged in as admin, this can also remove relay channels from other networks."""
+    Removes the given channel from the NetLink Relay, delinking all networks linked to it. If the home network is given and you are logged in as admin, this can also remove relay channels from other networks."""
     try:  # Two args were given: first one is network name, second is channel.
         channel = args[1]
         network = args[0]
@@ -2607,7 +2607,7 @@ link_parser.add_argument("-f", "--force-ts", action='store_true')
 def link(irc, source: str, args: list):
     """<remotenet> <channel> [<local channel>] [-f/--force-ts]
 
-    Links the specified channel on \x02remotenet\x02 over PyLink Relay as \x02local channel\x02.
+    Links the specified channel on \x02remotenet\x02 over NetLink Relay as \x02local channel\x02.
     If \x02local channel\x02 is not specified, it defaults to the same name as \x02channel\x02.
 
     If the --force-ts option is given, this command will bypass checks for TS and whether the target
@@ -2725,7 +2725,7 @@ link = utils.add_cmd(link, featured=True)
 def delink(irc, source: str, args: list):
     """<local channel> [<network>]
 
-    Delinks the given channel from PyLink Relay. \x02network\x02 must and can only be specified if you are on the host network for the channel given, and allows you to pick which network to delink.
+    Delinks the given channel from NetLink Relay. \x02network\x02 must and can only be specified if you are on the host network for the channel given, and allows you to pick which network to delink.
     To remove a relay channel entirely, use the 'destroy' command instead."""
     try:
         channel = irc.to_lower(args[0])
@@ -2772,7 +2772,7 @@ delink = utils.add_cmd(delink, featured=True)
 def linked(irc, source: str, args: list):
     """[<network>]
 
-    Returns a list of channels shared across PyLink Relay. If \x02network\x02 is given, filters output to channels linked to the given network."""
+    Returns a list of channels shared across NetLink Relay. If \x02network\x02 is given, filters output to channels linked to the given network."""
 
     permissions.check_permissions(irc, source, ['relay.linked'])
 
@@ -3018,10 +3018,10 @@ def modedelta(irc, source: str, args: list):
     This may be helpful in fighting spam if leaf networks
     don't police it as well as your own (e.g. you can set +R with this).
 
-    Mode names are defined using PyLink named modes, and not IRC mode characters: you can find a
+    Mode names are defined using NetLink named modes, and not IRC mode characters: you can find a
     list of channel named modes and the characters they map to on different IRCds at:
 
-    https://raw.githack.com/jlu5/PyLink/devel/docs/modelists/channel-modes.html
+    https://raw.githack.com/revrsefr/NetworkLinks/devel/docs/modelists/channel-modes.html
 
     Examples of setting modes:
 

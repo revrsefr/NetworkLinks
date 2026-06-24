@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import collections
 
-from pylinkirc import utils, world
-from pylinkirc.coremods import permissions
-from pylinkirc.log import log
+from netlink import utils, world
+from netlink.coremods import permissions
+from netlink.log import log
 
 DEFAULT_PERMISSIONS = {"$ircop": ['servermaps.localmap']}
 
@@ -85,7 +85,7 @@ def _map(irc, source, args, show_relay=True):
             serverusers = len(serverlist[leaf].users)
             if is_relay_server:
                 # Skip showing user data for relay servers.
-                reply("%s\x02%s\x02[%s] (via PyLink Relay)" %
+                reply("%s\x02%s\x02[%s] (via NetLink Relay)" %
                       ('    '*hops, serverlist[leaf].name, leaf))
             else:
                 reply("%s\x02%s\x02[%s]: %s user(s) (%s%%) {hopcount: %d}" %
@@ -109,7 +109,7 @@ def _map(irc, source, args, show_relay=True):
             # Afterwards, decrement the hopcount.
             hops -= 1
 
-    # Start the map at our PyLink server
+    # Start the map at our NetLink server
     firstserver = hostsid
     showall(ircobj, firstserver)
     serverlist = irc.servers

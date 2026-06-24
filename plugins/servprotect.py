@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import threading
 
-from pylinkirc import conf, utils
-from pylinkirc.log import log
+from netlink import conf, utils
+from netlink.log import log
 
 try:
     from cachetools import TTLCache
 except ImportError:
-    log.warning('servprotect: expiringdict support is deprecated as of PyLink 3.0; consider installing cachetools instead')
+    log.warning('servprotect: expiringdict support is deprecated as of NetLink 3.0; consider installing cachetools instead')
     from expiringdict import ExpiringDict as TTLCache
 
 # check for definitions
@@ -27,7 +27,7 @@ lock = threading.Lock()
 
 def handle_kill(irc, numeric: str, command: str, args: dict):
     """
-    Tracks kills against PyLink clients. If too many are received,
+    Tracks kills against NetLink clients. If too many are received,
     automatically disconnects from the network.
     """
 
@@ -44,7 +44,7 @@ utils.add_hook(handle_kill, 'KILL')
 
 def handle_save(irc, numeric: str, command: str, args: dict):
     """
-    Tracks SAVEs (nick collision) against PyLink clients. If too many are received,
+    Tracks SAVEs (nick collision) against NetLink clients. If too many are received,
     automatically disconnects from the network.
     """
     if irc.is_internal_client(args['target']):

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pylinkirc import conf, utils
-from pylinkirc.log import log
+from netlink import conf, utils
+from netlink.log import log
 
 mydesc = ("Provides anti-spam functionality.")
 sbot = utils.register_service("antispam", default_nick="AntiSpam", desc=mydesc)

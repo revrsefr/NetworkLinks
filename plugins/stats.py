@@ -1,14 +1,14 @@
 """
-stats.py: Simple statistics for PyLink IRC Services.
+stats.py: Simple statistics for NetLink IRC Services.
 """
 
 from __future__ import annotations
 import datetime
 import time
 
-from pylinkirc import conf, utils, world
-from pylinkirc.coremods import permissions
-from pylinkirc.log import log
+from netlink import conf, utils, world
+from netlink.coremods import permissions
+from netlink.log import log
 
 
 def timediff(before, now):
@@ -33,7 +33,7 @@ DEFAULT_TIME_FORMAT = "%a, %d %b %Y %H:%M:%S +0000"
 def uptime(irc, source: str, args: list):
     """[<network> / --all]
 
-    Returns the uptime for PyLink and the given network's connection (or the current network if not specified).
+    Returns the uptime for NetLink and the given network's connection (or the current network if not specified).
     The --all argument can also be given to show the uptime for all networks."""
     permissions.check_permissions(irc, source, ['stats.uptime'])
 
@@ -58,7 +58,7 @@ def uptime(irc, source: str, args: list):
     current_time = int(time.time())
     time_format = conf.conf.get('stats', {}).get('time_format', DEFAULT_TIME_FORMAT)
 
-    irc.reply("PyLink uptime: \x02%s\x02 (started on %s)" %
+    irc.reply("NetLink uptime: \x02%s\x02 (started on %s)" %
               (timediff(world.start_ts, current_time),
                time.strftime(time_format, time.gmtime(world.start_ts))
               )

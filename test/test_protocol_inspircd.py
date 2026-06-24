@@ -1,7 +1,7 @@
 import unittest
 
-from pylinkirc.classes import Server
-from pylinkirc.protocols import inspircd
+from netlink.classes import Server
+from netlink.protocols import inspircd
 
 import protocol_test_fixture as ptf
 

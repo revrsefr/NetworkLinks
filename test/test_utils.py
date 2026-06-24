@@ -4,7 +4,7 @@ Test cases for utils.py
 
 import unittest
 
-from pylinkirc import utils
+from netlink import utils
 
 
 class UtilsTestCase(unittest.TestCase):

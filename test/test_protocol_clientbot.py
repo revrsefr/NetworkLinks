@@ -1,8 +1,8 @@
 import unittest
 import unittest.mock
 
-from pylinkirc.protocols import clientbot
-from pylinkirc.classes import User
+from netlink.protocols import clientbot
+from netlink.classes import User
 
 import protocol_test_fixture as ptf
 
@@ -11,7 +11,7 @@ class ClientbotProtocolTest(ptf.BaseProtocolTest):
 
     def setUp(self):
         super().setUp()
-        self.p.pseudoclient = self._make_user('PyLink', uid='ClientbotInternal@0')
+        self.p.pseudoclient = self._make_user('NetLink', uid='ClientbotInternal@0')
 
     def test_get_UID(self):
         u_internal = self._make_user('you', uid='100')

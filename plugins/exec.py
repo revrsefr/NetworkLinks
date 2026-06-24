@@ -1,5 +1,5 @@
 """
-exec.py: Provides commands for executing raw code and debugging PyLink.
+exec.py: Provides commands for executing raw code and debugging NetLink.
 """
 
 from __future__ import annotations
@@ -8,9 +8,9 @@ import pprint
 # easier to access through eval and exec.
 import threading
 
-from pylinkirc import utils, world, conf
-from pylinkirc.coremods import permissions
-from pylinkirc.log import log
+from netlink import utils, world, conf
+from netlink.coremods import permissions
+from netlink.log import log
 
 log.warning("The 'exec' plugin is loaded: it runs arbitrary Python via exec()/eval() "
             "and is intended for debugging only. Do NOT load it on a production network.")
@@ -19,15 +19,15 @@ exec_locals_dict = {}
 PPRINT_MAX_LINES = 20
 PPRINT_WIDTH = 200
 
-if not conf.conf['pylink'].get("debug_enabled", False):
-    raise RuntimeError("pylink::debug_enabled must be enabled to load this plugin. "
+if not conf.conf['netlink'].get("debug_enabled", False):
+    raise RuntimeError("netlink::debug_enabled must be enabled to load this plugin. "
                        "This should ONLY be used in test environments for debugging and development, "
-                       "as anyone with access to this plugin's commands can run arbitrary code as the PyLink user!")
+                       "as anyone with access to this plugin's commands can run arbitrary code as the NetLink user!")
 
 def _exec(irc, source, args, locals_dict=None):
     """<code>
 
-    Admin-only. Executes <code> in the current PyLink instance. This command performs backslash escaping of characters, so things like \\n and \\ will work.
+    Admin-only. Executes <code> in the current NetLink instance. This command performs backslash escaping of characters, so things like \\n and \\ will work.
 
     \x02**WARNING: THIS CAN BE DANGEROUS IF USED IMPROPERLY!**\x02"""
     permissions.check_permissions(irc, source, ['exec.exec'])
@@ -58,7 +58,7 @@ utils.add_cmd(_exec, 'exec')
 def iexec(irc, source: str, args: list):
     """<code>
 
-    Admin-only. Executes <code> in the current PyLink instance with a persistent, isolated
+    Admin-only. Executes <code> in the current NetLink instance with a persistent, isolated
     locals scope (world.plugins['exec'].exec_local_dict).
 
     Note: irc, source, and args are added into this locals dict to allow things like irc.reply()
@@ -146,7 +146,7 @@ def pieval(irc, source: str, args: list):
 def inject(irc, source: str, args: list):
     """<text>
 
-    Admin-only. Injects raw text into the running PyLink protocol module, replying with the hook data returned.
+    Admin-only. Injects raw text into the running NetLink protocol module, replying with the hook data returned.
 
     \x02**WARNING: THIS CAN BREAK YOUR NETWORK IF USED IMPROPERLY!**\x02"""
     permissions.check_permissions(irc, source, ['exec.inject'])
@@ -164,12 +164,12 @@ def inject(irc, source: str, args: list):
 def threadinfo(irc, source: str, args: list):
     """takes no arguments.
 
-    Lists all threads currently present in this PyLink instance."""
+    Lists all threads currently present in this NetLink instance."""
     permissions.check_permissions(irc, source, ['exec.threadinfo'])
 
     for t in sorted(threading.enumerate(), key=lambda t: t.name.lower()):
         name = t.name
-        # Unnamed threads are something we want to avoid throughout PyLink.
+        # Unnamed threads are something we want to avoid throughout NetLink.
         if name.startswith('Thread-'):
             name = '\x0305%s\x03' % t.name
         # Also VERY bad: remaining threads for networks not in the networks index anymore!

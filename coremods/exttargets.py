@@ -4,8 +4,8 @@ exttargets.py - Implements extended targets like $account:xyz, $oper, etc.
 
 from __future__ import annotations
 
-from pylinkirc import world
-from pylinkirc.log import log
+from netlink import world
+from netlink.log import log
 
 __all__ = []
 
@@ -34,7 +34,7 @@ def account(irc, host: str, uid: str) -> bool:
     userobj = irc.users[uid]
     homenet = irc.name
     if hasattr(userobj, 'remote'):
-        # User is a PyLink Relay pseudoclient. Use their real services account on their
+        # User is a NetLink Relay pseudoclient. Use their real services account on their
         # origin network.
         homenet, realuid = userobj.remote
         log.debug('(%s) exttargets.account: Changing UID of relay client %s to %s/%s', irc.name,
@@ -136,17 +136,17 @@ def channel(irc, host: str, uid: str) -> bool:
     return False
 
 @bind
-def pylinkacc(irc, host: str, uid: str) -> bool:
+def netlinkacc(irc, host: str, uid: str) -> bool:
     """
-    $pylinkacc (PyLink account) exttarget handler. The following forms are supported, with groups
+    $netlinkacc (NetLink account) exttarget handler. The following forms are supported, with groups
     separated by a literal colon. Account matching is case insensitive.
 
-    $pylinkacc -> Returns True if the target is logged in to PyLink.
-    $pylinkacc:accountname -> Returns True if the target's PyLink login matches the one given.
+    $netlinkacc -> Returns True if the target is logged in to NetLink.
+    $netlinkacc:accountname -> Returns True if the target's NetLink login matches the one given.
     """
     login = irc.to_lower(irc.users[uid].account)
     groups = list(map(irc.to_lower, host.split(':')))
-    log.debug('(%s) exttargets.pylinkacc: groups to match: %s', irc.name, groups)
+    log.debug('(%s) exttargets.netlinkacc: groups to match: %s', irc.name, groups)
 
     if len(groups) == 1:
         # First scenario. Return True if user is logged in.
@@ -171,7 +171,7 @@ def network(irc, host: str, uid: str) -> bool:
 
     userobj = irc.users[uid]
     if hasattr(userobj, 'remote'):
-        # User is a PyLink Relay client; set the correct network name.
+        # User is a NetLink Relay client; set the correct network name.
         homenet = userobj.remote[0]
     else:
         homenet = irc.name
@@ -186,7 +186,7 @@ def exttarget_and(irc, host: str, uid: str) -> bool:
 
     Examples:
     $and:($ircop:*admin*+$network:ovd) -> Matches all opers on the network ovd.
-    $and:($account+$pylinkirc) -> Matches all users logged in to both services and PyLink.
+    $and:($account+$netlink) -> Matches all users logged in to both services and NetLink.
     $and:(*!*@localhost+$ircop) -> Matches all opers with the host `localhost`.
     $and:(*!*@*.mibbit.com+!$ircop+!$account) -> Matches all mibbit users that aren't opered or logged in to services.
     """
@@ -220,7 +220,7 @@ def service(irc, host: str, uid: str) -> bool:
     $service exttarget handler. This takes one optional argument: a glob, which is compared case-insensitively to the target user's service name (if present).
 
     Examples:
-    $service -> Matches any PyLink service bot.
+    $service -> Matches any NetLink service bot.
     $service:automode -> Matches the Automode service bot.
     """
     if not irc.users[uid].service:

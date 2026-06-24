@@ -1,5 +1,5 @@
 """
-corecommands.py - Implements core PyLink commands.
+corecommands.py - Implements core NetLink commands.
 """
 
 from __future__ import annotations
@@ -7,8 +7,8 @@ from __future__ import annotations
 import gc
 import sys
 
-from pylinkirc import utils, world
-from pylinkirc.log import log
+from netlink import utils, world
+from netlink.log import log
 
 from . import control, permissions
 
@@ -21,7 +21,7 @@ __all__ = []
 def shutdown(irc, source: str, args: list):
     """takes no arguments.
 
-    Exits PyLink by disconnecting all networks."""
+    Exits NetLink by disconnecting all networks."""
     permissions.check_permissions(irc, source, ['core.shutdown'])
     log.info('(%s) SHUTDOWN requested by %s, exiting...', irc.name, irc.get_hostmask(source))
     control.shutdown(irc=irc)
@@ -81,19 +81,19 @@ def unload(irc, source: str, args: list):
         log.debug('sys.getrefcount of plugin %s is %s', pl, sys.getrefcount(pl))
 
         # Remove any command functions defined by the plugin.
-        for cmdname, cmdfuncs in world.services['pylink'].commands.copy().items():
+        for cmdname, cmdfuncs in world.services['netlink'].commands.copy().items():
             log.debug('cmdname=%s, cmdfuncs=%s', cmdname, cmdfuncs)
 
             for cmdfunc in cmdfuncs:
                 log.debug('__module__ of cmdfunc %s is %s', cmdfunc, cmdfunc.__module__)
                 if cmdfunc.__module__ == modulename:
-                    log.debug("Removing %s from world.services['pylink'].commands[%s]", cmdfunc, cmdname)
-                    world.services['pylink'].commands[cmdname].remove(cmdfunc)
+                    log.debug("Removing %s from world.services['netlink'].commands[%s]", cmdfunc, cmdname)
+                    world.services['netlink'].commands[cmdname].remove(cmdfunc)
 
                     # If the cmdfunc list is empty, remove it.
                     if not cmdfuncs:
-                        log.debug("Removing world.services['pylink'].commands[%s] (it's empty now)", cmdname)
-                        del world.services['pylink'].commands[cmdname]
+                        log.debug("Removing world.services['netlink'].commands[%s] (it's empty now)", cmdname)
+                        del world.services['netlink'].commands[cmdname]
 
         # Remove any command hooks set by the plugin.
         for hookname, hookpairs in world.hooks.copy().items():
@@ -148,7 +148,7 @@ def reload(irc, source: str, args: list):
 def rehash(irc, source: str, args: list):
     """takes no arguments.
 
-    Reloads the configuration file for PyLink, (dis)connecting added/removed networks.
+    Reloads the configuration file for NetLink, (dis)connecting added/removed networks.
 
     Note: plugins must be manually reloaded."""
     permissions.check_permissions(irc, source, ['core.rehash'])

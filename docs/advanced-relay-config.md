@@ -1,6 +1,6 @@
-# Advanced Configuration for PyLink Relay
+# Advanced Configuration for NetLink Relay
 
-PyLink Relay provides a few configuration options not documented in the example configuration, either because they have limited use or are too complicated to be described briefly.
+NetLink Relay provides a few configuration options not documented in the example configuration, either because they have limited use or are too complicated to be described briefly.
 
 **This guide assumes that you are relatively familiar with the way YAML syntax works (lists, named arrays/dicts, etc.).** In this document, configuration options will be referred to in the format `a::b::c`, which represents the "`c`" option inside a "`b`" config block, all within an "`a`" config block.
 
@@ -14,9 +14,9 @@ a:
 
 ### Custom Clientbot Styles
 
-Custom Clientbot styles can be applied for any of Clientbot's supported events, by defining keys in the format `relay::clientbot_styles::<event name>`. As of PyLink 2.1, you can also override options per network by defining them in the form `servers::<network name>::relay_clientbot_styles::<event names>`
+Custom Clientbot styles can be applied for any of Clientbot's supported events, by defining keys in the format `relay::clientbot_styles::<event name>`. As of NetLink 2.1, you can also override options per network by defining them in the form `servers::<network name>::relay_clientbot_styles::<event names>`
 
-See below for a list of supported events and their default values (as of PyLink 2.1).
+See below for a list of supported events and their default values (as of NetLink 2.1).
 
 A common use case for this feature is to turn off or adjust colors/formatting; this is explicitly documented [below](#disabling-colorscontrol-codes).
 
@@ -63,7 +63,7 @@ PNOTICE  | <$sender> $text
 
 #### Disabling Colors/Control Codes
 
-If you don't want the messages PyLink sends for clientbot messages to be emboldened or colored,
+If you don't want the messages NetLink sends for clientbot messages to be emboldened or colored,
 remove all escape sequences (e.g. `\x02`) from the format template and replace the colored variants
 of applicable substitutions with their non-colored versions.
 

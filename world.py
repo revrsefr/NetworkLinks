@@ -1,5 +1,5 @@
 """
-world.py: Stores global variables for PyLink, including lists of active IRC objects and plugins.
+world.py: Stores global variables for NetLink, including lists of active IRC objects and plugins.
 """
 
 import threading
@@ -38,10 +38,10 @@ start_ts = time.time()
 shutting_down = threading.Event()
 
 # Source address.
-source = "https://github.com/jlu5/PyLink"  # CHANGE THIS IF YOU'RE FORKING!!
+source = "https://github.com/revrsefr/NetworkLinks"  # CHANGE THIS IF YOU'RE FORKING!!
 
 # Fallback hostname used in various places internally when hostname isn't configured.
-fallback_hostname = 'pylink.int'
+fallback_hostname = 'netlink.int'
 
 # Defines messages to be logged as soon as the log system is set up, for modules like conf that are
 # initialized before log. This is processed (and then not used again) when the log module loads.

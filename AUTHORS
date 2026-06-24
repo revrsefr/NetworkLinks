@@ -1,4 +1,7 @@
-The following people have contributed substantially to PyLink:
+NetLink is a derivative of PyLink, used under the Mozilla Public License 2.0.
+
+The following people contributed substantially to the original PyLink project,
+which NetLink is built on:
 
 James Lu <james@overdrivenetworks.com>
 Daniel Oaks <daniel@danieloaks.net>

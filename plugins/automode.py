@@ -7,9 +7,9 @@ from __future__ import annotations
 import collections
 import string
 
-from pylinkirc import conf, structures, utils, world
-from pylinkirc.coremods import permissions
-from pylinkirc.log import log
+from netlink import conf, structures, utils, world
+from netlink.coremods import permissions
+from netlink.log import log
 
 mydesc = ("The \x02Automode\x02 plugin provides simple channel ACL management by giving prefix modes "
           "to users matching hostmasks or exttargets.")
@@ -127,7 +127,7 @@ def match(irc, channel, uids=None):
                           irc.name, modes, outgoing_modes, irc.protoname)
 
     if outgoing_modes:
-        # If the Automode bot is missing, send the mode through the PyLink server.
+        # If the Automode bot is missing, send the mode through the NetLink server.
         if modebot_uid not in irc.users:
             modebot_uid = irc.sid
 
@@ -155,8 +155,8 @@ def handle_join(irc, source: str, command: str, args: dict):
     match(irc, channel, args['users'])
 
 utils.add_hook(handle_join, 'JOIN')
-utils.add_hook(handle_join, 'PYLINK_RELAY_JOIN')  # Handle the relay version of join
-utils.add_hook(handle_join, 'PYLINK_SERVICE_JOIN')  # And the version for service bots
+utils.add_hook(handle_join, 'NETLINK_RELAY_JOIN')  # Handle the relay version of join
+utils.add_hook(handle_join, 'NETLINK_SERVICE_JOIN')  # And the version for service bots
 
 def handle_services_login(irc, source: str, command: str, args: dict):
     """
@@ -167,7 +167,7 @@ def handle_services_login(irc, source: str, command: str, args: dict):
         match(irc, channel, [source])
 
 utils.add_hook(handle_services_login, 'CLIENT_SERVICES_LOGIN')
-utils.add_hook(handle_services_login, 'PYLINK_RELAY_SERVICES_LOGIN')
+utils.add_hook(handle_services_login, 'NETLINK_RELAY_SERVICES_LOGIN')
 
 def _get_channel_pair(irc, source, chanpair, perm=None):
     """

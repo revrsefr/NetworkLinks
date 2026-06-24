@@ -8,8 +8,8 @@ from __future__ import annotations
 import selectors
 import threading
 
-from pylinkirc import world
-from pylinkirc.log import log
+from netlink import world
+from netlink.log import log
 
 __all__ = ['register', 'unregister', 'start']
 

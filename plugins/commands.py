@@ -1,12 +1,12 @@
-# commands.py: base PyLink commands
+# commands.py: base NetLink commands
 
 from __future__ import annotations
 import sys
 import time
 
-from pylinkirc import __version__, conf, real_version, utils, world
-from pylinkirc.coremods import permissions
-from pylinkirc.coremods.login import pwd_context
+from netlink import __version__, conf, real_version, utils, world
+from netlink.coremods import permissions
+from netlink.coremods.login import pwd_context
 
 default_permissions = {"*!*@*": ['commands.status', 'commands.showuser', 'commands.showchan', 'commands.shownet']}
 
@@ -23,7 +23,7 @@ def die(irc=None):
 def status(irc, source: str, args: list):
     """takes no arguments.
 
-    Returns your current PyLink login status."""
+    Returns your current NetLink login status."""
     permissions.check_permissions(irc, source, ['commands.status'])
     identified = irc.users[source].account
     if identified:
@@ -76,7 +76,7 @@ def _do_showuser(irc, source, u):
           (u, userobj.realhost or _notavail, userobj.ip))
         channels = sorted(userobj.channels)
         f('\x02Channels\x02: %s' % (' '.join(map(str, channels)) or _none))
-        f('\x02PyLink identification\x02: %s; \x02Services account\x02: %s; \x02Away status\x02: %s' % \
+        f('\x02NetLink identification\x02: %s; \x02Services account\x02: %s; \x02Away status\x02: %s' % \
           ((userobj.account or _none), (userobj.services_account or _none), userobj.away or _none))
         f('\x02User modes\x02: %s' % irc.join_modes(userobj.modes, sort=True))
 
@@ -179,7 +179,7 @@ def shownet(irc, source: str, args: list):
     irc.reply('Information on network \x02%s\x02: \x02%s\x02' %
               (target, netobj.get_full_network_name() if netobj else '\x1dCurrently not connected\x1d'))
 
-    irc.reply('\x02PyLink protocol module\x02: %s; \x02Encoding\x02: %s' %
+    irc.reply('\x02NetLink protocol module\x02: %s; \x02Encoding\x02: %s' %
               (protocol_name, netobj.encoding if netobj else serverdata.get('encoding', 'utf-8[default]')))
 
     # Extended info: target host, defined hostname / SID
@@ -190,7 +190,7 @@ def shownet(irc, source: str, args: list):
         if serverdata.get('ip'):
             irc.reply('\x02Server target\x02: \x1f%s:%s' % (serverdata['ip'], serverdata.get('port')))
         if serverdata.get('hostname'):
-            irc.reply('\x02PyLink hostname\x02: %s; \x02SID:\x02 %s; \x02SID range:\x02 %s' %
+            irc.reply('\x02NetLink hostname\x02: %s; \x02SID:\x02 %s; \x02SID range:\x02 %s' %
                       (serverdata.get('hostname') or _none,
                         serverdata.get('sid') or _none,
                         serverdata.get('sidrange') or _none))
@@ -261,9 +261,9 @@ def showchan(irc, source: str, args: list):
 def version(irc, source: str, args: list):
     """takes no arguments.
 
-    Returns the version of the currently running PyLink instance."""
+    Returns the version of the currently running NetLink instance."""
     py_version = utils.NORMALIZEWHITESPACE_RE.sub(' ', sys.version)
-    irc.reply("PyLink version \x02%s\x02 (in VCS: %s), running on Python %s." % (__version__, real_version, py_version))
+    irc.reply("NetLink version \x02%s\x02 (in VCS: %s), running on Python %s." % (__version__, real_version, py_version))
     irc.reply("The source of this program is available at \x02%s\x02." % world.source)
 
 @utils.add_cmd
@@ -299,7 +299,7 @@ def _check_logout_access(irc, source, target, perms):
 def logout(irc, source: str, args: list):
     """[<other nick/UID>]
 
-    Logs your account out of PyLink. If you have the 'commands.logout.force' permission, or are
+    Logs your account out of NetLink. If you have the 'commands.logout.force' permission, or are
     attempting to log out yourself, you can also specify a nick to force a logout for."""
 
     try:

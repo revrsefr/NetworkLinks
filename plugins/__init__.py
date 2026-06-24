@@ -1,1 +1,1 @@
-# Stub so that pylinkirc.plugins is a module
+# Stub so that netlink.plugins is a module

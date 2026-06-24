@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import hmac
 
-from pylinkirc import conf, utils
-from pylinkirc.log import log
+from netlink import conf, utils
+from netlink.log import log
 
 __all__ = ['pwd_context', 'check_login', 'verify_hash']
 
@@ -16,7 +16,7 @@ __all__ = ['pwd_context', 'check_login', 'verify_hash']
 _warned_plaintext: set = set()
 
 
-# PyLink's global password context
+# NetLink's global password context
 pwd_context = None
 
 _DEFAULT_CRYPTCONTEXT_SETTINGS = {
@@ -73,7 +73,7 @@ def check_login(user: str, password: str) -> bool:
             # constant-time comparison to avoid leaking length/content via timing.
             if user not in _warned_plaintext:
                 log.warning("Account %r uses a plaintext password; set 'encrypted: true' and "
-                            "rehash it with pylink-mkpasswd to store it securely.", user)
+                            "rehash it with netlink-mkpasswd to store it securely.", user)
                 _warned_plaintext.add(user)
             return hmac.compare_digest(str(password), str(passhash))
 
@@ -124,7 +124,7 @@ def _irc_try_login(irc, source: str, username: str, skip_checks: bool = False):
 def identify(irc, source: str, args: list) -> None:
     """<username> <password>
 
-    Logs in to PyLink using the configured administrator account."""
+    Logs in to NetLink using the configured administrator account."""
     if irc.is_channel(irc.called_in):
         irc.reply('Error: This command must be sent in private. '
                   '(Would you really type a password inside a channel?)')

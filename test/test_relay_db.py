@@ -8,7 +8,7 @@ import pickle
 import tempfile
 import unittest
 
-from pylinkirc.plugins import relay
+from netlink.plugins import relay
 
 RelayDataStore = relay.RelayDataStore
 

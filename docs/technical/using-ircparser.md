@@ -1,6 +1,6 @@
 # Using utils.IRCParser()
 
-**As of 22/02/2017 (1.2-dev), PyLink allows plugin creators to either parse command arguments themselves
+**As of 22/02/2017 (1.2-dev), NetLink allows plugin creators to either parse command arguments themselves
 or use a sub-classed instance of [argparse.ArgumentParser()](https://docs.python.org/3/library/argparse.html)
 to parse their arguments.**
 
@@ -9,7 +9,7 @@ First off, you will already have access to IRCParser due to importing `utils`.
 Otherwise, this is how to include it...
 
 ```python
-from pylinkirc import utils
+from netlink import utils
 ```
 
 When you add a command that you want to use `utils.IRCParser()` with, the following is a guide on how to add arguments.

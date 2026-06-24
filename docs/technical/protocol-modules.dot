@@ -1,4 +1,4 @@
-/* Graph showing inheritance with the current PyLink protocol modules:
+/* Graph showing inheritance with the current NetLink protocol modules:
  * Update using: dot -Tsvg protocol-modules.dot > protocol-modules.svg
  */
 
@@ -6,16 +6,16 @@ digraph G {
 
 	edge [ penwidth=0.75, color="#111111CC" ];
 	subgraph cluster_core {
-		label="Core classes (pylinkirc.classes)";
+		label="Core classes (netlink.classes)";
 		style="filled";
 		node [style="filled",color="white"];
 		color="#90EE90";
 
-		"PyLinkNetworkCore" -> "PyLinkNetworkCoreWithUtils" -> "IRCNetwork";
+		"NetLinkNetworkCore" -> "NetLinkNetworkCoreWithUtils" -> "IRCNetwork";
 	}
 
 	subgraph cluster_helper {
-		label="Protocol module helpers\n(pylinkirc.protocols.ircs2s_common)";
+		label="Protocol module helpers\n(netlink.protocols.ircs2s_common)";
 		style="filled";
 		node [style="filled",color="white"];
 		color="lightblue";
@@ -23,7 +23,7 @@ digraph G {
 		"IRCNetwork" -> "IRCCommonProtocol" -> "IRCS2SProtocol" -> "TS6BaseProtocol";
 
 		subgraph cluster_helper {
-			label="pylinkirc.protocols.ts6_common";
+			label="netlink.protocols.ts6_common";
 			style="filled";
 			color="lightcyan";
 
@@ -32,7 +32,7 @@ digraph G {
 	}
 
 	subgraph cluster_pluggable {
-		label="Complete protocol modules (pylinkirc.protocols.*)";
+		label="Complete protocol modules (netlink.protocols.*)";
 		style="filled";
 		node [style="filled",color="white"];
 		color="khaki";

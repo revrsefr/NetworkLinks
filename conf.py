@@ -1,14 +1,14 @@
 """
-conf.py - PyLink configuration core.
+conf.py - NetLink configuration core.
 
-This module is used to access the configuration of the current PyLink instance.
+This module is used to access the configuration of the current NetLink instance.
 It provides simple checks for validating and loading YAML-format configurations from arbitrary files.
 """
 
 try:
     import yaml
 except ImportError:
-    raise ImportError("PyLink requires PyYAML to function; please install it and try again.")
+    raise ImportError("NetLink requires PyYAML to function; please install it and try again.")
 
 import logging
 import os.path
@@ -27,10 +27,10 @@ class ConfigurationError(RuntimeError):
 
 conf: dict[str, Any] = {'bot':
                 {
-                    'nick': 'PyLink',
-                    'user': 'pylink',
-                    'realname': 'PyLink Service Client',
-                    'serverdesc': 'Unconfigured PyLink'
+                    'nick': 'NetLink',
+                    'user': 'netlink',
+                    'realname': 'NetLink Service Client',
+                    'serverdesc': 'Unconfigured NetLink'
                 },
         'logging':
                 {
@@ -45,13 +45,13 @@ conf: dict[str, Any] = {'bot':
                                      'recvpass': "unconfigured",
                                      'sendpass': "unconfigured",
                                      'protocol': "null",
-                                     'hostname': "pylink.unconfigured",
+                                     'hostname': "netlink.unconfigured",
                                      'sid': "000",
                                      'maxnicklen': 20,
                                      'sidrange': '0##'
                                     })
         }
-conf['pylink'] = conf['bot']
+conf['netlink'] = conf['bot']
 confname = 'unconfigured'
 # Path to the loaded config file; set by load_conf().
 fname = ''
@@ -73,26 +73,26 @@ def _validate_conf(conf, logger=None):
             "Invalid configuration given: should be type dict, not %s."
             % type(conf).__name__)
 
-    if 'pylink' in conf and 'bot' in conf:
-        _log(logging.WARNING, "Since PyLink 1.2, the 'pylink:' and 'bot:' configuration sections have been condensed "
-             "into one. You should merge any options under these sections into one 'pylink:' block.", logger=logger)
+    if 'netlink' in conf and 'bot' in conf:
+        _log(logging.WARNING, "Since NetLink 1.2, the 'netlink:' and 'bot:' configuration sections have been condensed "
+             "into one. You should merge any options under these sections into one 'netlink:' block.", logger=logger)
 
         new_block = conf['bot'].copy()
-        new_block.update(conf['pylink'])
-        conf['bot'] = conf['pylink'] = new_block
-    elif 'pylink' in conf:
-        conf['bot'] = conf['pylink']
+        new_block.update(conf['netlink'])
+        conf['bot'] = conf['netlink'] = new_block
+    elif 'netlink' in conf:
+        conf['bot'] = conf['netlink']
     elif 'bot' in conf:
-        conf['pylink'] = conf['bot']
+        conf['netlink'] = conf['bot']
         # TODO: add a migration warning in the next release.
 
-    for section in ('pylink', 'servers', 'login', 'logging'):
+    for section in ('netlink', 'servers', 'login', 'logging'):
         validate(conf.get(section), "Missing %r section in config." % section)
 
     # Make sure at least one form of authentication is valid.
     # Also we'll warn them that login:user/login:password is deprecated
     if conf['login'].get('password') or conf['login'].get('user'):
-        _log(logging.WARNING, "The 'login:user' and 'login:password' options are deprecated since PyLink 1.1. "
+        _log(logging.WARNING, "The 'login:user' and 'login:password' options are deprecated since NetLink 1.1. "
              "Please switch to the new 'login:accounts' format as outlined in the example config.", logger=logger)
 
     old_login_valid = isinstance(conf['login'].get('password'), str) and isinstance(conf['login'].get('user'), str)
@@ -106,17 +106,17 @@ def _validate_conf(conf, logger=None):
     validate(conf['login'].get('password') != "changeme", "You have not set the login details correctly!")
 
     if newlogins and not old_login_valid:
-        validate(conf.get('permissions'), "New-style accounts enabled but no permissions block was found. You will not be able to administrate your PyLink instance!")
+        validate(conf.get('permissions'), "New-style accounts enabled but no permissions block was found. You will not be able to administrate your NetLink instance!")
 
     if conf['logging'].get('stdout'):
-         _log(logging.WARNING, 'The log:stdout option is deprecated since PyLink 1.2 in favour of '
+         _log(logging.WARNING, 'The log:stdout option is deprecated since NetLink 1.2 in favour of '
                                '(a more correctly named) log:console. Please update your '
                                'configuration accordingly!', logger=logger)
 
     return conf
 
 def load_conf(filename, errors_fatal=True, logger=None):
-    """Loads a PyLink configuration file from the filename given."""
+    """Loads a NetLink configuration file from the filename given."""
     global confname, conf, fname
     # Note: store globally the last loaded conf filename, for REHASH in coremods/control.
     fname = filename
@@ -144,13 +144,13 @@ def load_conf(filename, errors_fatal=True, logger=None):
 def get_database_name(dbname):
     """
     Returns a database filename with the given base DB name appropriate for the
-    current PyLink instance.
+    current NetLink instance.
 
-    This returns '<dbname>.db' if the running config name is PyLink's default
-    (pylink.yml), and '<dbname>-<config name>.db' for anything else. For example,
-    if this is called from an instance running as 'pylink testing.yml', it
+    This returns '<dbname>.db' if the running config name is NetLink's default
+    (netlink.yml), and '<dbname>-<config name>.db' for anything else. For example,
+    if this is called from an instance running as 'netlink testing.yml', it
     would return '<dbname>-testing.db'."""
-    if confname != 'pylink':
+    if confname != 'netlink':
         dbname += '-%s' % confname
     dbname += '.db'
     return dbname

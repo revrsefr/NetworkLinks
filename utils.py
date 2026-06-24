@@ -1,7 +1,7 @@
 """
-utils.py - PyLink utilities module.
+utils.py - NetLink utilities module.
 
-This module contains various utility functions related to IRC and/or the PyLink
+This module contains various utility functions related to IRC and/or the NetLink
 framework.
 """
 
@@ -17,7 +17,7 @@ import re
 import string
 
 # Load the protocol and plugin packages.
-from pylinkirc import plugins, protocols
+from netlink import plugins, protocols
 
 from . import conf, structures, world
 from .log import log
@@ -37,7 +37,7 @@ NORMALIZEWHITESPACE_RE = re.compile(r'\s+')
 
 class NotAuthorizedError(Exception):
     """
-    Exception raised by the PyLink permissions system when a user fails access requirements.
+    Exception raised by the NetLink permissions system when a user fails access requirements.
     """
     pass
 
@@ -53,7 +53,7 @@ class ProtocolError(RuntimeError):
 
 def add_cmd(func, name=None, **kwargs):
     """Binds an IRC command function to the given command name."""
-    world.services['pylink'].add_cmd(func, name=name, **kwargs)
+    world.services['netlink'].add_cmd(func, name=name, **kwargs)
     return func
 
 def add_hook(func, command: str, priority: int = 100):
@@ -78,10 +78,10 @@ def _reset_module_dirs():
     (Re)sets custom protocol module and plugin directories to the ones specified in the config.
     """
     # Note: This assumes that the first element of the package path is the default one.
-    plugins.__path__ = [plugins.__path__[0]] + [expandpath(path) for path in conf.conf['pylink'].get('plugin_dirs', [])]
-    log.debug('_reset_module_dirs: new pylinkirc.plugins.__path__: %s', plugins.__path__)
-    protocols.__path__ = [protocols.__path__[0]] + [expandpath(path) for path in conf.conf['pylink'].get('protocol_dirs', [])]
-    log.debug('_reset_module_dirs: new pylinkirc.protocols.__path__: %s', protocols.__path__)
+    plugins.__path__ = [plugins.__path__[0]] + [expandpath(path) for path in conf.conf['netlink'].get('plugin_dirs', [])]
+    log.debug('_reset_module_dirs: new netlink.plugins.__path__: %s', plugins.__path__)
+    protocols.__path__ = [protocols.__path__[0]] + [expandpath(path) for path in conf.conf['netlink'].get('protocol_dirs', [])]
+    log.debug('_reset_module_dirs: new netlink.protocols.__path__: %s', protocols.__path__)
 resetModuleDirs = _reset_module_dirs
 
 def _load_plugin(name):
@@ -111,7 +111,7 @@ splitHostmask = split_hostmask
 
 class ServiceBot():
     """
-    PyLink IRC Service class.
+    NetLink IRC Service class.
     """
 
     def __init__(self, name, default_help=True, default_list=True, manipulatable=False, default_nick=None, desc=None):
@@ -156,11 +156,11 @@ class ServiceBot():
         """
         Spawns instances of this service on all connected networks.
         """
-        # Spawn the new service by calling the PYLINK_NEW_SERVICE hook,
+        # Spawn the new service by calling the NETLINK_NEW_SERVICE hook,
         # which is handled by coreplugin.
         if irc is None:
             for irc in world.networkobjects.values():
-                irc.call_hooks([None, 'PYLINK_NEW_SERVICE', {'name': self.name}])
+                irc.call_hooks([None, 'NETLINK_NEW_SERVICE', {'name': self.name}])
         else:
             raise NotImplementedError("Network specific plugins not supported yet.")
 
@@ -174,7 +174,7 @@ class ServiceBot():
         marked persistent). This option is automatically *disabled* on networks
         where we cannot monitor channels that we're not in (e.g. Clientbot).
 
-        Before PyLink 2.0-alpha3, this function implicitly marked channels it
+        Before NetLink 2.0-alpha3, this function implicitly marked channels it
         receives to be persistent. This behaviour is no longer the case.
         """
         uid = self.uids.get(irc.name)
@@ -189,7 +189,7 @@ class ServiceBot():
             ignore_empty = False
         elif ignore_empty is None:
             ignore_empty = not (irc.serverdata.get('join_empty_channels',
-                                                   conf.conf['pylink'].get('join_empty_channels',
+                                                   conf.conf['netlink'].get('join_empty_channels',
                                                                            False)))
 
         # Specify modes to join the services bot with.
@@ -213,7 +213,7 @@ class ServiceBot():
                 else:
                     irc.join(uid, channel)
 
-                irc.call_hooks([irc.sid, 'PYLINK_SERVICE_JOIN', {'channel': channel, 'users': [uid]}])
+                irc.call_hooks([irc.sid, 'NETLINK_SERVICE_JOIN', {'channel': channel, 'users': [uid]}])
             else:
                 log.warning('(%s/%s) Ignoring invalid channel %r', irc.name, self.name, channel)
 
@@ -247,7 +247,7 @@ class ServiceBot():
                 log.debug('(%s/%s) Ignoring part to %r, we are not there', irc.name, self.name, channel)
                 continue
 
-        irc.call_hooks([uid, 'PYLINK_SERVICE_PART', {'channels': to_part, 'text': reason}])
+        irc.call_hooks([uid, 'NETLINK_SERVICE_PART', {'channels': to_part, 'text': reason}])
 
     def reply(self, irc, text, notice=None, private=None):
         """Replies to a message as the service in question."""
@@ -269,7 +269,7 @@ class ServiceBot():
 
     def call_cmd(self, irc, source, text, called_in=None):
         """
-        Calls a PyLink bot command. source is the caller's UID, and text is the
+        Calls a NetLink bot command. source is the caller's UID, and text is the
         full, unparsed text of the message.
         """
         irc.called_in = called_in or source
@@ -282,7 +282,7 @@ class ServiceBot():
             # XXX: we really need abstraction for this kind of config fetching...
             show_unknown_cmds = irc.serverdata.get('%s_show_unknown_commands' % self.name,
                                                    conf.conf.get(self.name, {}).get('show_unknown_commands',
-                                                   conf.conf['pylink'].get('show_unknown_commands', True)))
+                                                   conf.conf['netlink'].get('show_unknown_commands', True)))
 
             if cmd and show_unknown_cmds and not cmd.startswith('\x01'):
                 # Ignore empty commands and invalid command errors from CTCPs.
@@ -386,7 +386,7 @@ class ServiceBot():
         Returns the preferred hostname for this service bot on the given network. The following fields are checked in order:
         # 1) Network specific hostname settings for this service (servers:<netname>:servicename_host)
         # 2) Global settings for this service (servicename:host)
-        # 3) The PyLink server hostname.
+        # 3) The NetLink server hostname.
         """
         sbconf = conf.conf.get(self.name, {})
         return irc.serverdata.get("%s_host" % self.name) or sbconf.get('host') or irc.hostname()
@@ -396,11 +396,11 @@ class ServiceBot():
         Returns the preferred real name for this service bot on the given network. The following fields are checked in order:
         # 1) Network specific realname settings for this service (servers:<netname>:servicename_realname)
         # 2) Global settings for this service (servicename:realname)
-        # 3) The globally configured real name (pylink:realname).
+        # 3) The globally configured real name (netlink:realname).
         # 4) The literal service name.
         """
         sbconf = conf.conf.get(self.name, {})
-        return irc.serverdata.get("%s_realname" % self.name) or sbconf.get('realname') or conf.conf['pylink'].get('realname') or self.name
+        return irc.serverdata.get("%s_realname" % self.name) or sbconf.get('realname') or conf.conf['netlink'].get('realname') or self.name
 
     def add_persistent_channel(self, irc, namespace, channel, try_join=True):
         """
@@ -515,7 +515,7 @@ class ServiceBot():
                     _reply(args_desc.strip())
                     if not shortform:
                         # Note: we handle newlines in docstrings a bit differently. Per
-                        # https://github.com/jlu5/PyLink/issues/307, only double newlines (and
+                        # https://github.com/revrsefr/NetworkLinks/issues/307, only double newlines (and
                         # combinations of more) have the effect of showing a new line on IRC.
                         # Single newlines are stripped so that word wrap can be applied in source
                         # code without affecting the output on IRC.
@@ -593,7 +593,7 @@ class ServiceBot():
             # Filter by plugin, if the option was given.
             new_cmds = []
 
-            # Add the pylinkirc.plugins prefix to the module name, so it can be used for matching.
+            # Add the netlink.plugins prefix to the module name, so it can be used for matching.
             plugin_module = PLUGIN_PREFIX + plugin_filter
 
             for cmd_definition in cmds:
@@ -632,9 +632,9 @@ def register_service(name, *args, **kwargs):
         raise ValueError("Service name %s is already bound!" % name)
 
     # Allow disabling service spawning either globally or by service.
-    elif name != 'pylink' and not (conf.conf.get(name, {}).get('spawn_service',
-            conf.conf['pylink'].get('spawn_services', True))):
-        return world.services['pylink']
+    elif name != 'netlink' and not (conf.conf.get(name, {}).get('spawn_service',
+            conf.conf['netlink'].get('spawn_services', True))):
+        return world.services['netlink']
 
     world.services[name] = sbot = ServiceBot(name, *args, **kwargs)
     sbot.spawn()
@@ -652,9 +652,9 @@ def unregister_service(name):
     sbot = world.services[name]
     for ircnet, uid in sbot.uids.items():
         ircobj = world.networkobjects[ircnet]
-        # Special case for the main PyLink client. If we're unregistering that,
+        # Special case for the main NetLink client. If we're unregistering that,
         # clear the irc.pseudoclient entry.
-        if name == 'pylink':
+        if name == 'netlink':
             ircobj.pseudoclient = None
 
         ircobj.quit(uid, "Service unloaded.")
@@ -703,7 +703,7 @@ class IRCParser(argparse.ArgumentParser):
 
     def print_help(self, *args, **kwargs):
         # XXX: find a way to somehow route this through IRC
-        raise InvalidArgumentsError("Use help <commandname> to receive help for PyLink commands.")
+        raise InvalidArgumentsError("Use help <commandname> to receive help for NetLink commands.")
 
     def error(self, message, *args, **kwargs):
         raise InvalidArgumentsError(message)

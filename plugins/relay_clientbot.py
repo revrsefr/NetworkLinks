@@ -5,8 +5,8 @@ import shlex
 import string
 import time
 
-from pylinkirc import conf, utils, world
-from pylinkirc.log import log
+from netlink import conf, utils, world
+from netlink.log import log
 
 # Clientbot default styles:
 # These use template strings as documented @ https://docs.python.org/3/library/string.html#template-strings
@@ -257,7 +257,7 @@ def rpm(irc, source: str, args: list):
         irc.error('This command is only supported on Clientbot networks. Try /msg %s <text>' % target)
         return
     elif relay is None:
-        irc.error('PyLink Relay is not loaded.')
+        irc.error('NetLink Relay is not loaded.')
         return
     elif not text:
         irc.error('No text given.')
@@ -280,7 +280,7 @@ def rpm(irc, source: str, args: list):
         irc.error('Please select the target you want to PM: %s' % (', '.join(targets)))
         return
     else:
-        assert not irc.is_internal_client(source), "rpm is not allowed from PyLink bots"
+        assert not irc.is_internal_client(source), "rpm is not allowed from NetLink bots"
 
         # Send the message through relay by faking a hook for its handler.
         relay.handle_messages(irc, source, 'RELAY_CLIENTBOT_PRIVMSG', {'target': uids[0], 'text': text})

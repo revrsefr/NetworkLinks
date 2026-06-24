@@ -5,8 +5,8 @@ handlers.py - Implements miscellaneous IRC command handlers (WHOIS, services log
 from __future__ import annotations
 import time
 
-from pylinkirc import conf, utils
-from pylinkirc.log import log
+from netlink import conf, utils
+from netlink.log import log
 
 __all__ = []
 
@@ -80,7 +80,7 @@ def handle_whois(irc, source: str, command: str, args: dict):
             # 3) +H is set, but whois_use_hideoper is disabled in config
             isHideOper = (irc.umodes.get('hideoper'), None) in user.modes
             if (not isHideOper) or (isHideOper and source_is_oper) or \
-                    (isHideOper and not conf.conf['pylink'].get('whois_use_hideoper', True)):
+                    (isHideOper and not conf.conf['netlink'].get('whois_use_hideoper', True)):
                 opertype = user.opertype
 
                 # Let's be gramatically correct. (If the opertype starts with a vowel,
@@ -112,13 +112,13 @@ def handle_whois(irc, source: str, command: str, args: dict):
             f(335, source, "%s :is a bot" % nick)
 
         # :charybdis.midnight.vpn 317 jlu5 jlu5 1946 1499867833 :seconds idle, signon time
-        if irc.get_service_bot(target) and conf.conf['pylink'].get('whois_show_startup_time', True):
+        if irc.get_service_bot(target) and conf.conf['netlink'].get('whois_show_startup_time', True):
             f(317, source, "%s 0 %s :seconds idle (placeholder), signon time" % (nick, irc.start_ts))
 
-        # Call custom WHOIS handlers via the PYLINK_CUSTOM_WHOIS hook, unless the
+        # Call custom WHOIS handlers via the NETLINK_CUSTOM_WHOIS hook, unless the
         # caller is marked a bot and the whois_show_extensions_to_bots option is False
-        if (source_is_bot and conf.conf['pylink'].get('whois_show_extensions_to_bots')) or (not source_is_bot):
-            irc.call_hooks([source, 'PYLINK_CUSTOM_WHOIS', {'target': target, 'server': server}])
+        if (source_is_bot and conf.conf['netlink'].get('whois_show_extensions_to_bots')) or (not source_is_bot):
+            irc.call_hooks([source, 'NETLINK_CUSTOM_WHOIS', {'target': target, 'server': server}])
         else:
             log.debug('(%s) coremods.handlers.handle_whois: skipping custom whois handlers because '
                       'caller %s is marked as a bot', irc.name, source)
@@ -131,7 +131,7 @@ def handle_mode(irc, source: str, command: str, args: dict):
     """Protect against forced deoper attempts."""
     target = args['target']
     modes = args['modes']
-    # If the sender is not a PyLink client, and the target IS a protected
+    # If the sender is not a NetLink client, and the target IS a protected
     # client, revert any forced deoper attempts.
     if irc.is_internal_client(target) and not irc.is_internal_client(source):
         if ('-o', None) in modes and (target == irc.pseudoclient.uid or not irc.is_manipulatable_client(target)):
@@ -157,14 +157,14 @@ def handle_services_login(irc, source: str, command: str, args: dict):
 utils.add_hook(handle_services_login, 'CLIENT_SERVICES_LOGIN')
 
 def handle_version(irc, source: str, command: str, args: dict):
-    """Handles requests for the PyLink server version."""
+    """Handles requests for the NetLink server version."""
     # 351 syntax is usually "<server version>. <server hostname> :<anything else you want to add>
     fullversion = irc.version()
     irc.numeric(irc.sid, 351, source, fullversion)
 utils.add_hook(handle_version, 'VERSION')
 
 def handle_time(irc, source: str, command: str, args: dict):
-    """Handles requests for the PyLink server time."""
+    """Handles requests for the NetLink server time."""
     timestring = time.ctime()
     irc.numeric(irc.sid, 391, source, '%s :%s' % (irc.hostname(), timestring))
 utils.add_hook(handle_time, 'TIME')

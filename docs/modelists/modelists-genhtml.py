@@ -10,9 +10,9 @@ import os.path
 os.chdir(os.path.dirname(__file__))
 
 FILES = {
-    'user-modes.csv': 'Supported User Modes for PyLink',
-    'channel-modes.csv': 'Supported Channel Modes for PyLink',
-    'extbans.csv': 'Supported Extbans for PyLink',
+    'user-modes.csv': 'Supported User Modes for NetLink',
+    'channel-modes.csv': 'Supported Channel Modes for NetLink',
+    'extbans.csv': 'Supported Extbans for NetLink',
 }
 
 def _write(outf, text):

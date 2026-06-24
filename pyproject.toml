@@ -3,9 +3,9 @@ requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pylinkirc"
+name = "netlink"
 dynamic = ["version"]
-description = "PyLink IRC Services"
+description = "NetLink IRC Services"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MPL-2.0"
@@ -40,15 +40,15 @@ cron-support = ["psutil"]
 relay-unicode = ["unidecode"]
 
 [project.urls]
-Homepage = "https://github.com/jlu5/PyLink"
+Homepage = "https://github.com/revrsefr/NetworkLinks"
 
 [project.scripts]
-pylink = "pylinkirc.launcher:main"
+netlink = "netlink.launcher:main"
 
 [tool.setuptools]
-packages = ["pylinkirc", "pylinkirc.protocols", "pylinkirc.plugins", "pylinkirc.coremods"]
-package-dir = {pylinkirc = "."}
-script-files = ["pylink-mkpasswd"]
+packages = ["netlink", "netlink.protocols", "netlink.plugins", "netlink.coremods"]
+package-dir = {netlink = "."}
+script-files = ["netlink-mkpasswd"]
 
 [tool.setuptools.package-data]
 "*" = ["example-conf.yml", "VERSION", "README.md"]

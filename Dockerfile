@@ -1,17 +1,17 @@
 FROM python:3-alpine
 
-RUN adduser -D -H -u 10000 pylink
+RUN adduser -D -H -u 10000 netlink
 
-VOLUME /pylink
+VOLUME /netlink
 
-COPY . /pylink-src
+COPY . /netlink-src
 
-RUN cd /pylink-src && pip3 install --no-cache-dir -r requirements-docker.txt
-RUN cd /pylink-src && python3 setup.py install
-RUN rm -r /pylink-src
+RUN cd /netlink-src && pip3 install --no-cache-dir -r requirements-docker.txt
+RUN cd /netlink-src && python3 setup.py install
+RUN rm -r /netlink-src
 
-USER pylink
-WORKDIR /pylink
+USER netlink
+WORKDIR /netlink
 
 # Run in no-PID file mode by default
-CMD ["pylink", "-n"]
+CMD ["netlink", "-n"]

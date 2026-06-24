@@ -1,5 +1,5 @@
 """
-clientbot.py: Clientbot (regular IRC bot) protocol module for PyLink.
+clientbot.py: Clientbot (regular IRC bot) protocol module for NetLink.
 """
 
 # Here be dragons. There are lots of hacks and stubs in this module to recreate the same sort of state
@@ -11,14 +11,14 @@ import string
 import threading
 import time
 
-from pylinkirc import utils, world
-from pylinkirc.classes import *
-from pylinkirc.log import log
-from pylinkirc.protocols.ircs2s_common import *
+from netlink import utils, world
+from netlink.classes import *
+from netlink.log import log
+from netlink.protocols.ircs2s_common import *
 
 __all__ = ['ClientbotBaseProtocol', 'ClientbotWrapperProtocol']
 
-FALLBACK_REALNAME = 'PyLink Relay Mirror Client'
+FALLBACK_REALNAME = 'NetLink Relay Mirror Client'
 
 # IRCv3 capabilities to request when available.
 # Kept as a frozenset so plugins can read it safely.
@@ -42,7 +42,7 @@ IRCV3_CAPABILITIES = frozenset({
     'sasl',
 })
 
-class ClientbotBaseProtocol(PyLinkNetworkCoreWithUtils):
+class ClientbotBaseProtocol(NetLinkNetworkCoreWithUtils):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -56,7 +56,7 @@ class ClientbotBaseProtocol(PyLinkNetworkCoreWithUtils):
         """
         Fetches the UID for the given nick, creating one if it does not already exist and spawn_new is True.
 
-        To prevent message spoofing, this will only return an external (non-PyLink) client or the PyLink bot itself.
+        To prevent message spoofing, this will only return an external (non-NetLink) client or the NetLink bot itself.
         """
         #log.debug('(%s) _get_UID: searching for nick %s', self.name, nick, stack_info=True)
         idsource = self.nick_to_uid(nick, filterfunc=lambda uid: uid == self.pseudoclient.uid or not self.is_internal_client(uid))
@@ -296,7 +296,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         self._cap_timer.start()
 
         # Log in to IRC and set our irc.pseudoclient object.
-        sbot = world.services['pylink']
+        sbot = world.services['netlink']
         self._nick_fails = 0
 
         nick = sbot.get_nick(self)
@@ -318,7 +318,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
     def join(self, client, channel):
         """STUB: Joins a user to a channel."""
 
-        # Only joins for the main PyLink client are actually forwarded. Others are ignored.
+        # Only joins for the main NetLink client are actually forwarded. Others are ignored.
         # Note: we do not automatically add our main client to the channel state, as we
         # rely on the /NAMES reply to sync it up properly.
         if self.pseudoclient and client == self.pseudoclient.uid:
@@ -453,7 +453,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
 
             # Join persistent channels if always_autorejoin is enabled and there are any we're not in
             if self.serverdata.get('always_autorejoin') and self.has_cap('can-manage-bot-channels'):
-                for channel in world.services['pylink'].get_persistent_channels(self):
+                for channel in world.services['netlink'].get_persistent_channels(self):
                     if channel not in self.pseudoclient.channels:
                         log.info('(%s) Attempting to rejoin %s', self.name, channel)
                         self.join(self.pseudoclient.uid, channel)
@@ -463,7 +463,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         self._channels[channel].remove_user(source)
         self.users[source].channels.discard(channel)
 
-        # Only parts for the main PyLink client are actually forwarded. Others are ignored.
+        # Only parts for the main NetLink client are actually forwarded. Others are ignored.
         if self.pseudoclient and source == self.pseudoclient.uid:
             self._channels[channel]._clientbot_part_requested = True
             self.send('PART %s :%s' % (channel, reason))
@@ -521,7 +521,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
             command = args[0]
             args = args[1:]
         else:
-            # PyLink as a services framework expects UIDs and SIDs for everything. Since we connect
+            # NetLink as a services framework expects UIDs and SIDs for everything. Since we connect
             # as a bot here, there's no explicit user introduction, so we're going to generate
             # pseudo-uids and pseudo-sids as we see prefixes.
             if ('!' not in sender) and '.' in sender:
@@ -628,7 +628,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         """
         Handles SASL RPL_LOGGEDIN numerics.
         """
-        # <- :charybdis.midnight.vpn 900 ice ice!pylink@localhost ice :You are now logged in as ice
+        # <- :charybdis.midnight.vpn 900 ice ice!netlink@localhost ice :You are now logged in as ice
         # <- :server 900 <nick> <nick>!<ident>@<host> <account> :You are now logged in as <user>
 
         self.pseudoclient.services_account = args[2]
@@ -833,7 +833,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         Handles 352 / RPL_WHOREPLY.
         """
         # parameter count:               0   1     2       3         4                      5   6  7(-1)
-        # <- :charybdis.midnight.vpn 352 ice #test ~pylink 127.0.0.1 charybdis.midnight.vpn ice H+ :0 PyLink
+        # <- :charybdis.midnight.vpn 352 ice #test ~netlink 127.0.0.1 charybdis.midnight.vpn ice H+ :0 NetLink
         # <- :charybdis.midnight.vpn 352 ice #test ~jlu5 127.0.0.1 charybdis.midnight.vpn jlu5 H*@ :0 realname
         # with WHO %cuhsnfar (WHOX) - note, hopcount and realname are separate!
         #                                0   1     2   3         4                      5  6  7   8(-1)
@@ -942,7 +942,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         # <- :millennium.overdrivenetworks.com 433 * ice :Nickname is already in use.
 
         self._nick_fails += 1
-        newnick = self.pseudoclient.nick = world.services['pylink'].get_nick(self, fails=self._nick_fails)
+        newnick = self.pseudoclient.nick = world.services['netlink'].get_nick(self, fails=self._nick_fails)
         log.debug('(%s) _nick_fails = %s, trying new nick %r', self.name, self._nick_fails, newnick)
 
         self.send('NICK %s' % newnick)

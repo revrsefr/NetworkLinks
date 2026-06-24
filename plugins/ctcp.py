@@ -4,8 +4,8 @@ from __future__ import annotations
 import datetime
 import random
 
-from pylinkirc import utils
-from pylinkirc.log import log
+from netlink import utils
+from netlink.log import log
 
 
 def handle_ctcp(irc, source: str, command: str, args: dict):

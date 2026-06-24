@@ -1,12 +1,12 @@
-# example.py: An example PyLink plugin.
+# example.py: An example NetLink plugin.
 
 from __future__ import annotations
 import random
 
-from pylinkirc import utils
-from pylinkirc.log import log
+from netlink import utils
+from netlink.log import log
 
-# Example PRIVMSG hook that returns "hi there!" when PyLink's nick is mentioned
+# Example PRIVMSG hook that returns "hi there!" when NetLink's nick is mentioned
 # in a channel.
 
 # irc: The IRC object where the hook was called.
@@ -20,7 +20,7 @@ def hook_privmsg(irc, source: str, command: str, args: dict):
     channel = args['target']
     text = args['text']
 
-    # irc.pseudoclient stores the User object of the main PyLink client.
+    # irc.pseudoclient stores the User object of the main NetLink client.
     # (i.e. the user defined in the bot: section of the config)
     if irc.is_channel(channel) and irc.pseudoclient.nick in text:
         irc.msg(channel, 'hi there!')
@@ -46,7 +46,7 @@ def randint(irc, source: str, args: list):
     #   line, even though it is physically written on two.
     # - Double line breaks are treated as breaks between two paragraphs, and will be shown
     #   as distinct lines in IRC.
-    # As of PyLink 2.0, long paragraphs are automatically word-wrapped by irc.reply().
+    # As of NetLink 2.0, long paragraphs are automatically word-wrapped by irc.reply().
     """[<min> <max>]
 
     Returns a random number between <min> and <max>. <min> and <max> default to 1 and 10

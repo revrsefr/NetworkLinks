@@ -1,38 +1,38 @@
-# This is a sample configuration file for PyLink. You'll likely want to rename it to pylink.yml
+# This is a sample configuration file for NetLink. You'll likely want to rename it to netlink.yml
 # and begin your configuration there.
 
 # Note: lines starting with a "#" are comments and will be ignored.
 # Note 2: Use SPACES, NOT tabs to indent, or you will get parser errors on start!
 
-# Defines general settings for the PyLink server. Prior to PyLink 1.2, this configuration block
+# Defines general settings for the NetLink server. Prior to NetLink 1.2, this configuration block
 # was named "bot:".
-pylink:
+netlink:
     # Sets nick, user/ident, and real name.
-    nick: PyLink
-    ident: pylink
-    realname: PyLink Service Client
+    nick: NetLink
+    ident: netlink
+    realname: NetLink Service Client
 
     # Server description (shown in /links, /whois, etc.)
-    serverdesc: PyLink Server
+    serverdesc: NetLink Server
 
-    # Sets the fantasy command prefix for the main PyLink bot. To configure fantasy prefixes for
+    # Sets the fantasy command prefix for the main NetLink bot. To configure fantasy prefixes for
     # other service bots, add or modify the "prefix:" option in the configuration section of each
     # plugin. (see the "games:" block for an example)
-    # Note: prior to PyLink 1.2, defining a prefix here made it global for all service bots. This
+    # Note: prior to NetLink 1.2, defining a prefix here made it global for all service bots. This
     # was removed because it called all bots in a channel at once (even if they have conflicting
     # commands), which usually leads to one successful reply and a string of "Command not found"
     # errors.
-    # Note 2: this option REPLACES the deprecated "prefixes:" option from PyLink 1.1 and earlier.
+    # Note 2: this option REPLACES the deprecated "prefixes:" option from NetLink 1.1 and earlier.
     prefix: "&"
 
-    # Determines whether PyLink service bots will respond to commands prefixed with their nick
-    # (requires the fantasy plugin). Prior to PyLink 1.2, this option was named "respondtonick";
+    # Determines whether NetLink service bots will respond to commands prefixed with their nick
+    # (requires the fantasy plugin). Prior to NetLink 1.2, this option was named "respondtonick";
     # it was renamed for consistency. This defaults to false.
     #respond_to_nick: true
 
-    # Determines whether PyLink service clients should protect themselves from
+    # Determines whether NetLink service clients should protect themselves from
     # kicks, kills, etc. using IRCd-side servprotect modes. For this to work
-    # properly, this usually requires that PyLink be U-Lined. This defaults to
+    # properly, this usually requires that NetLink be U-Lined. This defaults to
     # False.
     #protect_services: false
 
@@ -43,10 +43,10 @@ pylink:
     # Determines whether spawning additional services for bots (e.g. Automode, Games) should be
     # enabled. This defaults to True, unless a network's protocol module doesn't support spawning
     # extra service bots. If this is set to false, the other plugins' commands and channels will
-    # be merged into that of the main PyLink service bot.
+    # be merged into that of the main NetLink service bot.
     #spawn_services: true
 
-    # Determines the default ban style that PyLink should use for setting bans (e.g. in Antispam)
+    # Determines the default ban style that NetLink should use for setting bans (e.g. in Antispam)
     # $ident, $host, $realhost, $ip, and $nick are among the supported substitutions here.
     # This defaults to "*!*@$host" if not set.
     # You should take extra caution that 1) the resulting mask is a valid nick!user@host
@@ -56,8 +56,8 @@ pylink:
 
     # Defines extra directories to look up plugins and protocol modules in.
     # Environment variables (e.g. $HOME) and home folders (~) are expanded here, in that order.
-    #plugin_dirs: ["~/my-plugins", "~/pylink-contrib-modules/plugins"]
-    #protocol_dirs: ["~/pylink-contrib-modules/protocols"]
+    #plugin_dirs: ["~/my-plugins", "~/netlink-contrib-modules/plugins"]
+    #protocol_dirs: ["~/netlink-contrib-modules/protocols"]
 
     # Determines whether service bots should return unknown command errors. Defaults to true if not
     # speciifed.
@@ -72,7 +72,7 @@ pylink:
     # accounts for authentication), it is recommended to leave this off.
     #whois_show_extensions_to_bots: false
 
-    # Determines whether PyLink should return its time of initial connection when replying to WHOIS
+    # Determines whether NetLink should return its time of initial connection when replying to WHOIS
     # for service bots. This defaults to true if not set.
     #whois_show_startup_time: true
 
@@ -87,28 +87,28 @@ pylink:
     #join_empty_channels: false
 
     # Determines where the plugins write their databases. The path can be relative to the directory
-    # PyLink is run from. Defaults to the current directory.
+    # NetLink is run from. Defaults to the current directory.
     #data_dir: ""
 
-    # Determines where the PID file is written. The path can be relative to the directory PyLink is
+    # Determines where the PID file is written. The path can be relative to the directory NetLink is
     # run from. Defaults to the current directory.
     #pid_dir: ""
 
 login:
-    # NOTE: for users migrating from PyLink < 1.1, the old login:user/login:password settings
+    # NOTE: for users migrating from NetLink < 1.1, the old login:user/login:password settings
     # have been deprecated. We strongly recommend migrating to the new "accounts:" block below, as
     # it supports multiple accounts, hashed passwords, and allows more flexibility (accounts no
     # longer imply admin access).
 
     # IMPORTANT: If you're switching from login:user/login:password, you MUST ADD YOURSELF to a
     # "permissions:" block like the one below, or you will lose IRC administration access to your
-    # PyLink daemon!
+    # NetLink daemon!
     accounts:
         # Creates an account with username "user1". You can define other usernames at the
         # same level here (key name is user name).
         user1:
             # Defines the password for the user. You can encrypt passwords using the
-            # 'mkpasswd' command or the 'pylink-mkpasswd' utility included with PyLink.
+            # 'mkpasswd' command or the 'netlink-mkpasswd' utility included with NetLink.
             password: "$6$rounds=81447$WlVlZYCgbnjPmVqy$28Tu/Zl0xNpePqimax2wABKn5GCoWomYEI1Pu5jqYyQNULazR4BxQmscZ0MgBHqBCCke.3u5eOtBSZwL3WwVf0"
 
             # Determines whether the password given is encrypted. Defaults to false
@@ -125,9 +125,9 @@ login:
             # are supported here as well.
             #hosts: ["*!*@localhost", "*!*@trusted.isp"]
 
-    # For ADVANCED users: adjusts settings for PyLink's default passlib CryptContext.
-    # As of PyLink 2.0.3, the default is to use pbkdf2_sha256 for new hashes, while also allowing verifying
-    # sha512_crypt for compatibility with PyLink < 2.0.3.
+    # For ADVANCED users: adjusts settings for NetLink's default passlib CryptContext.
+    # As of NetLink 2.0.3, the default is to use pbkdf2_sha256 for new hashes, while also allowing verifying
+    # sha512_crypt for compatibility with NetLink < 2.0.3.
     # This is configured as a dict of settings, which will be passed into the CryptContext constructor.
     # See https://passlib.readthedocs.io/en/stable/lib/passlib.context.html for a list of valid options.
     # Changes to this setting require a rehash to apply.
@@ -135,8 +135,8 @@ login:
         #schemes: ["pbkdf2_sha256", "sha512_crypt"]
 
 permissions:
-    # Permissions blocks in PyLink are define as a mapping of PyLink targets (i.e. hostmasks or
-    # exttargets) to lists of permission nodes. You can find a list of permissions that PyLink and
+    # Permissions blocks in NetLink are define as a mapping of NetLink targets (i.e. hostmasks or
+    # exttargets) to lists of permission nodes. You can find a list of permissions that NetLink and
     # its plugins define in docs/permissions-reference.md. Exttargets (extended targets) are
     # documented further in docs/exttargets.md
 
@@ -146,9 +146,9 @@ permissions:
     #    - "permission.node.2"
     #    - "someplugin.*"  # Wildcards are also supported in names
 
-    # Replace ABC123 with your PyLink account name (configured above in order to give yourself admin
-    # access. As of PyLink 2.0, specifying a bare account name is synonymous with
-    # "$pylinkirc:<accountname>" (i.e. the "$pylinkirc:" prefix is implied).
+    # Replace ABC123 with your NetLink account name (configured above in order to give yourself admin
+    # access. As of NetLink 2.0, specifying a bare account name is synonymous with
+    # "$netlinkirc:<accountname>" (i.e. the "$netlinkirc:" prefix is implied).
     "ABC123":
         - "*"
 
@@ -156,7 +156,7 @@ permissions:
 # You should generally only disable this if you need to configure permissions in a specific way,
 # because it WILL break features people expect to work (e.g. access to Relay commands) unless you
 # configure that in.
-# See docs/permissions-reference.md for a list of permissions defined by PyLink's stock plugins.
+# See docs/permissions-reference.md for a list of permissions defined by NetLink's stock plugins.
 # This defaults to true if not set.
 #permissions_merge_defaults: true
 
@@ -183,17 +183,17 @@ servers:
         netname: "Change this"
 
         # Hostname we will use to connect to the remote server
-        hostname: "pylink.yournet.local"
+        hostname: "netlink.yournet.local"
 
-        # Sets the server ID (SID) that the main PyLink server should use. For TS6-like servers
+        # Sets the server ID (SID) that the main NetLink server should use. For TS6-like servers
         # (InspIRCd, Charybdis, UnrealIRCd, etc.), this must be three characters:
         # the first char must be a digit [0-9], and the remaining two may be either uppercase
         # letters [A-Z] or digits.
         sid: "0PY"
 
-        # Server ID range: this specifies the range of server IDs that PyLink# may use for
+        # Server ID range: this specifies the range of server IDs that NetLink# may use for
         # subservers such as Relay. On TS6, this should be a combination of digits, letters, and #'s.
-        # Each # denotes a range (0-9A-Z) of characters that can be used by PyLink to generate SIDs.
+        # Each # denotes a range (0-9A-Z) of characters that can be used by NetLink to generate SIDs.
         # You will want to make sure no other servers are using this range.
         # There must be at least one # in this entry.
         sidrange: "8##"
@@ -209,7 +209,7 @@ servers:
         #target_version: insp3
 
         # Sets the max nick length for the network. It is important that this is set correctly, or
-        # PyLink might introduce a nick that is too long and cause netsplits!
+        # NetLink might introduce a nick that is too long and cause netsplits!
         # This defaults to 30 if not set.
         maxnicklen: 30
 
@@ -218,16 +218,16 @@ servers:
         ssl: true
 
         # Optional TLS cert/key to pass to the uplink server.
-        #ssl_certfile: pylink-cert.pem
-        #ssl_keyfile: pylink-key.pem
+        #ssl_certfile: netlink-cert.pem
+        #ssl_keyfile: netlink-key.pem
 
-        # New in PyLink 2.0: Determines whether the target server's TLS certificate hostnames should be
+        # New in NetLink 2.0: Determines whether the target server's TLS certificate hostnames should be
         # checked against the hostname we're set to connect to. This defaults to true for Clientbot
         # networks and others linked to via a hostname. It depends on ssl_accept_invalid_certs being
         # *disabled* to take effect.
         #ssl_validate_hostname: true
 
-        # New in PyLink 2.0: When enabled, this disables TLS certificate validation on the target network.
+        # New in NetLink 2.0: When enabled, this disables TLS certificate validation on the target network.
         # This defaults to false (bad certs are rejected) on Clientbot and true for server protocols
         # (where bad certs are accepted). This disables the ssl_validate_hostname option, forcing it to
         # be false.
@@ -258,8 +258,8 @@ servers:
         # configure channels per service using keys in the name of "<servicename>_channels"
         # Comment out or remove these keys if you don't want service bots# to join any channels by
         # default.
-        #channels: ["#pylink"]
-        #pylink_channels: ["#services"]
+        #channels: ["#netlink"]
+        #netlink_channels: ["#services"]
         #automode_channels: ["#chat"]
 
         # Encoding: allows you to override the network's encoding. This can be useful for networks
@@ -271,7 +271,7 @@ servers:
         #encoding: utf-8
 
         # Sets the ping frequency in seconds (i.e. how long we should wait between sending pings to
-        # our uplink). When more than two consecutive pings are missed, PyLink will disconnect with
+        # our uplink). When more than two consecutive pings are missed, NetLink will disconnect with
         # a ping timeout. This defaults to 90 if not set.
         #pingfreq: 90
 
@@ -298,7 +298,7 @@ servers:
         #ulines: ["services.example.conf"]
 
         # InspIRCd specific option: determines whether we should display WHOIS extensions by overriding
-        # InspIRCd's default WHOIS formatting. This defaults to true for consistency with PyLink 1.x.
+        # InspIRCd's default WHOIS formatting. This defaults to true for consistency with NetLink 1.x.
         #force_whois_extensions: true
 
     unrealnet:
@@ -313,7 +313,7 @@ servers:
         ssl: true
         #ssl_certfile: mycert.pem
         #ssl_keyfile: mycert.pem
-        hostname: "pylink.example.com"
+        hostname: "netlink.example.com"
         sid: "2PY"
         sidrange: "8##"
         protocol: "unreal"
@@ -324,10 +324,10 @@ servers:
 
         # You can also define network-specific nicks, idents, and hosts for various service
         # bots, using the configuration options "servicename_nick", etc.
-        #pylink_nick: MagicServ
-        #pylink_ident: magicserv
-        #pylink_host: magicserv.mynet.net
-        #pylink_realname: Magic Link Service
+        #netlink_nick: MagicServ
+        #netlink_ident: magicserv
+        #netlink_host: magicserv.mynet.net
+        #netlink_realname: Magic Link Service
         #games_nick: MagicGames
         #games_ident: magicgames
         #games_host: games.mynet.net
@@ -339,7 +339,7 @@ servers:
 
         # When the IP field is set to a hostname, the "ipv6" option determines whether IPv4 or IPv6
         # addresses should be used when resolving it.
-        # As of PyLink 3.1, this defaults to null, falling back to the system's default preferences
+        # As of NetLink 3.1, this defaults to null, falling back to the system's default preferences
         # if not set (e.g. /etc/gai.conf on Linux). Previous versions default to making IPv4 connections only.
         # This option is overridden by "bindhost" if it is also provided.
         #ipv6: null
@@ -356,12 +356,12 @@ servers:
 
         recvpass: "PASS123"
         sendpass: "PASS321"
-        hostname: "pylink.somenet.ddns.local"
+        hostname: "netlink.somenet.ddns.local"
 
-        # For P10, the SID and SID range options correspond to P10 server numerics. The PyLink
+        # For P10, the SID and SID range options correspond to P10 server numerics. The NetLink
         # "sid" should be the numeric of the main server, and "sidrange" should be a range of
         # numerics that subservers (e.g. for relay) can use.
-        # Make sure no other servers are in the numeric range you're reserving for PyLink, or you
+        # Make sure no other servers are in the numeric range you're reserving for NetLink, or you
         # may get conflicts.
         sid: 50
         sidrange: "100-150"
@@ -383,7 +383,7 @@ servers:
         # Sets the IRCd type. The following options are supported here: 'nefarious', 'snircd', 'ircu',
         # and 'generic'. This defaults to 'nefarious'.
         # With this key set to 'nefarious', FAKE (external vHost changing) and SETHOST (host changing
-        # for PyLink / relay clients) are enabled, along with a set of modes tailored to Nefarious.
+        # for NetLink / relay clients) are enabled, along with a set of modes tailored to Nefarious.
 
         # With this key set to 'snircd', SETHOST and a set of modes tailored to snircd are enabled.
         # Host changing for other users (e.g. via the changehost plugin) is not supported.
@@ -394,7 +394,7 @@ servers:
         # With this key set to 'generic', neither of these host changing features are enabled
         # and a baseline RFC1459 mode set is used. This configuration is not officially supported.
 
-        # (This option was previously named "p10_ircd" in PyLink 1.2, and that option name is
+        # (This option was previously named "p10_ircd" in NetLink 1.2, and that option name is
         #  deprecated as of 2.0).
         ircd: nefarious
 
@@ -433,7 +433,7 @@ servers:
         ssl: true
         recvpass: "abcd"
         sendpass: "abcd"
-        hostname: "pylink.example.com"
+        hostname: "netlink.example.com"
         sid: "8PY"
         netname: "Network name"
         sidrange: "8##"
@@ -450,16 +450,16 @@ servers:
 
         # Sets the IRCd (channel/user mode set) to target - currently supported values include
         # 'chatircd', 'charybdis', and 'elemental' (elemental-ircd). This option defaults to
-        # 'charybdis' if not set, and replaces the "use_elemental_modes" option from PyLink 1.2
+        # 'charybdis' if not set, and replaces the "use_elemental_modes" option from NetLink 1.2
         # and earlier.
         #ircd: charybdis
 
-        # Determines whether PyLink servers should be marked hidden in /links and /map.
+        # Determines whether NetLink servers should be marked hidden in /links and /map.
         # This only takes effect if the 'flatten_links' option in the IRCd is enabled.
         # Defaults to false if not set.
         #hidden: false
 
-    # Sample Clientbot configuration, if you want to connect PyLink as a bot to relay somewhere
+    # Sample Clientbot configuration, if you want to connect NetLink as a bot to relay somewhere
     # (or do other bot things).
     magicnet:
         ip: irc.somenet.local
@@ -472,14 +472,14 @@ servers:
         #channels: ["#this-works-as-usual"]
         protocol: "clientbot"
 
-        # You can set the PyLink bot nick and ident using the "pylink_nick" and "pylink_ident" options.
-        #pylink_nick: pybot
-        #pylink_ident: pybot
+        # You can set the NetLink bot nick and ident using the "netlink_nick" and "netlink_ident" options.
+        #netlink_nick: pybot
+        #netlink_ident: pybot
 
         # You can also define alternate fallback nicks on Clientbot. These will be used in order
         # if successive nicks are unavailable, falling back to the default nick plus an increasing
         # number of underscores.
-        #pylink_altnicks: ["pybot`", "pybot-"]
+        #netlink_altnicks: ["pybot`", "pybot-"]
 
         # TLS/SSL options. Certfile and keyfile are optional, but can be used for CertFP/SASL external
         # where supported.
@@ -506,11 +506,11 @@ servers:
 
         # Message throttling: when set to a non-zero value, only one message will be sent every X
         # seconds. If your bot is constantly running into Excess Flood errors, raising this to
-        # something like 0.5 or 1.0 should help. Since PyLink 2.0.2, this defaults to 0 if not set.
+        # something like 0.5 or 1.0 should help. Since NetLink 2.0.2, this defaults to 0 if not set.
         throttle_time: 0.3
 
         # Determines whether messages from unknown clients (servers, clients not sharing in a -n
-        # channel, etc.) should be forwarded via the PyLink server. If this is disabled, these
+        # channel, etc.) should be forwarded via the NetLink server. If this is disabled, these
         # messages will be silently dropped. This overrides the "accept_weird_senders" option in the
         # "relay:" configuration block, and defaults to True for consistency with older releases.
         #relay_weird_senders: false
@@ -547,7 +547,7 @@ servers:
 
         # Determines whether oper statuses should be tracked on this Clientbot network. This
         # defaults to False for the best security, since oper status may allow more access to the
-        # entire PyLink service than what's desired, even when PyLink is only connected as a bot.
+        # entire NetLink service than what's desired, even when NetLink is only connected as a bot.
         # This defaults to false if not specified.
         #track_oper_statuses: false
 
@@ -564,14 +564,14 @@ plugins:
     # channels, etc.
     - commands
 
-    # Networks plugin: Allows you to manage connections to networks while PyLink is running.
+    # Networks plugin: Allows you to manage connections to networks while NetLink is running.
     - networks
 
     # Ctcp plugin: handles basic CTCP replies (VERSION, etc) towards service bots.
     - ctcp
 
     # Servprotect plugin: disconnects from networks if too many kills or nick collisions to
-    # PyLink clients are received. Requires the cachetools Python library.
+    # NetLink clients are received. Requires the cachetools Python library.
     - servprotect
 
     # Relay plugin: Transparent server-side relay between channels (like Janus). See
@@ -580,11 +580,11 @@ plugins:
 
     # Relay Clientbot plugin: this allows channel messages and events like
     # JOIN, PART, KICK, etc. to relay over networks using Clientbot. You will
-    # want this loaded if you're using PyLink as a relay bot.
+    # want this loaded if you're using NetLink as a relay bot.
     #- relay_clientbot
 
     # Fantasy plugin: Allows you to trigger commands in channels by prefixing them
-    # with the PyLink service's nick or configurable prefix characters.
+    # with the NetLink service's nick or configurable prefix characters.
     #- fantasy
 
     # Oper commands plugin: Provides a handful of network management commands. (KILL, JUPE, etc.)
@@ -604,14 +604,14 @@ plugins:
     # You *will need* to configure it via the "antispam:" configuration block below.
     #- antispam
 
-    # Global plugin: Janus-style global plugin; announces messages to all channels the PyLink
+    # Global plugin: Janus-style global plugin; announces messages to all channels the NetLink
     # client is in.
     #- global
 
-    # Bots plugin: Allows you to manipulate PyLink service bots on networks.
+    # Bots plugin: Allows you to manipulate NetLink service bots on networks.
     #- bots
 
-    # Servermaps plugin: displays network /map's from the PyLink server's perspective.
+    # Servermaps plugin: displays network /map's from the NetLink server's perspective.
     #- servermaps
 
     # Raw plugin: Provides a 'raw' command for sending raw text to IRC.
@@ -619,19 +619,19 @@ plugins:
     #- raw
 
 logging:
-    # This configuration block defines targets that PyLink should log commands,
+    # This configuration block defines targets that NetLink should log commands,
     # errors, etc., to.
 
     # This sets the level for console logging, which is always enabled. Valid
     # settings include DEBUG, INFO, WARNING, ERROR, and CRITICAL: see
     # https://docs.python.org/3/library/logging.html#logging-levels for details.
-    # Prior to PyLink 1.2, this option was erroneously named 'log:stdout', even though the actual
+    # Prior to NetLink 1.2, this option was erroneously named 'log:stdout', even though the actual
     # logging output goes to stderr. That option name (log:stdout) is now *deprecated*.
     console: INFO
 
     channels:
         # Logs to channels on the specified networks.
-        # Make sure that the main PyLink client is also configured to join your
+        # Make sure that the main NetLink client is also configured to join your
         # log channel in the "channels:" block for the relevant networks.
 
         # Note: Log messages are forwarded over relay, so you will get duplicate
@@ -644,7 +644,7 @@ logging:
         inspnet:
             "#services":
                 loglevel: INFO
-            "#pylink-notifications":
+            "#netlink-notifications":
                 loglevel: WARNING
 
         ts6net:
@@ -652,7 +652,7 @@ logging:
                 loglevel: INFO
 
     # The directory where the log files are written. The path can be relative to the directory
-    # PyLink is run from. Defaults to "log/".
+    # NetLink is run from. Defaults to "log/".
     #log_dir: "log"
 
     files:
@@ -660,24 +660,24 @@ logging:
         # filename based on the current instance name and the target name:
         # instancename-targetname.log
 
-        # When running with "pylink", this will create log/pylink-errors.log
-        # When running with "pylink someconf.yml", this will create log/someconf-errors.log
+        # When running with "netlink", this will create log/netlink-errors.log
+        # When running with "netlink someconf.yml", this will create log/someconf-errors.log
         "errors":
             loglevel: ERROR
 
-        # Ditto above. When running with "pylink", it will use log/pylink-commands.log
-        # When running with "pylink someconf.yml", this will create log/someconf-commands.log
+        # Ditto above. When running with "netlink", it will use log/netlink-commands.log
+        # When running with "netlink someconf.yml", this will create log/someconf-commands.log
         "commands":
             loglevel: INFO
 
         # Uncomment this to enable debug logging. This is only needed if you're developing for
-        # PyLink or are requested to enable this when reporting a bug.
+        # NetLink or are requested to enable this when reporting a bug.
         #"debug":
         #    loglevel: DEBUG
 
     #filerotation:
-        # Configures optional log file rotation. When enabled, PyLink will create rotate files
-        # in the format pylink-commands.log, pylink-commands.log.1, pylink-commands.log.2, etc.
+        # Configures optional log file rotation. When enabled, NetLink will create rotate files
+        # in the format netlink-commands.log, netlink-commands.log.1, netlink-commands.log.2, etc.
         # If either max_bytes or backup_count is 0, log rotation will be disabled.
 
         # Max amount of bytes per file before rotation is done. Defaults to 20 MiB (20971520 bytes).
@@ -691,7 +691,7 @@ changehost:
     # aren't using it.
 
     # Sets the networks where Changehost should be enabled. Please note: changehost does NOT support
-    # arbitrarily cloaking clients introduced by PyLink (e.g. relay clients), as doing so would make
+    # arbitrarily cloaking clients introduced by NetLink (e.g. relay clients), as doing so would make
     # ban matching impossible. In these cases, it is the remote admin's job to turn on cloaking on
     # their IRCd.
     # You can also add to this list of enabled networks by setting "servers::<server name>::changehost_enable"
@@ -709,7 +709,7 @@ changehost:
 
     # Sets the masks that Changehost enforcement should ignore: these can be users with certain
     # hosts, exttargets, etc.
-    # Since PyLink 2.1, you can also add to this list on a per-network basis by adding options under
+    # Since NetLink 2.1, you can also add to this list on a per-network basis by adding options under
     # "servers::<server name>::changehost_enforce_exceptions".
     enforce_exceptions:
         - "*!*@yournet/staff/*"
@@ -726,7 +726,7 @@ changehost:
     # $uid, $ts (time of connection), $nick, $realhost, $ident, and $ip.
     # Invalid characters in hosts are replaced with a "-".
     # Also, make sure you quote each entry so the YAML parser treats them as raw strings.
-    # Since PyLink 2.1, you can also add to this list on a per-network basis by adding options under
+    # Since NetLink 2.1, you can also add to this list on a per-network basis by adding options under
     # "servers::<server name>::changehost_hosts".
     hosts:
         # Here are some examples. Note that to keep your users' details private, you should probably refrain
@@ -746,8 +746,8 @@ relay:
     # Determines whether all opers should be able to create, link, delink, destroy, and adjust
     # claim settings & channel descriptions on relay channels. You can disable this if you want to
     # configure Relay permissions in a more fine grained way, e.g. by granting each network admin
-    # their own PyLink account.
-    # This defaults to True if not set, for consistency with older (< 2.0) PyLink versions.
+    # their own NetLink account.
+    # This defaults to True if not set, for consistency with older (< 2.0) NetLink versions.
     # Changing this setting requires a rehash and reload of the Relay plugin to apply.
     allow_free_oper_links: true
 
@@ -849,7 +849,7 @@ relay:
     # re-established, but new links will be disabled.
 
     # Determines whether messages from unknown clients (servers, clients not sharing in a -n channel,
-    # etc.) should be forwarded via the PyLink server. If this is disabled, these messages will be
+    # etc.) should be forwarded via the NetLink server. If this is disabled, these messages will be
     # silently dropped. This defaults to True for consistency with older releases.
     #accept_weird_senders: false
 
@@ -892,23 +892,23 @@ automode:
 
     # Determines whether a separate service bot should be spawned for this plugin. This defaults to
     # True, unless a network's protocol module doesn't support spawning extra service bots.
-    # This option overrides the global "spawn_services" option defined in "pylink:".
+    # This option overrides the global "spawn_services" option defined in "netlink:".
     # If this is set to False, this plugin's commands and channels will be merged into that of the
-    # main PyLink service bot.
+    # main NetLink service bot.
     #spawn_service: true
 
     # Defines a fantasy prefix for the Automode bot (requires spawn_services to be set and the
-    # fantasy plugin to be loaded). This overrides the "prefix" option in the "pylink:" config
+    # fantasy plugin to be loaded). This overrides the "prefix" option in the "netlink:" config
     # block.
     prefix: "@"
 
     # Determines whether this bot should respond to its nick (requires spawn_services to be set and the
-    # fantasy plugin to be loaded). This overrides the "respond_to_nick" option in the "pylink:" config
+    # fantasy plugin to be loaded). This overrides the "respond_to_nick" option in the "netlink:" config
     # block.
     #respond_to_nick: true
 
     # Determines whether we should show unknown command errors for this service bot. Defaults to True.
-    # This overrides the "show_unknown_commands" option in the "pylink:" config block.
+    # This overrides the "show_unknown_commands" option in the "netlink:" config block.
     #show_unknown_commands: true
 
 games:
@@ -1008,12 +1008,12 @@ stats:
         # Sets the kick / kill message used when a message triggers the text spamfilter.
         #reason: "Spam is prohibited"
 
-        # Determines whether PMs to PyLink clients should also be tracked to prevent spam.
+        # Determines whether PMs to NetLink clients should also be tracked to prevent spam.
         # Valid values include false (the boolean value), 'services', and 'all':
         # - If this is set to false, PMs are ignored by text filtering.
         # - If this is set to 'services', only PMs sent to services are checked for spam (this allows
         #   them to effectively act as PM spam traps)
-        # - If this is set to 'all', all PyLink clients (including relay users) have incoming PMs
+        # - If this is set to 'all', all NetLink clients (including relay users) have incoming PMs
         #   checked for spam.
         # This defaults to false if not set.
         #watch_pms: false

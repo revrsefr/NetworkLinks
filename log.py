@@ -1,7 +1,7 @@
 """
-log.py - PyLink logging module.
+log.py - NetLink logging module.
 
-This module contains the logging portion of the PyLink framework. Plugins can
+This module contains the logging portion of the NetLink framework. Plugins can
 access the global logger object by importing "log" from this module
 (from log import log).
 """
@@ -36,7 +36,7 @@ world.console_handler.setFormatter(logformatter)
 world.console_handler.setLevel(_get_console_log_level())
 
 # Get the main logger object; plugins can import this variable for convenience.
-log = logging.getLogger('pylinkirc')
+log = logging.getLogger('netlink')
 log.addHandler(world.console_handler)
 
 # This is confusing, but we have to set the root logger to accept all events. Only this way
@@ -57,7 +57,7 @@ def _make_file_logger(filename: str, level=None):
     os.makedirs(logdir, exist_ok=True)
 
     # Use log names specific to the current instance, to prevent multiple
-    # PyLink instances from overwriting each others' log files.
+    # NetLink instances from overwriting each others' log files.
     target = os.path.join(logdir, '%s-%s.log' % (conf.confname, filename))
 
     logrotconf = logconf.get('filerotation', {})
@@ -65,7 +65,7 @@ def _make_file_logger(filename: str, level=None):
     # Max amount of bytes per file, before rotation is done. Defaults to 20 MiB.
     maxbytes = logrotconf.get('max_bytes', 20971520)
 
-    # Amount of backups to make (e.g. pylink-debug.log, pylink-debug.log.1, pylink-debug.log.2, ...)
+    # Amount of backups to make (e.g. netlink-debug.log, netlink-debug.log.1, netlink-debug.log.2, ...)
     # Defaults to 5.
     backups = logrotconf.get('backup_count', 5)
 
@@ -109,12 +109,12 @@ while world._log_queue:
     log.log(level, text)
 log.debug("log: Emptied _log_queue")
 
-class PyLinkChannelLogger(logging.Handler):
+class NetLinkChannelLogger(logging.Handler):
     """
-    Log handler to log to channels in PyLink.
+    Log handler to log to channels in NetLink.
     """
     def __init__(self, irc, channel, level=None):
-        super(PyLinkChannelLogger, self).__init__()
+        super(NetLinkChannelLogger, self).__init__()
         self.irc = irc
         self.channel = channel
 

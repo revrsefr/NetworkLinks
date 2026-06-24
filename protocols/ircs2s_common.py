@@ -7,9 +7,9 @@ from __future__ import annotations
 import re
 import time
 
-from pylinkirc import conf
-from pylinkirc.classes import IRCNetwork, ProtocolError
-from pylinkirc.log import log
+from netlink import conf
+from netlink.classes import IRCNetwork, ProtocolError
+from netlink.log import log
 
 __all__ = ['UIDGenerator', 'IRCCommonProtocol', 'IRCS2SProtocol']
 
@@ -205,9 +205,9 @@ class IRCCommonProtocol(IRCNetwork):
         Handles 005 / RPL_ISUPPORT. This is used by at least Clientbot and ngIRCd (for server negotiation).
         """
         # ngIRCd:
-        # <- :ngircd.midnight.local 005 pylink-devel.int NETWORK=ngircd-test :is my network name
-        # <- :ngircd.midnight.local 005 pylink-devel.int RFC2812 IRCD=ngIRCd CHARSET=UTF-8 CASEMAPPING=ascii PREFIX=(qaohv)~&@%+ CHANTYPES=#&+ CHANMODES=beI,k,l,imMnOPQRstVz CHANLIMIT=#&+:10 :are supported on this server
-        # <- :ngircd.midnight.local 005 pylink-devel.int CHANNELLEN=50 NICKLEN=21 TOPICLEN=490 AWAYLEN=127 KICKLEN=400 MODES=5 MAXLIST=beI:50 EXCEPTS=e INVEX=I PENALTY :are supported on this server
+        # <- :ngircd.midnight.local 005 netlink-devel.int NETWORK=ngircd-test :is my network name
+        # <- :ngircd.midnight.local 005 netlink-devel.int RFC2812 IRCD=ngIRCd CHARSET=UTF-8 CASEMAPPING=ascii PREFIX=(qaohv)~&@%+ CHANTYPES=#&+ CHANMODES=beI,k,l,imMnOPQRstVz CHANLIMIT=#&+:10 :are supported on this server
+        # <- :ngircd.midnight.local 005 netlink-devel.int CHANNELLEN=50 NICKLEN=21 TOPICLEN=490 AWAYLEN=127 KICKLEN=400 MODES=5 MAXLIST=beI:50 EXCEPTS=e INVEX=I PENALTY :are supported on this server
 
         # Regular clientbot, connecting to InspIRCd:
         # <- :millennium.overdrivenetworks.com 005 ice AWAYLEN=200 CALLERID=g CASEMAPPING=rfc1459 CHANMODES=IXbegw,k,FJLfjl,ACKMNOPQRSTUcimnprstz CHANNELLEN=64 CHANTYPES=# CHARSET=ascii ELIST=MU ESILENCE EXCEPTS=e EXTBAN=,ACNOQRSTUcmprsuz FNC INVEX=I :are supported by this server
@@ -366,18 +366,18 @@ class IRCS2SProtocol(IRCCommonProtocol):
                 return [sender, command, parsed_args]
 
     def invite(self, source, target, channel):
-        """Sends an INVITE from a PyLink client."""
+        """Sends an INVITE from a NetLink client."""
         if not self.is_internal_client(source):
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
 
         self._send_with_prefix(source, 'INVITE %s %s' % (self._expandPUID(target), channel))
 
     def kick(self, numeric, channel, target, reason=None):
-        """Sends kicks from a PyLink client/server."""
+        """Sends kicks from a NetLink client/server."""
 
         if (not self.is_internal_client(numeric)) and \
                 (not self.is_internal_server(numeric)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
 
         if not reason:
             reason = 'No reason given'
@@ -406,10 +406,10 @@ class IRCS2SProtocol(IRCCommonProtocol):
         self._send_with_prefix(source, '%s %s %s' % (numeric, target, text))
 
     def part(self, client, channel, reason=None):
-        """Sends a part from a PyLink client."""
+        """Sends a part from a NetLink client."""
         if not self.is_internal_client(client):
             log.error('(%s) Error trying to part %r from %r (no such client exists)', self.name, client, channel)
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
         msg = "PART %s" % channel
         if reason:
             msg += " :%s" % reason
@@ -419,17 +419,17 @@ class IRCS2SProtocol(IRCCommonProtocol):
     def _ping_uplink(self):
         """Sends a PING to the uplink.
 
-        This is mostly used by PyLink internals to check whether the remote link is up."""
+        This is mostly used by NetLink internals to check whether the remote link is up."""
         if self.sid and self.connected.is_set():
             self._send_with_prefix(self.sid, 'PING %s' % self._expandPUID(self.uplink))
 
     def quit(self, numeric, reason):
-        """Quits a PyLink client."""
+        """Quits a NetLink client."""
         if self.is_internal_client(numeric):
             self._send_with_prefix(numeric, "QUIT :%s" % reason)
             self._remove_client(numeric)
         else:
-            raise LookupError("No such PyLink client exists.")
+            raise LookupError("No such NetLink client exists.")
 
     def _build_tag_prefix(self, tags):
         """Builds an IRCv3 message-tag prefix ('@a=1;b ', with a trailing space)
@@ -446,12 +446,12 @@ class IRCS2SProtocol(IRCCommonProtocol):
         return ('@%s ' % ';'.join(parts)) if parts else ''
 
     def message(self, numeric, target, text, tags=None):
-        """Sends a PRIVMSG from a PyLink client.
+        """Sends a PRIVMSG from a NetLink client.
 
         `tags` is an optional dict of IRCv3 message tags (e.g. {'time': ...} for
         server-time); they are only emitted if message-tags was negotiated."""
         if not self.is_internal_client(numeric):
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
 
         # Mangle message targets for IRCds that require it.
         target = self._expandPUID(target)
@@ -464,13 +464,13 @@ class IRCS2SProtocol(IRCCommonProtocol):
             self._send_with_prefix(numeric, 'PRIVMSG %s :%s' % (target, text))
 
     def notice(self, numeric, target, text, tags=None):
-        """Sends a NOTICE from a PyLink client or server.
+        """Sends a NOTICE from a NetLink client or server.
 
         `tags` is an optional dict of IRCv3 message tags, emitted only if
         message-tags was negotiated."""
         if (not self.is_internal_client(numeric)) and \
                 (not self.is_internal_server(numeric)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
 
         # Mangle message targets for IRCds that require it.
         target = self._expandPUID(target)
@@ -488,7 +488,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
                 .replace('\r', '\\r').replace('\n', '\\n'))
 
     def tagmsg(self, numeric, target, tags):
-        """Sends a TAGMSG (IRCv3 message-tags) from a PyLink client.
+        """Sends a TAGMSG (IRCv3 message-tags) from a NetLink client.
 
         `tags` is a dict of tag name -> value. Only client-only tags (names
         starting with '+') are relayable across networks; callers should filter
@@ -496,7 +496,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
         if not self.has_cap('has-message-tags'):
             return
         if (not self.is_internal_client(numeric)) and (not self.is_internal_server(numeric)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
         if not tags:
             return
 
@@ -512,16 +512,16 @@ class IRCS2SProtocol(IRCCommonProtocol):
                                          self._expandPUID(target)))
 
     def squit(self, source, target, text='No reason given'):
-        """SQUITs a PyLink server."""
+        """SQUITs a NetLink server."""
         # -> SQUIT 9PZ :blah, blah
         log.debug('(%s) squit: source=%s, target=%s', self.name, source, target)
         self._send_with_prefix(source, 'SQUIT %s :%s' % (self._expandPUID(target), text))
         self.handle_squit(source, 'SQUIT', [target, text])
 
     def topic(self, source, target, text):
-        """Sends a TOPIC change from a PyLink client or server."""
+        """Sends a TOPIC change from a NetLink client or server."""
         if (not self.is_internal_client(source)) and (not self.is_internal_server(source)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
 
         self._send_with_prefix(source, 'TOPIC %s :%s' % (target, text))
         self._channels[target].topic = text
@@ -533,7 +533,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
         # TS6:
         #  <- :70MAAAAAC INVITE 0ALAAAAAA #blah 12345
         # P10:
-        #  <- ABAAA I PyLink-devel #services 1460948992
+        #  <- ABAAA I NetLink-devel #services 1460948992
         #  Note that the target is a nickname, not a numeric.
 
         target = self._get_UID(args[0])
@@ -603,7 +603,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
             # InspIRCd:
             # <- :1MLAAAAA1 KILL 0ALAAAAAC :Killed (jlu5 (test))
             # ngIRCd:
-            # <- :jlu5 KILL PyLink-devel :KILLed by jlu5: ?
+            # <- :jlu5 KILL NetLink-devel :KILLed by jlu5: ?
             killmsg = args[1]
 
         return {'target': killed, 'text': killmsg, 'userdata': userdata}
@@ -791,9 +791,9 @@ class IRCS2SProtocol(IRCCommonProtocol):
     def handle_whois(self, numeric: str, command: str, args: list):
         """Handles incoming WHOIS commands.."""
         # TS6:
-        # <- :42XAAAAAB WHOIS 5PYAAAAAA :pylink-devel
+        # <- :42XAAAAAB WHOIS 5PYAAAAAA :netlink-devel
         # P10:
-        # <- ABAAA W Ay :PyLink-devel
+        # <- ABAAA W Ay :NetLink-devel
 
         # First argument is the server that should reply to the WHOIS request
         # or the server hosting the UID given. We can safely assume that any
@@ -803,5 +803,5 @@ class IRCS2SProtocol(IRCCommonProtocol):
         return {'target': self._get_UID(args[-1])}
 
     def handle_version(self, numeric: str, command: str, args: list):
-        """Handles requests for the PyLink server version."""
+        """Handles requests for the NetLink server version."""
         return {}  # See coremods/handlers.py for how this hook is used

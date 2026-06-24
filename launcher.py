@@ -2,7 +2,7 @@ from __future__ import annotations
 
 #!/usr/bin/env python3
 """
-PyLink IRC Services launcher.
+NetLink IRC Services launcher.
 """
 
 import os
@@ -10,7 +10,7 @@ import signal
 import sys
 import time
 
-from pylinkirc import __version__, conf, real_version, world
+from netlink import __version__, conf, real_version, world
 
 try:
     import psutil
@@ -22,12 +22,12 @@ args = {}
 def _main() -> None:
     conf.load_conf(args.config)
 
-    from pylinkirc.log import log
-    from pylinkirc import classes, utils, coremods, selectdriver
+    from netlink.log import log
+    from netlink import classes, utils, coremods, selectdriver
 
     # Write and check for an existing PID file unless specifically told not to.
     if not args.no_pid:
-        pid_dir = conf.conf['pylink'].get('pid_dir', '')
+        pid_dir = conf.conf['netlink'].get('pid_dir', '')
         pidfile = os.path.join(pid_dir, '%s.pid' % conf.confname)
         pid_exists = False
         pid = None
@@ -49,19 +49,19 @@ def _main() -> None:
                     log.info("Ignoring stale PID %s from PID file %r: no such process exists.", pid, pidfile)
                 else:
                     # This PID got reused for something that isn't us?
-                    if not any('pylink' in arg.lower() for arg in proc.cmdline()):
+                    if not any('netlink' in arg.lower() for arg in proc.cmdline()):
                         log.info("Ignoring stale PID %s from PID file %r: process command line %r is not us", pid, pidfile, proc.cmdline())
                         pid_exists = False
 
         if pid and pid_exists:
             if args.rehash:
                 os.kill(pid, signal.SIGUSR1)
-                log.info('OK, rehashed PyLink instance %s (config %r)', pid, args.config)
+                log.info('OK, rehashed NetLink instance %s (config %r)', pid, args.config)
                 sys.exit()
             elif args.stop or args.restart:  # Handle --stop and --restart options
                 os.kill(pid, signal.SIGTERM)
 
-                log.info("Waiting for PyLink instance %s (config %r) to stop...", pid, args.config)
+                log.info("Waiting for NetLink instance %s (config %r) to stop...", pid, args.config)
                 while os.path.exists(pidfile):
                     # XXX: this is ugly, but os.waitpid() only works on non-child processes on Windows
                     time.sleep(0.2)
@@ -73,8 +73,8 @@ def _main() -> None:
                 log.error("PID file %r exists; aborting!", pidfile)
 
                 if psutil is None:
-                    log.error("If PyLink didn't shut down cleanly last time it ran, or you're upgrading "
-                              "from PyLink < 1.1-dev, delete %r and start the server again.", pidfile)
+                    log.error("If NetLink didn't shut down cleanly last time it ran, or you're upgrading "
+                              "from NetLink < 1.1-dev, delete %r and start the server again.", pidfile)
                     if os.name == 'posix':
                         log.error("Alternatively, you can install psutil for Python 3 (pip3 install psutil), "
                                   "which will allow this launcher to detect stale PID files and ignore them.")
@@ -84,14 +84,14 @@ def _main() -> None:
             # --stop and --restart should take care of stale PIDs.
             if pid:
                 world._should_remove_pid = True
-                log.error('Cannot stop/rehash PyLink: no process with PID %s exists.', pid)
+                log.error('Cannot stop/rehash NetLink: no process with PID %s exists.', pid)
             else:
-                log.error('Cannot stop/rehash PyLink: PID file %r does not exist or cannot be read.', pidfile)
+                log.error('Cannot stop/rehash NetLink: PID file %r does not exist or cannot be read.', pidfile)
             sys.exit(1)
 
         world._should_remove_pid = True
 
-    log.info('PyLink %s starting...', __version__)
+    log.info('NetLink %s starting...', __version__)
 
     world.daemon = args.daemonize
     if args.daemonize:
@@ -120,9 +120,9 @@ def _main() -> None:
         #     https://stackoverflow.com/questions/7387276/
         if os.name == 'nt':
             import ctypes
-            ctypes.windll.kernel32.SetConsoleTitleW("PyLink %s" % __version__)
+            ctypes.windll.kernel32.SetConsoleTitleW("NetLink %s" % __version__)
         elif os.name == 'posix':
-            sys.stdout.write("\x1b]2;PyLink %s\x07" % __version__)
+            sys.stdout.write("\x1b]2;NetLink %s\x07" % __version__)
 
     if not args.no_pid:
         # Write the PID file only after forking.
@@ -172,22 +172,22 @@ def main() -> None:
 
     global args
 
-    parser = argparse.ArgumentParser(description='Starts an instance of PyLink IRC Services.')
-    parser.add_argument('config', help='specifies the path to the config file (defaults to pylink.yml)', nargs='?', default='pylink.yml')
+    parser = argparse.ArgumentParser(description='Starts an instance of NetLink IRC Services.')
+    parser.add_argument('config', help='specifies the path to the config file (defaults to netlink.yml)', nargs='?', default='netlink.yml')
     parser.add_argument("-v", "--version", help="displays the program version and exits", action='store_true')
-    parser.add_argument("-c", "--check-pid", help="no-op; kept for compatibility with PyLink <= 1.2.x", action='store_true')
+    parser.add_argument("-c", "--check-pid", help="no-op; kept for compatibility with NetLink <= 1.2.x", action='store_true')
     parser.add_argument("-n", "--no-pid", help="skips generating and checking PID files", action='store_true')
-    parser.add_argument("-r", "--restart", help="restarts the PyLink instance with the given config file", action='store_true')
-    parser.add_argument("-s", "--stop", help="stops the PyLink instance with the given config file", action='store_true')
-    parser.add_argument("-R", "--rehash", help="rehashes the PyLink instance with the given config file", action='store_true')
-    parser.add_argument("-d", "--daemonize", help="daemonizes the PyLink instance on POSIX systems", action='store_true')
+    parser.add_argument("-r", "--restart", help="restarts the NetLink instance with the given config file", action='store_true')
+    parser.add_argument("-s", "--stop", help="stops the NetLink instance with the given config file", action='store_true')
+    parser.add_argument("-R", "--rehash", help="rehashes the NetLink instance with the given config file", action='store_true')
+    parser.add_argument("-d", "--daemonize", help="daemonizes the NetLink instance on POSIX systems", action='store_true')
     parser.add_argument("-t", "--trace", help="traces through running Python code; useful for debugging", action='store_true')
     parser.add_argument('--trace-ignore-mods', help='comma-separated list of extra modules to ignore when tracing', action='store', default='')
     parser.add_argument('--trace-ignore-dirs', help='comma-separated list of extra directories to ignore when tracing', action='store', default='')
     args = parser.parse_args()
 
     if args.version:  # Display version and exit
-        print('PyLink %s (in VCS: %s)' % (__version__, real_version))
+        print('NetLink %s (in VCS: %s)' % (__version__, real_version))
         sys.exit()
 
     # XXX: repetitive

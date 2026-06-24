@@ -1,5 +1,5 @@
 """
-unreal.py: UnrealIRCd 6.x protocol module for PyLink.
+unreal.py: UnrealIRCd 6.x protocol module for NetLink.
 
 This module targets UnrealIRCd 6 only (protocol 6000+); support for the legacy
 3.2/4.x/5.x link protocol has been removed.
@@ -12,10 +12,10 @@ import re
 import socket
 import time
 
-from pylinkirc import conf, utils
-from pylinkirc.classes import *
-from pylinkirc.log import log
-from pylinkirc.protocols.ts6_common import TS6BaseProtocol
+from netlink import conf, utils
+from netlink.classes import *
+from netlink.log import log
+from netlink.protocols.ts6_common import TS6BaseProtocol
 
 __all__ = ['UnrealProtocol']
 
@@ -24,7 +24,7 @@ SJOIN_PREFIXES = {'q': '*', 'a': '~', 'o': '@', 'h': '%', 'v': '+', 'b': '&', 'e
 
 class UnrealProtocol(TS6BaseProtocol):
     # I'm not sure what the real limit is, but the text posted at
-    # https://github.com/jlu5/PyLink/issues/378 suggests 427 characters.
+    # https://github.com/revrsefr/NetworkLinks/issues/378 suggests 427 characters.
     # https://github.com/unrealircd/unrealircd/blob/4cad9cb/src/modules/m_server.c#L1260 may
     # also help. (but why BUFSIZE-*80*?) -jlu5
     S2S_BUFSIZE = 427
@@ -117,14 +117,14 @@ class UnrealProtocol(TS6BaseProtocol):
         """
         server = server or self.sid
         if not self.is_internal_server(server):
-            raise ValueError('Server %r is not a PyLink server!' % server)
+            raise ValueError('Server %r is not a NetLink server!' % server)
 
         # Unreal 4.0 uses TS6-style UIDs. They don't start from AAAAAA like other IRCd's
         # do, but that doesn't matter to us...
         uid = self.uidgen[server].next_uid()
 
         ts = ts or int(time.time())
-        realname = realname or conf.conf['pylink']['realname']
+        realname = realname or conf.conf['netlink']['realname']
         realhost = realhost or host
 
         # Add +xt so that vHost cloaking always works.
@@ -166,9 +166,9 @@ class UnrealProtocol(TS6BaseProtocol):
         return u
 
     def join(self, client, channel):
-        """Joins a PyLink client to a channel."""
+        """Joins a NetLink client to a channel."""
         if not self.is_internal_client(client):
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
 
         # Forward this on to SJOIN, as using JOIN in Unreal S2S seems to cause TS corruption bugs.
         # This seems to be what Unreal itself does anyways.
@@ -193,7 +193,7 @@ class UnrealProtocol(TS6BaseProtocol):
         server = server or self.sid
         assert users, "sjoin: No users sent?"
         if not server:
-            raise LookupError('No such PyLink server exists.')
+            raise LookupError('No such NetLink server exists.')
 
         changedmodes = set(modes or self._channels[channel].modes)
         orig_ts = self._channels[channel].ts
@@ -247,7 +247,7 @@ class UnrealProtocol(TS6BaseProtocol):
 
         sjoin_prefix += " :"
         # Wrap arguments to the max supported S2S line length to prevent cutoff
-        # (https://github.com/jlu5/PyLink/issues/378)
+        # (https://github.com/revrsefr/NetworkLinks/issues/378)
         for line in utils.wrap_arguments(sjoin_prefix, itemlist, self.S2S_BUFSIZE):
             self.send(line)
 
@@ -262,14 +262,14 @@ class UnrealProtocol(TS6BaseProtocol):
 
     def mode(self, numeric, target, modes, ts=None):
         """
-        Sends mode changes from a PyLink client/server. The mode list should be
+        Sends mode changes from a NetLink client/server. The mode list should be
         a list of (mode, arg) tuples, i.e. the format of utils.parse_modes() output.
         """
         # <- :unreal.midnight.vpn MODE #test +ntCo jlu5 1444361345
 
         if (not self.is_internal_client(numeric)) and \
                 (not self.is_internal_server(numeric)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
 
         self.apply_modes(target, modes)
 
@@ -300,7 +300,7 @@ class UnrealProtocol(TS6BaseProtocol):
             # characters, and TS take up three args, so we're left with 12 spaces for parameters.
             # Any lines that go over 15 args/line has the potential of corrupting a channel's TS
             # pretty badly, as the last argument gets mangled into a number:
-            # * *** Warning! Possible desynch: MODE for channel #test ('+bbbbbbbbbbbb *!*@0.1 *!*@1.1 *!*@2.1 *!*@3.1 *!*@4.1 *!*@5.1 *!*@6.1 *!*@7.1 *!*@8.1 *!*@9.1 *!*@10.1 *!*@11.1') has fishy timestamp (12) (from pylink.local/pylink.local)
+            # * *** Warning! Possible desynch: MODE for channel #test ('+bbbbbbbbbbbb *!*@0.1 *!*@1.1 *!*@2.1 *!*@3.1 *!*@4.1 *!*@5.1 *!*@6.1 *!*@7.1 *!*@8.1 *!*@9.1 *!*@10.1 *!*@11.1') has fishy timestamp (12) (from netlink.local/netlink.local)
 
             # Thanks to kevin and Jobe for helping me debug this!
             for modestring in self.wrap_modes(modes, bufsize, max_modes_per_msg=12):
@@ -309,7 +309,7 @@ class UnrealProtocol(TS6BaseProtocol):
             # For user modes, the only way to set modes (for non-U:Lined servers)
             # is through UMODE2, which sets the modes on the caller.
             # U:Lines can use SVSMODE/SVS2MODE, but I won't expect people to
-            # U:Line a PyLink daemon...
+            # U:Line a NetLink daemon...
             if not self.is_internal_client(target):
                 raise ProtocolError('Cannot force mode change on external clients!')
 
@@ -388,17 +388,17 @@ class UnrealProtocol(TS6BaseProtocol):
                                    {'target': target, 'newgecos': text}])
 
     def kill(self, source, target, reason):
-        """Sends a kill from a PyLink client or server."""
+        """Sends a kill from a NetLink client or server."""
 
         if (not self.is_internal_client(source)) and \
                 (not self.is_internal_server(source)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
 
         self._send_with_prefix(source, 'KILL %s :%s' % (target, reason))
         self._remove_client(target)
 
     def knock(self, numeric, target, text):
-        """Sends a KNOCK from a PyLink client."""
+        """Sends a KNOCK from a NetLink client."""
         # KNOCKs in UnrealIRCd are actually just specially formatted NOTICEs,
         # sent to all ops in a channel.
         # <- :unreal.midnight.vpn NOTICE @#test :[Knock] by jlu5|!jlu5@hidden-1C620195 (test)
@@ -440,7 +440,7 @@ class UnrealProtocol(TS6BaseProtocol):
         f('PROTOCTL NOQUIT NICKv2 SJOIN SJ3 UMODE2 VL SID NICKIP ESVID EXTSWHOIS '
           'MTAGS SJSBY NEXTBANS TKLEXT TKLEXT2 CLK MLOCK '
           'EAUTH=%s SID=%s' % (host, self.sid))
-        sdesc = self.serverdata.get('serverdesc') or conf.conf['pylink']['serverdesc']
+        sdesc = self.serverdata.get('serverdesc') or conf.conf['netlink']['serverdesc']
         f('SERVER %s 1 U%s-h6e-%s :%s' % (host, self.proto_ver, self.sid, sdesc))
 
         self._send_with_prefix(self.sid, 'EOS')
@@ -643,7 +643,7 @@ class UnrealProtocol(TS6BaseProtocol):
 
     def handle_join(self, numeric: str, command: str, args: list):
         """Handles the UnrealIRCd JOIN command."""
-        # <- :jlu5 JOIN #pylink,#test
+        # <- :jlu5 JOIN #netlink,#test
         if args[0] == '0':
             # /join 0; part the user from all channels
             oldchans = self.users[numeric].channels.copy()
@@ -981,9 +981,9 @@ class UnrealProtocol(TS6BaseProtocol):
         # <- :jlu5 CHGIDENT jlu5 test
         target = self._get_UID(args[0])
 
-        # Bounce attempts to change fields of protected PyLink clients
+        # Bounce attempts to change fields of protected NetLink clients
         if self.is_internal_client(target):
-            log.warning("(%s) Bouncing attempt from %s to change ident of PyLink client %s",
+            log.warning("(%s) Bouncing attempt from %s to change ident of NetLink client %s",
                         self.name, self.get_friendly_name(source), self.get_friendly_name(target))
             self.update_client(target, 'IDENT', self.users[target].ident)
             return
@@ -995,9 +995,9 @@ class UnrealProtocol(TS6BaseProtocol):
         """Handles CHGHOST, used for denoting hostname changes."""
         # <- :jlu5 CHGHOST jlu5 some.host
         target = self._get_UID(args[0])
-        # Bounce attempts to change fields of protected PyLink clients
+        # Bounce attempts to change fields of protected NetLink clients
         if self.is_internal_client(target):
-            log.warning("(%s) Bouncing attempt from %s to change host of PyLink client %s",
+            log.warning("(%s) Bouncing attempt from %s to change host of NetLink client %s",
                         self.name, self.get_friendly_name(source), self.get_friendly_name(target))
             self.update_client(target, 'HOST', self.users[target].host)
             return
@@ -1014,9 +1014,9 @@ class UnrealProtocol(TS6BaseProtocol):
         """Handles CHGNAME, used for denoting real name/gecos changes."""
         # <- :jlu5 CHGNAME jlu5 :afdsafasf
         target = self._get_UID(args[0])
-        # Bounce attempts to change fields of protected PyLink clients
+        # Bounce attempts to change fields of protected NetLink clients
         if self.is_internal_client(target):
-            log.warning("(%s) Bouncing attempt from %s to change gecos of PyLink client %s",
+            log.warning("(%s) Bouncing attempt from %s to change gecos of NetLink client %s",
                         self.name, self.get_friendly_name(source), self.get_friendly_name(target))
             self.update_client(target, 'REALNAME', self.users[target].realname)
             return

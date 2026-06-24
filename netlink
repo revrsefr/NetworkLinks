@@ -2,10 +2,10 @@
 import sys
 
 try:
-    from pylinkirc import launcher
+    from netlink import launcher
 except ImportError:
-    print("ERROR: Failed to import PyLink launcher module (pylinkirc.launcher).\n\nIf you are "
-          "running PyLink from source, please install PyLink first using 'python3 "
+    print("ERROR: Failed to import NetLink launcher module (netlink.launcher).\n\nIf you are "
+          "running NetLink from source, please install NetLink first using 'python3 "
           "setup.py install' (global install) or 'python3 setup.py install --user'"
           " (local install)\n")
     sys.exit(1)

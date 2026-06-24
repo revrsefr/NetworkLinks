@@ -5,9 +5,9 @@ opercmds.py: Provides a subset of network management commands.
 from __future__ import annotations
 import argparse
 
-from pylinkirc import utils, world
-from pylinkirc.coremods import permissions
-from pylinkirc.log import log
+from netlink import utils, world
+from netlink.coremods import permissions
+from netlink.log import log
 
 # Having a hard limit here is sensible because otherwise it can flood the client or server off.
 CHECKBAN_MAX_RESULTS = 200
@@ -28,7 +28,7 @@ def checkban(irc, source, args, use_regex=False):
     """<banmask> [<target nick or hostmask>] [--channel #channel] [--maxresults <num>]
 
     CHECKBAN provides a ban checker command based on nick!user@host masks, user@host masks, and
-    PyLink extended targets.
+    NetLink extended targets.
 
     If a target nick or hostmask is given, this command returns whether the given banmask will match it.
     Otherwise, it will display a list of connected users matching the banmask.
@@ -100,7 +100,7 @@ massban_parser.add_argument('--include-opers', '-o', action='store_true')
 def massban(irc, source, args, use_regex=False):
     """<channel> <banmask / exttarget> [<kick reason>] [--quiet/-q] [--force/-f] [--include-opers/-o]
 
-    Applies (i.e. kicks affected users) the given PyLink banmask on the specified channel.
+    Applies (i.e. kicks affected users) the given NetLink banmask on the specified channel.
 
     The --quiet option can also be given to mass-mute the given user on networks where this is supported
     (currently ts6, unreal, and inspircd). No kicks will be sent in this case.
@@ -199,7 +199,7 @@ masskill_parser.add_argument('--include-opers', '-o', action='store_true')
 def masskill(irc, source, args, use_regex=False):
     """<banmask / exttarget> [<kill/ban reason>] [--akill/ak] [--force-kb/-f] [--include-opers/-o]
 
-    Kills all users matching the given PyLink banmask.
+    Kills all users matching the given NetLink banmask.
 
     The --akill option can also be given to convert kills to akills, which expire after 7 days.
 
@@ -264,7 +264,7 @@ def masskill(irc, source, args, use_regex=False):
         else:
             if args.akill:  # TODO: configurable length via strings such as "2w3d5h6m3s" - though month and minute clash this way?
                 if not (userobj.realhost or userobj.ip):
-                    irc.reply("Skipping akill on %s because PyLink doesn't know the real host." % irc.get_hostmask(uid))
+                    irc.reply("Skipping akill on %s because NetLink doesn't know the real host." % irc.get_hostmask(uid))
                     continue
                 irc.set_server_ban(irc.pseudoclient.uid, 604800, host=userobj.realhost or userobj.ip or userobj.host, reason=reason)
             else:
@@ -403,7 +403,7 @@ def kill(irc, source: str, args: list):
     targetu = _try_find_target(irc, target)
 
     if irc.pseudoclient.uid == targetu:
-        irc.error("Cannot kill the main PyLink client!")
+        irc.error("Cannot kill the main NetLink client!")
         return
 
     userdata = irc.users.get(targetu)

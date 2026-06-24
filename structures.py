@@ -1,5 +1,5 @@
 """
-structures.py - PyLink data structures module.
+structures.py - NetLink data structures module.
 
 This module contains custom data structures that may be useful in various situations.
 """
@@ -213,7 +213,7 @@ class DataStore:
     def __init__(self, name: str, filename: str, save_frequency: int | None = None,
                  default_db: dict | None = None, data_dir: str | None = None) -> None:
         if data_dir is None:
-            data_dir = conf.conf['pylink'].get('data_dir', '')
+            data_dir = conf.conf['netlink'].get('data_dir', '')
 
         filename = os.path.join(data_dir, filename)
 
@@ -224,7 +224,7 @@ class DataStore:
         log.debug('(DataStore:%s) using implementation %s', self.name, self.__class__.__name__)
         log.debug('(DataStore:%s) database path set to %s', self.name, self.filename)
 
-        self.save_frequency = save_frequency or conf.conf['pylink'].get('save_delay', 300)
+        self.save_frequency = save_frequency or conf.conf['netlink'].get('save_delay', 300)
         log.debug('(DataStore:%s) saving every %s seconds', self.name, self.save_frequency)
 
         if default_db is not None:

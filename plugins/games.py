@@ -5,7 +5,7 @@ games.py: Creates a bot providing a few simple games.
 from __future__ import annotations
 import random
 
-from pylinkirc import utils
+from netlink import utils
 
 mydesc = "The \x02Games\x02 plugin provides simple games for IRC."
 

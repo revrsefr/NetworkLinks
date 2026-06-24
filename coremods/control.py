@@ -8,8 +8,8 @@ import os
 import signal
 import threading
 
-from pylinkirc import conf, utils, world  # Do not import classes, it'll import loop
-from pylinkirc.log import _get_console_log_level, _make_file_logger, _stop_file_loggers, log
+from netlink import conf, utils, world  # Do not import classes, it'll import loop
+from netlink.log import _get_console_log_level, _make_file_logger, _stop_file_loggers, log
 
 from . import login
 
@@ -53,13 +53,13 @@ def _kill_plugins(irc=None) -> None:
             except:  # But don't allow it to crash the server.
                 log.exception('coremods.control: Error occurred in die() of plugin %s, skipping...', name)
 
-# We use atexit to register certain functions so that when PyLink cleans up after itself if it
+# We use atexit to register certain functions so that when NetLink cleans up after itself if it
 # shuts down because all networks have been disconnected.
 atexit.register(_remove_pid)
 atexit.register(_kill_plugins)
 
 def shutdown(irc=None) -> None:
-    """Shuts down the Pylink daemon."""
+    """Shuts down the NetLink daemon."""
     if world.shutting_down.is_set():  # We froze on shutdown last time, so immediately abort.
         _print_remaining_threads()
         raise KeyboardInterrupt("Forcing shutdown.")
@@ -71,8 +71,8 @@ def shutdown(irc=None) -> None:
     atexit.unregister(_kill_plugins)
     _kill_plugins(irc=irc)
 
-    # Remove our main PyLink bot as well.
-    utils.unregister_service('pylink')
+    # Remove our main NetLink bot as well.
+    utils.unregister_service('netlink')
 
     for ircobj in world.networkobjects.copy().values():
         # Disconnect all our networks.
@@ -81,14 +81,14 @@ def shutdown(irc=None) -> None:
         except NotImplementedError:
             continue
 
-    log.info("Waiting for remaining threads to stop; this may take a few seconds. If PyLink freezes "
+    log.info("Waiting for remaining threads to stop; this may take a few seconds. If NetLink freezes "
              "at this stage, press Ctrl-C to force a shutdown.")
     _print_remaining_threads()
 
     # Done.
 
 def _sigterm_handler(signo: int, stack_frame) -> None:
-    """Handles SIGTERM and SIGINT gracefully by shutting down the PyLink daemon."""
+    """Handles SIGTERM and SIGINT gracefully by shutting down the NetLink daemon."""
     log.info("Shutting down on signal %s." % signo)
     shutdown()
 
@@ -96,8 +96,8 @@ signal.signal(signal.SIGTERM, _sigterm_handler)
 signal.signal(signal.SIGINT, _sigterm_handler)
 
 def rehash() -> None:
-    """Rehashes the PyLink daemon."""
-    log.info('Reloading PyLink configuration...')
+    """Rehashes the NetLink daemon."""
+    log.info('Reloading NetLink configuration...')
     old_conf = conf.conf.copy()
     fname = conf.fname
     new_conf = conf.load_conf(fname, errors_fatal=False, logger=log)
@@ -151,12 +151,12 @@ def rehash() -> None:
             except:
                 log.exception('Failed to initialize network %r, skipping it...', network)
 
-    log.info('Finished reloading PyLink configuration.')
+    log.info('Finished reloading NetLink configuration.')
 
 if os.name == 'posix':
     # Only register SIGHUP/SIGUSR1 on *nix.
     def _sighup_handler(signo, _stack_frame):
-        """Handles SIGHUP/SIGUSR1 by rehashing the PyLink daemon."""
+        """Handles SIGHUP/SIGUSR1 by rehashing the NetLink daemon."""
         log.info("Signal %s received, reloading config." % signo)
         rehash()
 

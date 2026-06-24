@@ -5,9 +5,9 @@ server-time forwarding helper.
 import time
 import unittest
 
-from pylinkirc.classes import User, Server
-from pylinkirc.protocols import inspircd
-from pylinkirc.plugins import relay
+from netlink.classes import User, Server
+from netlink.protocols import inspircd
+from netlink.plugins import relay
 
 import protocol_test_fixture as ptf
 

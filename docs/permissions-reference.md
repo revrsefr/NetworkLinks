@@ -1,8 +1,8 @@
-# PyLink Permissions Reference
+# NetLink Permissions Reference
 
-Below is a list of all the permissions defined by PyLink and its official plugins.
+Below is a list of all the permissions defined by NetLink and its official plugins.
 
-## PyLink Core
+## NetLink Core
 - `core.clearqueue` - Grants access to the `clearqueue` command.
 - `core.load` - Grants access to the `load` command.
 - `core.rehash` - Grants access to the `rehash` command.
@@ -36,7 +36,7 @@ Remote versions of the `manage`, `list`, `sync`, and `clear` commands also exist
 
 ## Bots
 
-- `bots.join` - Grants access to the `join` command. `bots.joinclient` is a deprecated alias for this, retained for compatibility with PyLink < 2.0-rc1.
+- `bots.join` - Grants access to the `join` command. `bots.joinclient` is a deprecated alias for this, retained for compatibility with NetLink < 2.0-rc1.
 - `bots.msg` - Grants access to the `msg` command.
 - `bots.nick` - Grants access to the `nick` command.
 - `bots.part` - Grants access to the `part` command.
@@ -53,7 +53,7 @@ Remote versions of the `manage`, `list`, `sync`, and `clear` commands also exist
 - `commands.logout.force` - Allows forcing logouts on other users via the `logout` command.
 - `commands.showchan` - Grants access to the `showchan` command. **With the default permissions set, this is granted to all users.**
 - `commands.shownet` - Grants access to the `shownet` command (basic info including netname, protocol module, and encoding). **With the default permissions set, this is granted to all users.**
-- `commands.shownet.extended` - Grants access to extended info in `shownet`, including connected status, target IP:port, and configured PyLink hostname / SID.
+- `commands.shownet.extended` - Grants access to extended info in `shownet`, including connected status, target IP:port, and configured NetLink hostname / SID.
 - `commands.showuser` - Grants access to the `showuser` command. **With the default permissions set, this is granted to all users.**
 - `commands.status` - Grants access to the `status` command. **With the default permissions set, this is granted to all users.**
 
@@ -87,7 +87,7 @@ Remote versions of the `manage`, `list`, `sync`, and `clear` commands also exist
 - `opercmds.topic` - Grants access to the `topic` command.
 
 ## Raw
-- `raw.raw` - Grants access to the `raw` command. `exec.raw` is equivalent to this and retained for compatibility with PyLink 1.x.
+- `raw.raw` - Grants access to the `raw` command. `exec.raw` is equivalent to this and retained for compatibility with NetLink 1.x.
 - `raw.raw.unsupported_network` - Allows use of the `raw` command on servers other than Clientbot.
 
 ## Relay

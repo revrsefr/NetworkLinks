@@ -1,5 +1,5 @@
 """
-inspircd.py: InspIRCd 4.x protocol module for PyLink.
+inspircd.py: InspIRCd 4.x protocol module for NetLink.
 
 This module targets InspIRCd 4 only (S2S protocol 1206); the uplink must report
 that protocol version or higher at CAPAB time or the link is refused.
@@ -10,10 +10,10 @@ from __future__ import annotations
 import threading
 import time
 
-from pylinkirc import conf
-from pylinkirc.classes import *
-from pylinkirc.log import log
-from pylinkirc.protocols.ts6_common import TS6BaseProtocol
+from netlink import conf
+from netlink.classes import *
+from netlink.log import log
+from netlink.protocols.ts6_common import TS6BaseProtocol
 
 __all__ = ['InspIRCdProtocol']
 
@@ -100,12 +100,12 @@ class InspIRCdProtocol(TS6BaseProtocol):
         server = server or self.sid
 
         if not self.is_internal_server(server):
-            raise ValueError('Server %r is not a PyLink server!' % server)
+            raise ValueError('Server %r is not a NetLink server!' % server)
 
         uid = self.uidgen[server].next_uid()
 
         ts = ts or int(time.time())
-        realname = realname or conf.conf['pylink']['realname']
+        realname = realname or conf.conf['netlink']['realname']
         realhost = realhost or host
         raw_modes = self.join_modes(modes)
         u = self.users[uid] = User(self, nick, ts, uid, server, ident=ident, host=host,
@@ -134,7 +134,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         return u
 
     def join(self, client, channel):
-        """Joins a PyLink client to a channel."""
+        """Joins a NetLink client to a channel."""
         # InspIRCd doesn't distinguish between burst joins and regular joins,
         # so what we're actually doing here is sending FJOIN from the server,
         # on behalf of the clients that are joining.
@@ -142,7 +142,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         server = self.get_server(client)
         if not self.is_internal_server(server):
             log.error('(%s) Error trying to join %r to %r (no such client exists)', self.name, client, channel)
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
 
         # Strip out list-modes, they shouldn't be ever sent in FJOIN.
         modes = [m for m in self._channels[channel].modes if m[0] not in self.cmodes['*A']]
@@ -168,7 +168,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         log.debug('(%s) sjoin: got %r for users', self.name, users)
 
         if not server:
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
 
         # Strip out list-modes, they shouldn't ever be sent in FJOIN (protocol rules).
         modes = modes or self._channels[channel].modes
@@ -251,13 +251,13 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self._send_with_prefix(target, 'OPERTYPE %s' % otype)
 
     def mode(self, numeric, target, modes, ts=None):
-        """Sends mode changes from a PyLink client/server."""
-        # -> :9PYAAAAAA FMODE #pylink 1433653951 +os 9PYAAAAAA
+        """Sends mode changes from a NetLink client/server."""
+        # -> :9PYAAAAAA FMODE #netlink 1433653951 +os 9PYAAAAAA
         # -> :9PYAAAAAA MODE 9PYAAAAAA -i+w
 
         if (not self.is_internal_client(numeric)) and \
                 (not self.is_internal_server(numeric)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
 
         if ('+o', None) in modes and not self.is_channel(target):
             # https://github.com/inspircd/inspircd/blob/master/src/modules/m_spanningtree/opertype.cpp#L26-L28
@@ -274,10 +274,10 @@ class InspIRCdProtocol(TS6BaseProtocol):
             self._send_with_prefix(numeric, 'MODE %s %s' % (target, joinedmodes))
 
     def kill(self, numeric, target, reason):
-        """Sends a kill from a PyLink client/server."""
+        """Sends a kill from a NetLink client/server."""
         if (not self.is_internal_client(numeric)) and \
                 (not self.is_internal_server(numeric)):
-            raise LookupError('No such PyLink client/server exists.')
+            raise LookupError('No such NetLink client/server exists.')
 
         # InspIRCd will show the raw kill message sent from our server as the quit message.
         # So, make the kill look actually like a kill instead of someone quitting with
@@ -292,9 +292,9 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self._remove_client(target)
 
     def topic(self, source, target, text):
-        """Sends a topic change from a PyLink client."""
+        """Sends a topic change from a NetLink client."""
         if not self.is_internal_client(source):
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
 
         if self.proto_ver >= 1205:
             self._send_with_prefix(source, 'FTOPIC %s %s %s :%s' % (target, self._channels[target].ts, int(time.time()), text))
@@ -302,9 +302,9 @@ class InspIRCdProtocol(TS6BaseProtocol):
             return super().topic(source, target, text)
 
     def topic_burst(self, source, target, text):
-        """Sends a topic change from a PyLink server. This is usually used on burst."""
+        """Sends a topic change from a NetLink server. This is usually used on burst."""
         if not self.is_internal_server(source):
-            raise LookupError('No such PyLink server exists.')
+            raise LookupError('No such NetLink server exists.')
 
         topic_ts = int(time.time())
         servername = self.servers[source].name
@@ -318,9 +318,9 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self._channels[target].topicset = True
 
     def knock(self, numeric, target, text):
-        """Sends a KNOCK from a PyLink client."""
+        """Sends a KNOCK from a NetLink client."""
         if not self.is_internal_client(numeric):
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
         self._send_with_prefix(numeric, 'ENCAP * KNOCK %s :%s' % (target, text))
 
     def update_client(self, target, field, text):
@@ -393,7 +393,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         # InspIRCd 2.0 syntax (undocumented):
         # Essentially what this does is push the raw numeric text after the first ":" towards the
         # given user.
-        # <- :70M PUSH 0ALAAAAAA ::midnight.vpn 422 PyLink-devel :Message of the day file is missing.
+        # <- :70M PUSH 0ALAAAAAA ::midnight.vpn 422 NetLink-devel :Message of the day file is missing.
 
         # InspIRCd 3 uses a new NUM command in this format:
         # -> NUM <numeric source sid> <target uuid> <numeric ID> <params>
@@ -403,9 +403,9 @@ class InspIRCdProtocol(TS6BaseProtocol):
             self._send_with_prefix(self.sid, 'PUSH %s ::%s %s %s %s' % (target, source, numeric, target, text))
 
     def invite(self, source, target, channel):
-        """Sends an INVITE from a PyLink client."""
+        """Sends an INVITE from a NetLink client."""
         if not self.is_internal_client(source):
-            raise LookupError('No such PyLink client exists.')
+            raise LookupError('No such NetLink client exists.')
 
         if self.proto_ver >= 1205:  # insp3
             # Note: insp3 supports optionally sending an invite expiration (after the TS argument),
@@ -415,7 +415,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
             self._send_with_prefix(source, 'INVITE %s %s' % (target, channel))
 
     def away(self, source, text):
-        """Sends an AWAY message from a PyLink client. <text> can be an empty string
+        """Sends an AWAY message from a NetLink client. <text> can be an empty string
         to unset AWAY status."""
         if text:
             self._send_with_prefix(source, 'AWAY %s :%s' % (int(time.time()), text))
@@ -425,21 +425,21 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
     def spawn_server(self, name, sid=None, uplink=None, desc=None):
         """
-        Spawns a server off a PyLink server. desc (server description)
-        defaults to the one in the config. uplink defaults to the main PyLink
+        Spawns a server off a NetLink server. desc (server description)
+        defaults to the one in the config. uplink defaults to the main NetLink
         server, and sid (the server ID) is automatically generated if not
         given.
 
         Endburst delay can be tweaked by setting the _endburst_delay variable
         to a positive value before calling spawn_server(). This can be used to
-        prevent PyLink bursts from filling up snomasks and triggering InspIRCd +j.
+        prevent NetLink bursts from filling up snomasks and triggering InspIRCd +j.
         """
         # -> :0AL SERVER test.server * 1 0AM :some silly pseudoserver
         uplink = uplink or self.sid
         name = name.lower()
 
         # "desc" defaults to the configured server description.
-        desc = desc or self.serverdata.get('serverdesc') or conf.conf['pylink']['serverdesc']
+        desc = desc or self.serverdata.get('serverdesc') or conf.conf['netlink']['serverdesc']
 
         if sid is None:  # No sid given; generate one!
             sid = self.sidgen.next_sid()
@@ -453,7 +453,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
                 raise ValueError('A server named %r already exists!' % name)
 
         if not self.is_internal_server(uplink):
-            raise ValueError('Server %r is not a PyLink server!' % uplink)
+            raise ValueError('Server %r is not a NetLink server!' % uplink)
 
         if not self.is_server_name(name):
             raise ValueError('Invalid server name %r' % name)
@@ -520,7 +520,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
             server_line = 'SERVER {host} {Pass} 0 {sid} :{sdesc}'
         f(server_line.format(host=host,
             Pass=self.serverdata["sendpass"], sid=self.sid,
-            sdesc=self.serverdata.get('serverdesc') or conf.conf['pylink']['serverdesc']))
+            sdesc=self.serverdata.get('serverdesc') or conf.conf['netlink']['serverdesc']))
 
         self._send_with_prefix(self.sid, 'BURST %s' % ts)
 
@@ -568,17 +568,17 @@ class InspIRCdProtocol(TS6BaseProtocol):
                                     "At least %s is needed. (got %s)" %
                                     (self.proto_ver, protocol_version))
             elif protocol_version > self.MAX_PROTO_VER:
-                log.warning("(%s) PyLink support for InspIRCd > 4.x is experimental, "
+                log.warning("(%s) NetLink support for InspIRCd > 4.x is experimental, "
                             "and should not be relied upon for anything important.",
                             self.name)
             elif protocol_version >= 1206 > self.proto_ver:
-                log.warning("(%s) PyLink 3.1+ introduces native support for InspIRCd 4. "
+                log.warning("(%s) NetLink 3.1+ introduces native support for InspIRCd 4. "
                             "Enable this by setting 'target_version' to 'insp4' in your InspIRCd "
                             "server block. Otherwise, some features will not work correctly!",
                             self.name)
                 log.warning("(%s) Falling back to InspIRCd 3 compatibility mode.", self.name)
             elif protocol_version >= 1205 > self.proto_ver:
-                log.warning("(%s) PyLink 3.0 introduces native support for InspIRCd 3. "
+                log.warning("(%s) NetLink 3.0 introduces native support for InspIRCd 3. "
                             "You should enable this by setting the 'target_version' option in your "
                             "InspIRCd server block to 'insp3'. Otherwise, some features will not "
                             "work correctly!", self.name)
@@ -666,7 +666,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
                 if name == 'founder':  # Channel mode +q
                     # Founder, owner; same thing. m_customprefix allows you to name it anything you like,
-                    # but PyLink uses the latter in its definitions
+                    # but NetLink uses the latter in its definitions
                     name = 'owner'
 
                 if name in ('repeat', 'kicknorejoin'):
@@ -933,7 +933,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         # Allow hiding the startup time if set to do so (if both idle and signon time is 0, InspIRCd omits
         # showing this line).
         target = args[0]
-        start_time = self.start_ts if (conf.conf['pylink'].get('whois_show_startup_time', True) and
+        start_time = self.start_ts if (conf.conf['netlink'].get('whois_show_startup_time', True) and
                                        self.get_service_bot(target)) else 0
 
         # First arg = source, second = signon time, third = idle time
@@ -1140,7 +1140,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
     def handle_alltime(self, source: str, command: str, args: list):
         """Handles /ALLTIME requests."""
         # -> :9PYAAAAAA ENCAP * ALLTIME
-        # <- :70M PUSH 0ALAAAAAC ::midnight.vpn NOTICE PyLink-devel :System time is 2016-08-13 02:23:06 (1471054986) on midnight.vpn
+        # <- :70M PUSH 0ALAAAAAC ::midnight.vpn NOTICE NetLink-devel :System time is 2016-08-13 02:23:06 (1471054986) on midnight.vpn
 
         # XXX: We override notice() here because that abstraction doesn't allow messages from servers.
         timestring = '%s (%s)' % (time.strftime('%Y-%m-%d %H:%M:%S'), int(time.time()))

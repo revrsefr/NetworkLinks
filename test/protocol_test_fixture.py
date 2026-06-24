@@ -1,5 +1,5 @@
 """
-A test fixture for PyLink protocol modules.
+A test fixture for NetLink protocol modules.
 """
 import time
 import unittest
@@ -7,9 +7,9 @@ import collections
 import itertools
 from unittest.mock import patch
 
-from pylinkirc import conf, world
-from pylinkirc.log import log
-from pylinkirc.classes import User, Server, Channel
+from netlink import conf, world
+from netlink.log import log
+from netlink.classes import User, Server, Channel
 
 class DummySocket():
     def __init__(self):
@@ -132,7 +132,7 @@ class BaseProtocolTest(unittest.TestCase):
         assertF = lambda inp: self.assertFalse(self.p.is_nick(inp))
 
         assertT('test')
-        assertT('PyLink')
+        assertT('NetLink')
         assertT('[bracketman]')
         assertT('{RACKETman}')
         assertT('bar|tender')
@@ -519,26 +519,26 @@ class BaseProtocolTest(unittest.TestCase):
 
     # TODO: check the output of parse_modes() here too
     def test_parse_modes_channel_key(self):
-        c = self.p.channels['#pylink'] = Channel(self.p, name='#pylink')
+        c = self.p.channels['#netlink'] = Channel(self.p, name='#netlink')
         c.modes = {('k', 'foobar')}
 
-        modes = self.p.parse_modes('#pylink', ['-k', 'foobar'])
+        modes = self.p.parse_modes('#netlink', ['-k', 'foobar'])
         self.assertEqual(modes, [('-k', 'foobar')], "Parse result should include -k")
 
-        modes = self.p.parse_modes('#pylink', ['-k', 'aBcDeF'])
+        modes = self.p.parse_modes('#netlink', ['-k', 'aBcDeF'])
         self.assertEqual(modes, [], "Incorrect key removal should be ignored")
 
-        modes = self.p.parse_modes('#pylink', ['+k', 'aBcDeF'])
+        modes = self.p.parse_modes('#netlink', ['+k', 'aBcDeF'])
         self.assertEqual(modes, [('+k', 'aBcDeF')], "Parse result should include +k (replace key)")
 
         # Mismatched case - treat this as remove
         # Some IRCds allow this (Unreal, P10), others do not (InspIRCd). However, if such a message
         # makes actually its way to us it is most likely valid.
         # Note: Charybdis and ngIRCd do -k * removal instead so this case will never happen there
-        modes = self.p.parse_modes('#pylink', ['-k', 'FooBar'])
+        modes = self.p.parse_modes('#netlink', ['-k', 'FooBar'])
         self.assertEqual(modes, [('-k', 'foobar')], "Parse result should include -k (different case)")
 
-        modes = self.p.parse_modes('#pylink', ['-k', '*'])
+        modes = self.p.parse_modes('#netlink', ['-k', '*'])
         self.assertEqual(modes, [('-k', 'foobar')], "Parse result should include -k (-k *)")
 
     def test_parse_modes_user_rfc(self):
@@ -602,26 +602,26 @@ class BaseProtocolTest(unittest.TestCase):
         self.assertEqual(c.modes, {('t', None)})
 
     def test_apply_modes_channel_key(self):
-        c = self.p.channels['#pylink'] = Channel(self.p, name='#pylink')
-        self.p.apply_modes('#pylink', [('+k', 'password123'), ('+s', None)])
+        c = self.p.channels['#netlink'] = Channel(self.p, name='#netlink')
+        self.p.apply_modes('#netlink', [('+k', 'password123'), ('+s', None)])
         self.assertEqual(c.modes, {('s', None), ('k', 'password123')})
 
-        self.p.apply_modes('#pylink', [('+k', 'qwerty')])
+        self.p.apply_modes('#netlink', [('+k', 'qwerty')])
         self.assertEqual(c.modes, {('s', None), ('k', 'qwerty')})
 
-        self.p.apply_modes('#pylink', [('-k', 'abcdef')])
+        self.p.apply_modes('#netlink', [('-k', 'abcdef')])
         # Trying to remove with wrong key is a no-op
         self.assertEqual(c.modes, {('s', None), ('k', 'qwerty')})
 
-        self.p.apply_modes('#pylink', [('-k', 'qwerty')])
+        self.p.apply_modes('#netlink', [('-k', 'qwerty')])
         self.assertEqual(c.modes, {('s', None)})
 
-        self.p.apply_modes('#pylink', [('+k', 'qwerty')])
+        self.p.apply_modes('#netlink', [('+k', 'qwerty')])
         self.assertEqual(c.modes, {('s', None), ('k', 'qwerty')})
-        self.p.apply_modes('#pylink', [('-k', 'QWERTY')])  # Remove with different case
+        self.p.apply_modes('#netlink', [('-k', 'QWERTY')])  # Remove with different case
         self.assertEqual(c.modes, {('s', None)})
 
-        self.p.apply_modes('#pylink', [('+k', '12345')])  # Replace existing key
+        self.p.apply_modes('#netlink', [('+k', '12345')])  # Replace existing key
         self.assertEqual(c.modes, {('s', None), ('k', '12345')})
 
     def test_apply_modes_channel_ban(self):

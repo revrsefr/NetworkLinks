@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import string
 
-from pylinkirc import conf, utils, world
-from pylinkirc.coremods import permissions
-from pylinkirc.log import log
+from netlink import conf, utils, world
+from netlink.coremods import permissions
+from netlink.log import log
 
 DEFAULT_FORMAT = "[$sender@$fullnetwork] $text"
 

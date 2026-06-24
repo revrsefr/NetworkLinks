@@ -1,11 +1,11 @@
 """
-service_support.py - Implements handlers for the PyLink ServiceBot API.
+service_support.py - Implements handlers for the NetLink ServiceBot API.
 """
 
 from __future__ import annotations
 
-from pylinkirc import conf, utils, world
-from pylinkirc.log import log
+from netlink import conf, utils, world
+from netlink.log import log
 
 __all__ = []
 
@@ -19,7 +19,7 @@ def spawn_service(irc, source: str, command: str, args: dict):
     # Service name
     name = args['name']
 
-    if name != 'pylink' and not irc.has_cap('can-spawn-clients'):
+    if name != 'netlink' and not irc.has_cap('can-spawn-clients'):
         log.debug("(%s) Not spawning service %s because the server doesn't support spawning clients",
                   irc.name, name)
         return
@@ -34,7 +34,7 @@ def spawn_service(irc, source: str, command: str, args: dict):
                   irc.pseudoclient.nick)
         return
 
-    if name == 'pylink' and irc.pseudoclient:
+    if name == 'netlink' and irc.pseudoclient:
         # irc.pseudoclient already exists, reuse values from it but
         # spawn a new client. This is used for protocols like Clientbot,
         # so that they can override the main service nick, among other things.
@@ -54,7 +54,7 @@ def spawn_service(irc, source: str, command: str, args: dict):
         preferred_modes = ['oper', 'hideoper', 'hidechans', 'invisible', 'bot']
         modes = []
 
-        if conf.conf['pylink'].get('protect_services'):
+        if conf.conf['netlink'].get('protect_services'):
             preferred_modes.append('servprotect')
 
         for mode in preferred_modes:
@@ -72,16 +72,16 @@ def spawn_service(irc, source: str, command: str, args: dict):
 
     sbot.uids[irc.name] = u = userobj.uid
 
-    # Special case: if this is the main PyLink client being spawned,
+    # Special case: if this is the main NetLink client being spawned,
     # assign this as irc.pseudoclient.
-    if name == 'pylink' and not irc.pseudoclient:
+    if name == 'netlink' and not irc.pseudoclient:
         log.debug('(%s) spawn_service: irc.pseudoclient set to UID %s', irc.name, u)
         irc.pseudoclient = userobj
 
     # Enumerate & join network defined channels.
     sbot.join(irc, sbot.get_persistent_channels(irc))
 
-utils.add_hook(spawn_service, 'PYLINK_NEW_SERVICE')
+utils.add_hook(spawn_service, 'NETLINK_NEW_SERVICE')
 
 def handle_disconnect(irc, source: str, command: str, args: dict):
     """Handles network disconnections."""
@@ -92,7 +92,7 @@ def handle_disconnect(irc, source: str, command: str, args: dict):
         except KeyError:
             continue
 
-utils.add_hook(handle_disconnect, 'PYLINK_DISCONNECT')
+utils.add_hook(handle_disconnect, 'NETLINK_DISCONNECT')
 
 def handle_endburst(irc, source: str, command: str, args: dict):
     """Handles network bursts."""
@@ -106,7 +106,7 @@ def handle_endburst(irc, source: str, command: str, args: dict):
 utils.add_hook(handle_endburst, 'ENDBURST', priority=500)
 
 def handle_kill(irc, source: str, command: str, args: dict):
-    """Handle KILLs to PyLink service bots, respawning them as needed."""
+    """Handle KILLs to NetLink service bots, respawning them as needed."""
     target = args['target']
     if irc.pseudoclient and target == irc.pseudoclient.uid:
         irc.pseudoclient = None
@@ -139,14 +139,14 @@ def handle_join(irc, source: str, command: str, args: dict):
             log.debug('(%s) Dynamically joining service %r to channel %r.', irc.name, servicename, channel)
             sbot.join(irc, channel)
 utils.add_hook(handle_join, 'JOIN')
-utils.add_hook(handle_join, 'PYLINK_SERVICE_JOIN')
+utils.add_hook(handle_join, 'NETLINK_SERVICE_JOIN')
 
 def _services_dynamic_part(irc, channel: str):
     """Dynamically removes service bots from empty channels."""
     if irc.has_cap('visible-state-only'):
         # No-op on bot-only servers.
         return
-    if irc.serverdata.get('join_empty_channels', conf.conf['pylink'].get('join_empty_channels', False)):
+    if irc.serverdata.get('join_empty_channels', conf.conf['netlink'].get('join_empty_channels', False)):
         return
 
     # If all remaining users in the channel are service bots, make them all part.
@@ -165,7 +165,7 @@ def handle_part(irc, source: str, command: str, args: dict):
 utils.add_hook(handle_part, 'PART')
 
 def handle_kick(irc, source: str, command: str, args: dict):
-    """Handle KICKs to the PyLink service bots, rejoining channels as needed."""
+    """Handle KICKs to the NetLink service bots, rejoining channels as needed."""
     channel = args['channel']
     # Skip autorejoin routines if the channel is now empty.
     if not _services_dynamic_part(irc, channel):
@@ -176,7 +176,7 @@ def handle_kick(irc, source: str, command: str, args: dict):
 utils.add_hook(handle_kick, 'KICK')
 
 def handle_commands(irc, source: str, command: str, args: dict):
-    """Handle commands sent to the PyLink service bots (PRIVMSG)."""
+    """Handle commands sent to the NetLink service bots (PRIVMSG)."""
     target = args['target']
     text = args['text']
 
@@ -186,8 +186,8 @@ def handle_commands(irc, source: str, command: str, args: dict):
 
 utils.add_hook(handle_commands, 'PRIVMSG')
 
-# Register the main PyLink service. All command definitions MUST go after this!
+# Register the main NetLink service. All command definitions MUST go after this!
 # TODO: be more specific in description, and possibly allow plugins to modify this to mention
 # their features?
-mydesc = "\x02PyLink\x02 provides extended network services for IRC."
-utils.register_service('pylink', default_nick="PyLink", desc=mydesc, manipulatable=True)
+mydesc = "\x02NetLink\x02 provides extended network services for IRC."
+utils.register_service('netlink', default_nick="NetLink", desc=mydesc, manipulatable=True)

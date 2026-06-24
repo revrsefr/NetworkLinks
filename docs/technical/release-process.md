@@ -1,6 +1,6 @@
-# Release Process for PyLink
+# Release Process for NetLink
 
-This document documents the steps that I (James) use to release updates to PyLink.
+This document documents the steps that I (James) use to release updates to NetLink.
 
 1) Draft the next release's changelog in `RELNOTES.md`
 

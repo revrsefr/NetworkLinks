@@ -11,33 +11,33 @@
 <polygon fill="white" stroke="none" points="-4,4 -4,-647 526,-647 526,4 -4,4"/>
 <g id="clust1" class="cluster"><title>cluster_core</title>
 <polygon fill="#90ee90" stroke="#90ee90" points="77,-416 77,-635 333,-635 333,-416 77,-416"/>
-<text text-anchor="middle" x="205" y="-619.8" font-family="Times,serif" font-size="14.00">Core classes (pylinkirc.classes)</text>
+<text text-anchor="middle" x="205" y="-619.8" font-family="Times,serif" font-size="14.00">Core classes (netlink.classes)</text>
 </g>
 <g id="clust2" class="cluster"><title>cluster_helper</title>
 <polygon fill="lightblue" stroke="lightblue" points="83,-163 83,-408 302,-408 302,-163 83,-163"/>
 <text text-anchor="middle" x="192.5" y="-392.8" font-family="Times,serif" font-size="14.00">Protocol module helpers</text>
-<text text-anchor="middle" x="192.5" y="-377.8" font-family="Times,serif" font-size="14.00">(pylinkirc.protocols.ircs2s_common)</text>
+<text text-anchor="middle" x="192.5" y="-377.8" font-family="Times,serif" font-size="14.00">(netlink.protocols.ircs2s_common)</text>
 </g>
 <g id="clust3" class="cluster"><title>cluster_helper</title>
 <polygon fill="lightcyan" stroke="lightcyan" points="91,-171 91,-246 285,-246 285,-171 91,-171"/>
-<text text-anchor="middle" x="188" y="-230.8" font-family="Times,serif" font-size="14.00">pylinkirc.protocols.ts6_common</text>
+<text text-anchor="middle" x="188" y="-230.8" font-family="Times,serif" font-size="14.00">netlink.protocols.ts6_common</text>
 </g>
 <g id="clust4" class="cluster"><title>cluster_pluggable</title>
 <polygon fill="khaki" stroke="khaki" points="8,-8 8,-155 514,-155 514,-8 8,-8"/>
-<text text-anchor="middle" x="261" y="-139.8" font-family="Times,serif" font-size="14.00">Complete protocol modules (pylinkirc.protocols.*)</text>
+<text text-anchor="middle" x="261" y="-139.8" font-family="Times,serif" font-size="14.00">Complete protocol modules (netlink.protocols.*)</text>
 </g>
-<!-- PyLinkNetworkCore -->
-<g id="node1" class="node"><title>PyLinkNetworkCore</title>
+<!-- NetLinkNetworkCore -->
+<g id="node1" class="node"><title>NetLinkNetworkCore</title>
 <ellipse fill="white" stroke="white" cx="205" cy="-586" rx="84.485" ry="18"/>
-<text text-anchor="middle" x="205" y="-582.3" font-family="Times,serif" font-size="14.00">PyLinkNetworkCore</text>
+<text text-anchor="middle" x="205" y="-582.3" font-family="Times,serif" font-size="14.00">NetLinkNetworkCore</text>
 </g>
-<!-- PyLinkNetworkCoreWithUtils -->
-<g id="node2" class="node"><title>PyLinkNetworkCoreWithUtils</title>
+<!-- NetLinkNetworkCoreWithUtils -->
+<g id="node2" class="node"><title>NetLinkNetworkCoreWithUtils</title>
 <ellipse fill="white" stroke="white" cx="205" cy="-514" rx="119.679" ry="18"/>
-<text text-anchor="middle" x="205" y="-510.3" font-family="Times,serif" font-size="14.00">PyLinkNetworkCoreWithUtils</text>
+<text text-anchor="middle" x="205" y="-510.3" font-family="Times,serif" font-size="14.00">NetLinkNetworkCoreWithUtils</text>
 </g>
-<!-- PyLinkNetworkCore&#45;&gt;PyLinkNetworkCoreWithUtils -->
-<g id="edge1" class="edge"><title>PyLinkNetworkCore&#45;&gt;PyLinkNetworkCoreWithUtils</title>
+<!-- NetLinkNetworkCore&#45;&gt;NetLinkNetworkCoreWithUtils -->
+<g id="edge1" class="edge"><title>NetLinkNetworkCore&#45;&gt;NetLinkNetworkCoreWithUtils</title>
 <path fill="none" stroke="#111111" stroke-width="0.75" stroke-opacity="0.800000" d="M205,-567.697C205,-559.983 205,-550.712 205,-542.112"/>
 <polygon fill="#111111" fill-opacity="0.800000" stroke="#111111" stroke-width="0.75" stroke-opacity="0.800000" points="208.5,-542.104 205,-532.104 201.5,-542.104 208.5,-542.104"/>
 </g>
@@ -46,8 +46,8 @@
 <ellipse fill="white" stroke="white" cx="205" cy="-442" rx="55.7903" ry="18"/>
 <text text-anchor="middle" x="205" y="-438.3" font-family="Times,serif" font-size="14.00">IRCNetwork</text>
 </g>
-<!-- PyLinkNetworkCoreWithUtils&#45;&gt;IRCNetwork -->
-<g id="edge2" class="edge"><title>PyLinkNetworkCoreWithUtils&#45;&gt;IRCNetwork</title>
+<!-- NetLinkNetworkCoreWithUtils&#45;&gt;IRCNetwork -->
+<g id="edge2" class="edge"><title>NetLinkNetworkCoreWithUtils&#45;&gt;IRCNetwork</title>
 <path fill="none" stroke="#111111" stroke-width="0.75" stroke-opacity="0.800000" d="M205,-495.697C205,-487.983 205,-478.712 205,-470.112"/>
 <polygon fill="#111111" fill-opacity="0.800000" stroke="#111111" stroke-width="0.75" stroke-opacity="0.800000" points="208.5,-470.104 205,-460.104 201.5,-470.104 208.5,-470.104"/>
 </g>

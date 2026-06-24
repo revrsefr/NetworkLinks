@@ -1,7 +1,7 @@
 import unittest
 
-from pylinkirc.classes import ProtocolError, Server
-from pylinkirc.protocols import unreal
+from netlink.classes import ProtocolError, Server
+from netlink.protocols import unreal
 
 import protocol_test_fixture as ptf
 

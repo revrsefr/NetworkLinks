@@ -1,13 +1,13 @@
 """
-permissions.py - Permissions Abstraction for PyLink IRC Services.
+permissions.py - Permissions Abstraction for NetLink IRC Services.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
 
-from pylinkirc import conf, utils
-from pylinkirc.log import log
+from netlink import conf, utils
+from netlink.log import log
 
 __all__ = ['default_permissions', 'add_default_permissions',
            'remove_default_permissions', 'check_permissions']
@@ -38,7 +38,7 @@ def check_permissions(irc, uid: str, perms: list, also_show: list = []) -> bool:
     # For old (< 1.1 login blocks):
     # If the user is logged in, they automatically have all permissions.
     olduser = conf.conf['login'].get('user')
-    if olduser and irc.match_host('$pylinkacc:%s' % olduser, uid):
+    if olduser and irc.match_host('$netlinkacc:%s' % olduser, uid):
         log.debug('permissions: overriding permissions check for old-style admin user %s',
                   irc.get_hostmask(uid))
         return True

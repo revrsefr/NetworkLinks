@@ -1,7 +1,7 @@
 """
-classes.py - Base classes for PyLink IRC Services.
+classes.py - Base classes for NetLink IRC Services.
 
-This module contains the base classes used by PyLink, including threaded IRC
+This module contains the base classes used by NetLink, including threaded IRC
 connections and objects used to represent IRC servers, users, and channels.
 
 Here be dragons.
@@ -24,11 +24,11 @@ import threading
 import time
 
 from . import __version__, conf, selectdriver, structures, utils, world
-from .log import log, PyLinkChannelLogger
-from .utils import ProtocolError  # Compatibility with PyLink 1.x
+from .log import log, NetLinkChannelLogger
+from .utils import ProtocolError  # Compatibility with NetLink 1.x
 
-__all__ = ['ChannelState', 'User', 'UserMapping', 'PyLinkNetworkCore',
-           'PyLinkNetworkCoreWithUtils', 'IRCNetwork', 'Server', 'Channel',
+__all__ = ['ChannelState', 'User', 'UserMapping', 'NetLinkNetworkCore',
+           'NetLinkNetworkCoreWithUtils', 'IRCNetwork', 'Server', 'Channel',
            'PUIDGenerator', 'ProtocolError']
 
 QUEUE_FULL = queue.Full
@@ -68,10 +68,10 @@ class TSObject():
         self._ts = value
 
 class User(TSObject):
-    """PyLink IRC user class."""
-    def __init__(self, irc: PyLinkNetworkCore, nick: str, ts: int, uid: str, server: str,
+    """NetLink IRC user class."""
+    def __init__(self, irc: NetLinkNetworkCore, nick: str, ts: int, uid: str, server: str,
                  ident: str = 'null', host: str = 'null',
-                 realname: str = 'PyLink dummy client', realhost: str = 'null',
+                 realname: str = 'NetLink dummy client', realhost: str = 'null',
                  ip: str = '0.0.0.0', manipulatable: bool = False,
                  opertype: str = 'IRC Operator') -> None:
         super().__init__()
@@ -90,7 +90,7 @@ class User(TSObject):
         self.server = server
         self._irc = irc
 
-        # Tracks PyLink identification status
+        # Tracks NetLink identification status
         self.account = ''
 
         # Tracks oper type (for display only)
@@ -228,8 +228,8 @@ class UserMapping(collections.abc.MutableMapping, structures.CopyWrapper):
     def __copy__(self):
         return self.__class__(self._irc, data=self._data.copy())
 
-class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
-    """Base IRC object for PyLink."""
+class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
+    """Base IRC object for NetLink."""
 
     def __init__(self, netname):
 
@@ -242,7 +242,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         if netname in conf.conf['servers'] and not hasattr(self, 'serverdata'):
             self.serverdata = conf.conf['servers'][netname]
 
-        self.protoname = self.__class__.__module__.split('.')[-1]  # Remove leading pylinkirc.protocols.
+        self.protoname = self.__class__.__module__.split('.')[-1]  # Remove leading netlink.protocols.
 
         # Protocol stuff
         self.casemapping = 'rfc1459'
@@ -252,7 +252,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         self.conf_keys = {'ip', 'port', 'hostname', 'sid', 'sidrange', 'protocol', 'sendpass',
                           'recvpass'}
 
-        # Defines a set of PyLink protocol capabilities
+        # Defines a set of NetLink protocol capabilities
         self.protocol_caps = set()
 
         # These options depend on self.serverdata from above to be set.
@@ -298,7 +298,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
                     log.warning('(%s) Got invalid channel logging pair %r: %r; are your indentation '
                                 'and block commenting consistent?', self.name, channel, chandata)
 
-                handler = PyLinkChannelLogger(self, channel, level=level)
+                handler = NetLinkChannelLogger(self, channel, level=level)
                 self.loghandlers.append(handler)
                 log.addHandler(handler)
 
@@ -309,7 +309,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         """
         self.encoding = self.serverdata.get('encoding') or 'utf-8'
 
-        # Tracks the main PyLink client's UID.
+        # Tracks the main NetLink client's UID.
         self.pseudoclient = None
 
         # Internal variable to set the place and caller of the last command (in PM
@@ -322,7 +322,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         self.servers = {}
         self.users = UserMapping(self)
 
-        # Two versions of the channels index exist in PyLink 2.0, and they are joined together
+        # Two versions of the channels index exist in NetLink 2.0, and they are joined together
         # - irc._channels which implicitly creates channels on access (mostly used
         #   in protocol modules)
         # - irc.channels which does not (recommended for use by plugins)
@@ -438,14 +438,14 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
 
     def call_command(self, source, text):
         """
-        Calls a PyLink bot command. source is the caller's UID, and text is the
+        Calls a NetLink bot command. source is the caller's UID, and text is the
         full, unparsed text of the message.
         """
-        world.services['pylink'].call_cmd(self, source, text)
+        world.services['netlink'].call_cmd(self, source, text)
 
     def msg(self, target, text, notice=None, source=None, loopback=True, wrap=True):
         """Handy function to send messages/notices to clients. Source
-        is optional, and defaults to the main PyLink client if not specified."""
+        is optional, and defaults to the main NetLink client if not specified."""
         if not text:
             return
 
@@ -457,10 +457,10 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         def _msg(text):
             if notice:
                 self.notice(source, target, text)
-                cmd = 'PYLINK_SELF_NOTICE'
+                cmd = 'NETLINK_SELF_NOTICE'
             else:
                 self.message(source, target, text)
-                cmd = 'PYLINK_SELF_PRIVMSG'
+                cmd = 'NETLINK_SELF_PRIVMSG'
 
             # Determines whether we should send a hook for this msg(), to forward things like services
             # replies across relay.
@@ -482,7 +482,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         """
         if private is None:
             # Allow using private replies as the default, if no explicit setting was given.
-            private = conf.conf['pylink'].get("prefer_private_replies")
+            private = conf.conf['netlink'].get("prefer_private_replies")
 
         # Private reply is enabled, or the caller was originally a PM
         if private or (self.called_in in self.users):
@@ -515,15 +515,15 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
     ## Configuration-based lookup functions.
     def version(self):
         """
-        Returns a detailed version string including the PyLink daemon version,
+        Returns a detailed version string including the NetLink daemon version,
         the protocol module in use, and the server hostname.
         """
-        fullversion = 'PyLink-%s. %s :[protocol:%s, encoding:%s]' % (__version__, self.hostname(), self.protoname, self.encoding)
+        fullversion = 'NetLink-%s. %s :[protocol:%s, encoding:%s]' % (__version__, self.hostname(), self.protoname, self.encoding)
         return fullversion
 
     def hostname(self):
         """
-        Returns the server hostname used by PyLink on the given server.
+        Returns the server hostname used by NetLink on the given server.
         """
         return self.serverdata.get('hostname', world.fallback_hostname)
 
@@ -658,7 +658,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         Implements triggers called after a network disconnects.
         """
         # Internal hook signifying that a network has disconnected.
-        self.call_hooks([None, 'PYLINK_DISCONNECT', {'was_successful': self.was_successful}])
+        self.call_hooks([None, 'NETLINK_DISCONNECT', {'was_successful': self.was_successful}])
 
         # Clear the to_lower cache.
         self.to_lower.cache_clear()
@@ -711,7 +711,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
 
     def is_internal_client(self, uid: str) -> bool:
         """
-        Returns whether the given UID is a PyLink client.
+        Returns whether the given UID is a NetLink client.
 
         This returns False if the numeric doesn't exist.
         """
@@ -721,7 +721,7 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
         return False
 
     def is_internal_server(self, sid: str) -> bool:
-        """Returns whether the given SID is an internal PyLink server."""
+        """Returns whether the given SID is an internal NetLink server."""
         return (sid in self.servers and self.servers[sid].internal)
 
     def get_server(self, uid: str) -> str | None:
@@ -757,9 +757,9 @@ class PyLinkNetworkCore(structures.CamelCaseToSnakeCase):
                         "exist (%s)!", self.name, uid, userobj.nick, sname)
         return world.services.get(sname)
 
-structures._BLACKLISTED_COPY_TYPES.append(PyLinkNetworkCore)
+structures._BLACKLISTED_COPY_TYPES.append(NetLinkNetworkCore)
 
-class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
+class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -889,7 +889,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
                 log.debug('Server %s also hosts server %s, removing those users too...', split_server, sid)
                 # Recursively run SQUIT on any other hubs this server may have been connected to.
                 args = self._squit(sid, 'SQUIT', [sid, "0",
-                                   "PyLink: Automatically splitting leaf servers of %s" % sid])
+                                   "NetLink: Automatically splitting leaf servers of %s" % sid])
                 affected_users += args['users']
                 affected_servers += args['affected_servers']
 
@@ -922,7 +922,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         """
         Log debug info related to mode parsing if enabled.
         """
-        if conf.conf['pylink'].get('log_mode_parsers'):
+        if conf.conf['netlink'].get('log_mode_parsers'):
             log.debug(*args, **kwargs)
 
     def _parse_modes(self, args, existing, supported_modes, is_channel=False, prefixmodes=None,
@@ -932,7 +932,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
 
         args: A mode string or a mode string split by space (type list)
         existing: A set or iterable of existing modes
-        supported_modes: a dict of PyLink supported modes (mode names mapping
+        supported_modes: a dict of NetLink supported modes (mode names mapping
                          to mode chars, with *ABCD keys)
         prefixmodes: a dict of prefix modes (irc.prefixmodes style)
         """
@@ -1336,7 +1336,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         orig_modes = modes.copy()
         modes = list(modes)
         while modes:
-            # PyLink mode lists come in the form [('+t', None), ('-b', '*!*@someone'), ('+l', 3)]
+            # NetLink mode lists come in the form [('+t', None), ('-b', '*!*@someone'), ('+l', 3)]
             # The +/- part is optional and is treated as the prefix of the last mode if not given,
             # or + (adding modes) if it is the first mode in the list.
             next_mode = modes.pop(0)
@@ -1465,12 +1465,12 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         Returns whether the given user has operator / server administration status.
         For IRC, this checks usermode +o. Other platforms may choose to define this another way.
 
-        The allowAuthed and allowOper keyword arguments are deprecated since PyLink 2.0-alpha4.
+        The allowAuthed and allowOper keyword arguments are deprecated since NetLink 2.0-alpha4.
         """
         if 'allowAuthed' in kwargs or 'allowOper' in kwargs:
             log.warning('(%s) is_oper: the "allowAuthed" and "allowOper" options are deprecated as '
-                        'of PyLink 2.0-alpha4 and now imply False and True respectively. To check for'
-                        'PyLink account status, instead check the User.account attribute directly.',
+                        'of NetLink 2.0-alpha4 and now imply False and True respectively. To check for'
+                        'NetLink account status, instead check the User.account attribute directly.',
                         self.name)
 
         if uid in self.users and ("o", None) in self.users[uid].modes:
@@ -1480,7 +1480,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
     def match_host(self, glob, target, ip=True, realhost=True):
         """
         Checks whether the given host or given UID's hostmask matches the given glob
-        (nick!user@host for IRC). PyLink extended targets are also supported.
+        (nick!user@host for IRC). NetLink extended targets are also supported.
 
         If the target given is a UID, and the 'ip' or 'realhost' options are True, this will also
         match against the target's IP address and real host, respectively.
@@ -1510,9 +1510,9 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
                         if specialchar in glob:
                             break
                     else:
-                        # Implicitly convert matches for *sane* account names to "$pylinkacc:accountname".
-                        log.debug('(%s) Using target $pylinkacc:%s instead of raw string %r', self.name, glob, glob)
-                        glob = '$pylinkacc:' + glob
+                        # Implicitly convert matches for *sane* account names to "$netlinkacc:accountname".
+                        log.debug('(%s) Using target $netlinkacc:%s instead of raw string %r', self.name, glob, glob)
+                        glob = '$netlinkacc:' + glob
 
                 if glob.startswith('$'):
                     # Exttargets start with $. Skip regular ban matching and find the matching ban handler.
@@ -1601,7 +1601,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         """Creates a hostmask-based ban for the given user.
 
         Ban exceptions, invite exceptions quiets, and extbans are also supported by setting ban_type
-        to the appropriate PyLink named mode (e.g. "ban", "banexception", "invex", "quiet", "ban_nonick")."""
+        to the appropriate NetLink named mode (e.g. "ban", "banexception", "invex", "quiet", "ban_nonick")."""
         assert uid in self.users, "Unknown user %s" % uid
 
         # FIXME: verify that this is a valid mask.
@@ -1610,7 +1610,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
         #      (cloaked and uncloaked), etc.
         # TODO: make this not specific to IRC
         ban_style = ban_style or self.serverdata.get('ban_style') or \
-            conf.conf['pylink'].get('ban_style') or '*!*@$host'
+            conf.conf['netlink'].get('ban_style') or '*!*@$host'
 
         template = string.Template(ban_style)
         banhost = template.safe_substitute(self.users[uid].get_fields())
@@ -1727,7 +1727,7 @@ class PyLinkNetworkCoreWithUtils(PyLinkNetworkCore):
 # next cycle. Effectively the ping timeout is: pingfreq * (KEEPALIVE_MAX_MISSED + 1)
 KEEPALIVE_MAX_MISSED = 2
 
-class IRCNetwork(PyLinkNetworkCoreWithUtils):
+class IRCNetwork(NetLinkNetworkCoreWithUtils):
     S2S_BUFSIZE = 510
 
     def __init__(self, *args, **kwargs):
@@ -1945,7 +1945,7 @@ class IRCNetwork(PyLinkNetworkCoreWithUtils):
 
             self.servers[self.sid] = Server(self, None, host, internal=True,
                                             desc=self.serverdata.get('serverdesc')
-                                            or conf.conf['pylink']['serverdesc'])
+                                            or conf.conf['netlink']['serverdesc'])
 
             log.info('(%s) Starting ping schedulers....', self.name)
             self._schedule_ping()
@@ -2206,17 +2206,17 @@ class IRCNetwork(PyLinkNetworkCoreWithUtils):
 Irc = IRCNetwork
 
 class Server():
-    """PyLink IRC server class.
+    """NetLink IRC server class.
 
     irc: the protocol/network object this Server instance is attached to.
     uplink: The SID of this Server instance's uplink. This is set to None
-            for **both** the main PyLink server and our uplink.
+            for **both** the main NetLink server and our uplink.
     name: The name of the server.
-    internal: Boolean, whether the server is an internal PyLink server.
+    internal: Boolean, whether the server is an internal NetLink server.
     desc: Sets the server description if relevant.
     """
 
-    def __init__(self, irc: PyLinkNetworkCore, uplink: str | None, name: str,
+    def __init__(self, irc: NetLinkNetworkCore, uplink: str | None, name: str,
                  internal: bool = False, desc: str = "(None given)") -> None:
         self.uplink = uplink
         self.users: set[str] = set()
@@ -2244,9 +2244,9 @@ class Server():
 IrcServer = Server
 
 class Channel(TSObject, structures.CamelCaseToSnakeCase, structures.CopyWrapper):
-    """PyLink IRC channel class."""
+    """NetLink IRC channel class."""
 
-    def __init__(self, irc: PyLinkNetworkCore, name: str | None = None) -> None:
+    def __init__(self, irc: NetLinkNetworkCore, name: str | None = None) -> None:
         super().__init__()
         # Initialize variables, such as the topic, user list, TS, who's opped, etc.
         self.users: set[str] = set()

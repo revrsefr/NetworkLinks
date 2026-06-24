@@ -1,6 +1,6 @@
 # Automode Tutorial
 
-The Automode plugin was introduced in PyLink 0.9 as a simple mechanism to manage channel access. That said, it is not designed to entirely replace traditional IRC services such as ChanServ.
+The Automode plugin was introduced in NetLink 0.9 as a simple mechanism to manage channel access. That said, it is not designed to entirely replace traditional IRC services such as ChanServ.
 
 ## Starting steps
 
@@ -26,7 +26,7 @@ Clearing all access entries on a channel:
 - `/msg Automode clearacc #channel`
 
 ## Supported masks and extended targets
-Automode supports any hostmask or PyLink extended target; see the [Exttargets Guide](exttargets.md) for more details.
+Automode supports any hostmask or NetLink extended target; see the [Exttargets Guide](exttargets.md) for more details.
 
 ## Permissions
 
@@ -34,4 +34,4 @@ See the [Permissions Reference](permissions-reference.md#automode) for a list of
 
 ## Caveats
 
-- Service bot joining and Relay don't always behave consistently: see https://github.com/jlu5/PyLink/issues/265
+- Service bot joining and Relay don't always behave consistently: see https://github.com/revrsefr/NetworkLinks/issues/265

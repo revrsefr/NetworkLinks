@@ -1,13 +1,13 @@
-# PyLink hooks reference
+# NetLink hooks reference
 
 ***Last updated for 3.1-dev (2021-06-13).***
 
-In PyLink, protocol modules communicate with plugins through a system of hooks. This has the benefit of being IRCd-independent, allowing most plugins to function regardless of the IRCd being used.
+In NetLink, protocol modules communicate with plugins through a system of hooks. This has the benefit of being IRCd-independent, allowing most plugins to function regardless of the IRCd being used.
 Each hook payload is formatted as a Python `list`, with three arguments: `numeric`, `command`, and `args`.
 
 1) **numeric**: The sender of the hook payload (normally a UID or SID).
 
-2) **command**: The command name (hook name) of the payload. These are *always* UPPERCASE, and those starting with "PYLINK_" indicate hooks sent out by PyLink IRC objects themselves (i.e. they don't require protocol modules to handle them).
+2) **command**: The command name (hook name) of the payload. These are *always* UPPERCASE, and those starting with "NETLINK_" indicate hooks sent out by NetLink IRC objects themselves (i.e. they don't require protocol modules to handle them).
 
 3) **args**: The hook data (args), a Python `dict`, with different data keys and values depending on the command given.
 
@@ -23,7 +23,7 @@ On UnrealIRCd, because SETHOST is mapped to CHGHOST, `:jlu5 SETHOST blah` would 
 
 - `['001ZJZW01', 'CHGHOST', {'ts': 1451174512, 'target': '001ZJZW01', 'newhost': 'blah'}]`
 
-Some hooks, like MODE, are more complex and can include the entire state of a channel. This will be further described later. `:jlu5 MODE #chat +o PyLink-devel` is converted into (pretty-printed for readability):
+Some hooks, like MODE, are more complex and can include the entire state of a channel. This will be further described later. `:jlu5 MODE #chat +o NetLink-devel` is converted into (pretty-printed for readability):
 
 ```
 ['001ZJZW01',
@@ -36,14 +36,14 @@ Some hooks, like MODE, are more complex and can include the entire state of a ch
 
 ## Core hooks
 
-These following hooks, sent with their correct data keys, are required for PyLink's basic functioning.
+These following hooks, sent with their correct data keys, are required for NetLink's basic functioning.
 
 - **ENDBURST**: `{}`
     - The hook data here is empty.
     - This payload should be sent whenever a server finishes its burst, with the SID of the bursted server as the sender.
     - The service bot API and plugins like relay use this to make sure networks are properly connected. Should ENDBURST not be sent or emulated, they will likely fail to spawn users entirely.
 
-- **PYLINK_DISCONNECT**: `{'was_successful': False}`
+- **NETLINK_DISCONNECT**: `{'was_successful': False}`
     - This is sent to plugins by IRC object instances whenever their network has disconnected. The sender here is always **None**.
     - The `was_successful` key shows whether the last connection before this message was successful (i.e. whether the disconnect wasn't caused by a configuration error, etc.)
 
@@ -129,16 +129,16 @@ The following hooks represent regular IRC commands sent between servers.
     - As of 1.1.x, SAVE is also used internally to alert plugins of nick collisions, when protocol modules receive a user introduction for a nick that already exists.
 
 - **SVSNICK**: `{'target': 'UID1', 'newnick': 'abcd'}`
-    - PyLink does not comply with SVSNICK requests, but instead forwards it to plugins that listen for it.
+    - NetLink does not comply with SVSNICK requests, but instead forwards it to plugins that listen for it.
     - Relay, for example, treats SVSNICK as a cue to force tag nicks.
 
 - **VERSION**: `{}`
-    - This is used for protocols that send VERSION requests between servers when a client requests it (e.g. `/raw version pylink.local`).
+    - This is used for protocols that send VERSION requests between servers when a client requests it (e.g. `/raw version netlink.local`).
     - `coremods/handlers.py` automatically handles this by responding with a 351 numeric, with the data being the output of `irc.version()`.
 
 - **WHOIS**: `{'target': 'UID1'}`
     - On protocols supporting it (everything except InspIRCd), the WHOIS command is sent between servers for remote WHOIS requests.
-    - PyLink has built-in handling for this via `coremods/handlers.py` - plugins wishing to add custom WHOIS text should use the PYLINK_CUSTOM_WHOIS hook below.
+    - NetLink has built-in handling for this via `coremods/handlers.py` - plugins wishing to add custom WHOIS text should use the NETLINK_CUSTOM_WHOIS hook below.
 
 ## Hooks that don't map to IRC commands
 Some hooks do not map directly to IRC commands, but to events that protocol modules should handle.
@@ -150,11 +150,11 @@ Some hooks do not map directly to IRC commands, but to events that protocol modu
     - This hook is sent whenever an oper-up is successful: when a user with umode `+o` is bursted, when umode `+o` is set, etc.
     - The `text` field denotes the oper type (not the SWHOIS), which is used for WHOIS replies on different IRCds.
 
-- **PYLINK_NEW_SERVICE**: `{'name': "servicename"}`
-    - This hook is sent when a new service is introduced. It replaces the old `PYLINK_SPAWNMAIN` hook.
+- **NETLINK_NEW_SERVICE**: `{'name': "servicename"}`
+    - This hook is sent when a new service is introduced. It replaces the old `NETLINK_SPAWNMAIN` hook.
     - The sender here is always **None**.
 
-- **PYLINK_CUSTOM_WHOIS**: `{'target': UID1, 'server': SID1}`
+- **NETLINK_CUSTOM_WHOIS**: `{'target': UID1, 'server': SID1}`
     - This hook is called by `coremods/handlers.py` during its WHOIS handling process, to allow plugins to provide custom WHOIS information. The `target` field represents the target UID, while the `server` field represents the SID that should be replying to the WHOIS request. The source of the payload is the user using `/whois`.
     - Plugins wishing to implement this should use the standard WHOIS numerics, using `irc.numeric()` to reply to the source from the given server.
     - This hook replaces the pre-0.8.x fashion of defining custom WHOIS handlers, which was never standardized and poorly documented.
@@ -177,4 +177,4 @@ At this time, commands that are handled by protocol modules without returning an
     - Replace `irc.fullVersion()` with `irc.version()`
     - Various minor wording tweaks.
 * 2017-02-24 (1.2-dev)
-    - The `was_successful` key was added to PYLINK_DISCONNECT.
+    - The `was_successful` key was added to NETLINK_DISCONNECT.

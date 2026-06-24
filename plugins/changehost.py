@@ -5,9 +5,9 @@ Changehost plugin - automatically changes the hostname of matching users.
 from __future__ import annotations
 import string
 
-from pylinkirc import conf, utils, world
-from pylinkirc.coremods import permissions
-from pylinkirc.log import log
+from netlink import conf, utils, world
+from netlink.coremods import permissions
+from netlink.log import log
 
 # Characters allowed in a hostname.
 allowed_chars = string.ascii_letters + '-./:' + string.digits
