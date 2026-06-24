@@ -188,20 +188,33 @@ def massbanre(irc, source: str, args: list):
 
 utils.add_cmd(massbanre, aliases=('rban',))
 
+DEFAULT_AKILL_DURATION = 604800  # 7 days
+
+def _duration(value):
+    """argparse type: parse a duration string (e.g. '1w2d3h') into seconds."""
+    try:
+        return utils.parse_duration(value)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e))
+
 masskill_parser = utils.IRCParser()
 masskill_parser.add_argument('banmask')
 # Regarding default ban reason: it's a good idea not to leave in the caller to prevent retaliation...
 masskill_parser.add_argument('reason', nargs='*', default=["User banned"], type=str)
 masskill_parser.add_argument('--akill', '-ak', action='store_true')
+masskill_parser.add_argument('--duration', '-t', type=_duration, default=DEFAULT_AKILL_DURATION,
+                             help="AKILL duration as a time string such as 1w2d3h4m5s (default 7 days). "
+                                  "Only meaningful together with --akill.")
 masskill_parser.add_argument('--force-kb', '-f', action='store_true')
 masskill_parser.add_argument('--include-opers', '-o', action='store_true')
 
 def masskill(irc, source, args, use_regex=False):
-    """<banmask / exttarget> [<kill/ban reason>] [--akill/ak] [--force-kb/-f] [--include-opers/-o]
+    """<banmask / exttarget> [<kill/ban reason>] [--akill/ak] [--duration/-t <time>] [--force-kb/-f] [--include-opers/-o]
 
     Kills all users matching the given NetLink banmask.
 
-    The --akill option can also be given to convert kills to akills, which expire after 7 days.
+    The --akill option can also be given to convert kills to akills, which expire after 7 days by default.
+    Use --duration with a time string such as 1w2d3h4m5s to set a different akill length.
 
     For relay users, attempts to kill are forwarded as a kickban to every channel where the calling user
     meets claim requirements to set a ban (i.e. this is true if you are opped, if your network is in claim list, etc.;
@@ -262,11 +275,11 @@ def masskill(irc, source, args, use_regex=False):
                     irc.reply("Not kicking \x02%s\x02 from \x02%s\x02 because you don't have CLAIM access. If this is "
                               "another network's channel, ask someone to op you or use the --force-kb option." % (userobj.nick, channel))
         else:
-            if args.akill:  # TODO: configurable length via strings such as "2w3d5h6m3s" - though month and minute clash this way?
+            if args.akill:
                 if not (userobj.realhost or userobj.ip):
                     irc.reply("Skipping akill on %s because NetLink doesn't know the real host." % irc.get_hostmask(uid))
                     continue
-                irc.set_server_ban(irc.pseudoclient.uid, 604800, host=userobj.realhost or userobj.ip or userobj.host, reason=reason)
+                irc.set_server_ban(irc.pseudoclient.uid, args.duration, host=userobj.realhost or userobj.ip or userobj.host, reason=reason)
             else:
                 irc.kill(irc.pseudoclient.uid, uid, reason)
                 try:
@@ -285,12 +298,13 @@ def masskill(irc, source, args, use_regex=False):
 utils.add_cmd(masskill, aliases=('mkill',))
 
 def masskillre(irc, source: str, args: list):
-    """<regular expression> [<kill/ban reason>] [--akill/ak] [--force-kb/-f] [--include-opers/-o]
+    """<regular expression> [<kill/ban reason>] [--akill/ak] [--duration/-t <time>] [--force-kb/-f] [--include-opers/-o]
 
     Kills all users whose "nick!user@host [gecos]" mask matches the given Python-style regular expression.
     (https://docs.python.org/3/library/re.html#regular-expression-syntax describes supported syntax)
 
-    The --akill option can also be given to convert kills to akills that expire after 7 days.
+    The --akill option can also be given to convert kills to akills that expire after 7 days by default.
+    Use --duration with a time string such as 1w2d3h4m5s to set a different akill length.
 
     For relay users, attempts to kill are forwarded as a kickban to every channel where the calling user
     meets claim requirements to set a ban (i.e. this is true if you are opped, if your network is in claim list, etc.;
@@ -328,11 +342,37 @@ def jupe(irc, source: str, args: list):
         irc.error("Invalid server name %r." % servername)
         return
 
+    # SQUIT any pre-existing server with this name first, so re-juping doesn't fail
+    # with a "server already exists" error from the uplink (issue #669).
+    existing_sid = irc._get_SID(servername)
+    if existing_sid in irc.servers:
+        irc.squit(irc.sid, existing_sid, text=desc)
+
     sid = irc.spawn_server(servername, desc=desc)
 
+    # Log an oper notice: not every IRCd announces juping on its own (issue #669).
+    log.info('(%s) %s juped server %s: %s', irc.name, irc.get_hostmask(source), servername, reason)
+    irc.announce_administration("%s juped server %s (%s)" % (irc.get_hostmask(source), servername, reason))
     irc.call_hooks([irc.pseudoclient.uid, 'OPERCMDS_SPAWNSERVER',
                    {'name': servername, 'sid': sid, 'text': desc}])
 
+    irc.reply("Done.")
+
+@utils.add_cmd
+def globops(irc, source: str, args: list):
+    """<message>
+
+    Sends a message to all opers on the network (via GLOBOPS / OPERWALL /
+    server notice, depending on what the IRCd supports)."""
+    permissions.check_permissions(irc, source, ['opercmds.globops'])
+
+    message = ' '.join(args).strip()
+    if not message:
+        irc.error("No message given.")
+        return
+
+    irc.oper_notice(irc.pseudoclient.uid, message)
+    log.info('(%s) %s sent globops: %s', irc.name, irc.get_hostmask(source), message)
     irc.reply("Done.")
 
 def _try_find_target(irc, nick):

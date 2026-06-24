@@ -474,6 +474,28 @@ class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
         else:
             _msg(text)
 
+    def oper_notice(self, source, text):
+        """Send a message to all opers on the network.
+
+        This default implementation is a no-op, for protocols (e.g. Clientbot)
+        that have no way to send a global oper notice. Protocols that support
+        GLOBOPS/OPERWALL/SNONOTICE override this.
+        """
+        log.debug('(%s) oper_notice is not supported by this protocol; dropping message: %s',
+                  self.name, text)
+
+    def announce_administration(self, text):
+        """Send an oper notice announcing an administrative action, if enabled.
+
+        Gated by the per-network 'announce_administration' option (opt-in for
+        privacy: some networks would rather not broadcast services actions).
+        """
+        if not self.serverdata.get('announce_administration'):
+            return
+        if not self.pseudoclient:
+            return
+        self.oper_notice(self.pseudoclient.uid, text)
+
     def _reply(self, text, notice=None, source=None, private=None, force_privmsg_in_private=False,
             loopback=True, wrap=True):
         """

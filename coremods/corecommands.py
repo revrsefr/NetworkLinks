@@ -158,6 +158,7 @@ def rehash(irc, source: str, args: list):
         irc.reply("Error loading configuration file: %s: %s" % (type(e).__name__, e))
         return
     else:
+        irc.announce_administration("%s rehashed the NetLink configuration." % irc.get_hostmask(source))
         irc.reply("Done.")
 
 @utils.add_cmd
