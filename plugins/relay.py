@@ -1520,26 +1520,27 @@ def handle_squit(irc, numeric: str, command: str, args: dict):
         initialize_all(remoteirc)
 
     else:
-        # Some other netsplit happened on the network, we'll have to fake
-        # some *.net *.split quits for that.
-        for user in users:
-            log.debug('(%s) relay.handle_squit: sending handle_quit on %s', irc.name, user)
+        # A netsplit on the network. Fake quits for all the split users in one
+        # batch (single lock, quit text worked out once) instead of replaying a
+        # whole QUIT hook per user.
+        text = '*.net *.split'
+        if conf.conf.get('relay', {}).get('show_netsplits'):
+            try:
+                text = '%s %s' % (irc.servers[args['uplink']].name, args['name'])
+            except (KeyError, AttributeError):
+                log.warning("(%s) relay.handle_squit: Failed to get server name for %s",
+                            irc.name, args.get('uplink'))
 
-            try:  # Allow netsplit hiding to be toggled
-                show_splits = conf.conf['relay']['show_netsplits']
-            except KeyError:
-                show_splits = False
+        def _quit(irc, remoteirc, user):
+            try:
+                remoteirc.quit(user, text)
+            except LookupError:
+                pass
 
-            text = '*.net *.split'
-            if show_splits:
-                uplink = args['uplink']
-                try:
-                    text = '%s %s' % (irc.servers[uplink].name, args['name'])
-                except (KeyError, AttributeError):
-                    log.warning("(%s) relay.handle_squit: Failed to get server name for %s",
-                                irc.name, uplink)
-
-            handle_quit(irc, user, command, {'text': text})
+        with spawnlocks[irc.name]:
+            for user in users:
+                iterate_all_present(irc, user, _quit)
+                relayusers.pop((irc.name, user), None)
 
 utils.add_hook(handle_squit, 'SQUIT')
 
