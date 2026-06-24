@@ -2,6 +2,8 @@
 automode.py - Provide simple channel ACL management by giving prefix modes to users matching
 hostmasks or exttargets.
 """
+
+from __future__ import annotations
 import collections
 import string
 
@@ -138,13 +140,13 @@ def match(irc, channel, uids=None):
         irc.call_hooks([modebot_uid, 'AUTOMODE_MODE',
                       {'target': channel, 'modes': outgoing_modes, 'parse_as': 'MODE'}])
 
-def handle_endburst(irc, source, command, args):
+def handle_endburst(irc, source: str, command: str, args: dict):
     """ENDBURST hook handler - used to join the Automode service to channels where it has entries."""
     if source == irc.uplink:
         _join_db_channels(irc)
 utils.add_hook(handle_endburst, 'ENDBURST')
 
-def handle_join(irc, source, command, args):
+def handle_join(irc, source: str, command: str, args: dict):
     """
     Automode JOIN listener. This sets modes accordingly if the person joining matches a mask in the
     ACL.
@@ -156,7 +158,7 @@ utils.add_hook(handle_join, 'JOIN')
 utils.add_hook(handle_join, 'PYLINK_RELAY_JOIN')  # Handle the relay version of join
 utils.add_hook(handle_join, 'PYLINK_SERVICE_JOIN')  # And the version for service bots
 
-def handle_services_login(irc, source, command, args):
+def handle_services_login(irc, source: str, command: str, args: dict):
     """
     Handles services login change, to trigger Automode matching.
     """
@@ -200,7 +202,7 @@ def _get_channel_pair(irc, source, chanpair, perm=None):
 
     return (ircobj, channel)
 
-def setacc(irc, source, args):
+def setacc(irc, source: str, args: list):
     """<channel/chanpair> <mask> <mode list>
 
     Assigns the given prefix mode characters to the given mask for the channel given. Extended targets are supported for masks - use this to your advantage!
@@ -245,7 +247,7 @@ def setacc(irc, source, args):
 
 modebot.add_cmd(setacc, aliases=('setaccess', 'set'), featured=True)
 
-def delacc(irc, source, args):
+def delacc(irc, source: str, args: list):
     """<channel/chanpair> <mask or range string>
 
     Removes the Automode entry for the given mask or range string, if they exist.
@@ -299,7 +301,7 @@ def delacc(irc, source, args):
 
 modebot.add_cmd(delacc, aliases=('delaccess', 'del'), featured=True)
 
-def listacc(irc, source, args):
+def listacc(irc, source: str, args: list):
     """<channel/chanpair>
 
     Lists all Automode entries for the given channel."""
@@ -327,7 +329,7 @@ def listacc(irc, source, args):
 
 modebot.add_cmd(listacc, featured=True, aliases=('listaccess',))
 
-def save(irc, source, args):
+def save(irc, source: str, args: list):
     """takes no arguments.
 
     Saves the Automode database to disk."""
@@ -337,7 +339,7 @@ def save(irc, source, args):
 
 modebot.add_cmd(save)
 
-def syncacc(irc, source, args):
+def syncacc(irc, source: str, args: list):
     """<channel/chanpair>
 
     Syncs Automode access lists to the channel.
@@ -357,7 +359,7 @@ def syncacc(irc, source, args):
 
 modebot.add_cmd(syncacc, featured=True, aliases=('sync', 'syncaccess'))
 
-def clearacc(irc, source, args):
+def clearacc(irc, source: str, args: list):
     """<channel>
 
     Removes all Automode entries for the given channel.

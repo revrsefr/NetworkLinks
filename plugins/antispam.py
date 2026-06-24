@@ -1,5 +1,7 @@
 # antispam.py: Basic services-side spamfilters for IRC
 
+from __future__ import annotations
+
 from pylinkirc import conf, utils
 from pylinkirc.log import log
 
@@ -208,7 +210,7 @@ MASSHIGHLIGHT_DEFAULTS = {
     'punishment': 'kick+ban',
     'enabled': False
 }
-def handle_masshighlight(irc, source, command, args):
+def handle_masshighlight(irc, source: str, command: str, args: dict):
     """Handles mass highlight attacks."""
     channel = args['target']
     text = args['text']
@@ -289,7 +291,7 @@ TEXTFILTER_DEFAULTS = {
     'enabled': False,
     'munge_unicode': True,
 }
-def handle_textfilter(irc, source, command, args):
+def handle_textfilter(irc, source: str, command: str, args: dict):
     """Antispam text filter handler."""
     target = args['target']
     text = args['text']
@@ -373,7 +375,7 @@ PARTQUIT_DEFAULTS = {
     'part_filter_message': "Reason filtered",
     'quit_filter_message': "Reason filtered",
 }
-def handle_partquit(irc, source, command, args):
+def handle_partquit(irc, source: str, command: str, args: dict):
     """Antispam part/quit message filter."""
     text = args.get('text')
     pq_settings = irc.get_service_option('antispam', 'partquit',

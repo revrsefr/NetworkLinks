@@ -1,4 +1,6 @@
 # example.py: An example PyLink plugin.
+
+from __future__ import annotations
 import random
 
 from pylinkirc import utils
@@ -14,7 +16,7 @@ from pylinkirc.log import log
 # args: The hook data (a dict) associated with the command. The available data
 #       keys differ by hook name (see the hooks reference for a list of which can
 #       be used).
-def hook_privmsg(irc, source, command, args):
+def hook_privmsg(irc, source: str, command: str, args: dict):
     channel = args['target']
     text = args['text']
 
@@ -36,7 +38,7 @@ utils.add_hook(hook_privmsg, 'PRIVMSG')
 # irc: The IRC object where the command was called.
 # source: The UID/numeric of the calling user.
 # args: A list of command args (excluding the command name) that the command was called with.
-def randint(irc, source, args):
+def randint(irc, source: str, args: list):
     # The 'help' command uses command functions' docstrings as help text, and formats them
     # in the following manner:
     # - Any newlines immediately adjacent to text on both sides are replaced with a space. This

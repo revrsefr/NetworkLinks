@@ -1,4 +1,6 @@
 # commands.py: base PyLink commands
+
+from __future__ import annotations
 import sys
 import time
 
@@ -18,7 +20,7 @@ def die(irc=None):
     permissions.remove_default_permissions(default_permissions)
 
 @utils.add_cmd
-def status(irc, source, args):
+def status(irc, source: str, args: list):
     """takes no arguments.
 
     Returns your current PyLink login status."""
@@ -108,7 +110,7 @@ def _do_showuser(irc, source, u):
                 f("\x02Relay channels\x02: %s" % ' '.join(relaychannels))
 
 @utils.add_cmd
-def showuser(irc, source, args):
+def showuser(irc, source: str, args: list):
     """<user>
 
     Shows information about <user>."""
@@ -125,7 +127,7 @@ def showuser(irc, source, args):
         _do_showuser(irc, source, user)
 
 @utils.add_cmd
-def shownet(irc, source, args):
+def shownet(irc, source: str, args: list):
     """[<network name>]
 
     Shows information about <network name>, or the current network if no argument is given."""
@@ -194,7 +196,7 @@ def shownet(irc, source, args):
                         serverdata.get('sidrange') or _none))
 
 @utils.add_cmd
-def showchan(irc, source, args):
+def showchan(irc, source: str, args: list):
     """<channel>
 
     Shows information about <channel>."""
@@ -256,7 +258,7 @@ def showchan(irc, source, args):
                 f('\x02Relayed channels:\x02 %s' % (' '.join(relays)))
 
 @utils.add_cmd
-def version(irc, source, args):
+def version(irc, source: str, args: list):
     """takes no arguments.
 
     Returns the version of the currently running PyLink instance."""
@@ -265,7 +267,7 @@ def version(irc, source, args):
     irc.reply("The source of this program is available at \x02%s\x02." % world.source)
 
 @utils.add_cmd
-def echo(irc, source, args):
+def echo(irc, source: str, args: list):
     """<text>
 
     Echoes the text given."""
@@ -294,7 +296,7 @@ def _check_logout_access(irc, source, target, perms):
         return True
 
 @utils.add_cmd
-def logout(irc, source, args):
+def logout(irc, source: str, args: list):
     """[<other nick/UID>]
 
     Logs your account out of PyLink. If you have the 'commands.logout.force' permission, or are
@@ -325,7 +327,7 @@ def logout(irc, source, args):
 
 loglevels = {'DEBUG': 10, 'INFO': 20, 'WARNING': 30, 'ERROR': 40, 'CRITICAL': 50}
 @utils.add_cmd
-def loglevel(irc, source, args):
+def loglevel(irc, source: str, args: list):
     """<level>
 
     Sets the log level to the given <level>. <level> must be either DEBUG, INFO, WARNING, ERROR, or CRITICAL.
@@ -345,7 +347,7 @@ def loglevel(irc, source, args):
         irc.reply(world.console_handler.level)
 
 @utils.add_cmd
-def mkpasswd(irc, source, args):
+def mkpasswd(irc, source: str, args: list):
     """<password>
     Hashes a password for use in the configuration file."""
     # TODO: restrict to only certain users?

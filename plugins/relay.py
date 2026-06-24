@@ -1,4 +1,6 @@
 # relay.py: PyLink Relay plugin
+
+from __future__ import annotations
 import base64
 import inspect
 import json
@@ -1360,7 +1362,7 @@ def get_supported_cmodes(irc, remoteirc, channel, modes):
 
 ### EVENT HANDLERS
 
-def handle_relay_whois(irc, source, command, args):
+def handle_relay_whois(irc, source: str, command: str, args: dict):
     """
     WHOIS handler for the relay plugin.
     """
@@ -1408,7 +1410,7 @@ def handle_relay_whois(irc, source, command, args):
 
 utils.add_hook(handle_relay_whois, 'PYLINK_CUSTOM_WHOIS')
 
-def handle_operup(irc, numeric, command, args):
+def handle_operup(irc, numeric: str, command: str, args: dict):
     """
     Handles setting oper types on relay clients during oper up.
     """
@@ -1422,7 +1424,7 @@ def handle_operup(irc, numeric, command, args):
     iterate_all_present(irc, numeric, _handle_operup_func)
 utils.add_hook(handle_operup, 'CLIENT_OPERED')
 
-def handle_join(irc, numeric, command, args):
+def handle_join(irc, numeric: str, command: str, args: dict):
     channel = args['channel']
     if not get_relay(irc, channel):
         # No relay here, return.
@@ -1478,7 +1480,7 @@ def handle_join(irc, numeric, command, args):
 utils.add_hook(handle_join, 'JOIN')
 utils.add_hook(handle_join, 'PYLINK_SERVICE_JOIN')
 
-def handle_quit(irc, numeric, command, args):
+def handle_quit(irc, numeric: str, command: str, args: dict):
     # Lock the user spawning mechanism before proceeding, since we're going to be
     # deleting client from the relayusers cache.
     log.debug('(%s) Grabbing spawnlocks[%s] from thread %r in function %r', irc.name, irc.name,
@@ -1497,7 +1499,7 @@ def handle_quit(irc, numeric, command, args):
 
 utils.add_hook(handle_quit, 'QUIT')
 
-def handle_squit(irc, numeric, command, args):
+def handle_squit(irc, numeric: str, command: str, args: dict):
     """
     Handles SQUITs over relay.
     """
@@ -1541,7 +1543,7 @@ def handle_squit(irc, numeric, command, args):
 
 utils.add_hook(handle_squit, 'SQUIT')
 
-def handle_nick(irc, numeric, command, args):
+def handle_nick(irc, numeric: str, command: str, args: dict):
     newnick = args['newnick']
     def _handle_nick_func(irc, remoteirc, user):
         remote_newnick = normalize_nick(remoteirc, irc.name, newnick, uid=user)
@@ -1552,7 +1554,7 @@ def handle_nick(irc, numeric, command, args):
 
 utils.add_hook(handle_nick, 'NICK')
 
-def handle_part(irc, numeric, command, args):
+def handle_part(irc, numeric: str, command: str, args: dict):
     channels = args['channels']
     text = args['text']
     # Don't allow the PyLink client PARTing to be relayed.
@@ -1610,7 +1612,7 @@ def _relay_send(remoteirc, user, target, text, notice, tags):
         else:
             remoteirc.message(user, target, line, **extra)
 
-def handle_messages(irc, numeric, command, args):
+def handle_messages(irc, numeric: str, command: str, args: dict):
     command = command.upper()
     notice = 'NOTICE' in command or command.startswith('WALL')
 
@@ -1788,7 +1790,7 @@ def handle_messages(irc, numeric, command, args):
 for cmd in ('PRIVMSG', 'NOTICE', 'PYLINK_SELF_NOTICE', 'PYLINK_SELF_PRIVMSG'):
     utils.add_hook(handle_messages, cmd, priority=500)
 
-def handle_tagmsg(irc, numeric, command, args):
+def handle_tagmsg(irc, numeric: str, command: str, args: dict):
     """Relays IRCv3 TAGMSG (client-only message tags) across linked channels.
 
     Only client-only tags (names starting with '+', e.g. +typing, +draft/react,
@@ -1827,7 +1829,7 @@ def handle_tagmsg(irc, numeric, command, args):
 for cmd in ('TAGMSG', 'PYLINK_SELF_TAGMSG'):
     utils.add_hook(handle_tagmsg, cmd, priority=500)
 
-def handle_kick(irc, source, command, args):
+def handle_kick(irc, source: str, command: str, args: dict):
     channel = args['channel']
     target = args['target']
     text = args['text']
@@ -1943,7 +1945,7 @@ def handle_kick(irc, source, command, args):
 
 utils.add_hook(handle_kick, 'KICK')
 
-def handle_chgclient(irc, source, command, args):
+def handle_chgclient(irc, source: str, command: str, args: dict):
     target = args['target']
     field = text = None
     if args.get('newhost'):
@@ -1973,7 +1975,7 @@ def handle_chgclient(irc, source, command, args):
 for c in ('CHGHOST', 'CHGNAME', 'CHGIDENT'):
     utils.add_hook(handle_chgclient, c)
 
-def handle_mode(irc, numeric, command, args):
+def handle_mode(irc, numeric: str, command: str, args: dict):
     target = args['target']
     modes = args['modes']
 
@@ -2120,7 +2122,7 @@ def handle_mode(irc, numeric, command, args):
 
 utils.add_hook(handle_mode, 'MODE')
 
-def handle_topic(irc, numeric, command, args):
+def handle_topic(irc, numeric: str, command: str, args: dict):
     channel = args['channel']
     oldtopic = args.get('oldtopic')
     topic = args['text']
@@ -2152,7 +2154,7 @@ def handle_topic(irc, numeric, command, args):
 
 utils.add_hook(handle_topic, 'TOPIC')
 
-def handle_kill(irc, numeric, command, args):
+def handle_kill(irc, numeric: str, command: str, args: dict):
     target = args['target']
     userdata = args['userdata']
 
@@ -2245,7 +2247,7 @@ def handle_kill(irc, numeric, command, args):
 
 utils.add_hook(handle_kill, 'KILL')
 
-def handle_away(irc, numeric, command, args):
+def handle_away(irc, numeric: str, command: str, args: dict):
     iterate_all_present(irc, numeric,
                         lambda irc, remoteirc, user:
                         remoteirc.away(user, args['text']))
@@ -2267,7 +2269,7 @@ def handle_away(irc, numeric, command, args):
 
 utils.add_hook(handle_away, 'AWAY')
 
-def handle_invite(irc, source, command, args):
+def handle_invite(irc, source: str, command: str, args: dict):
     target = args['target']
     channel = args['channel']
     if is_relay_client(irc, target):
@@ -2289,12 +2291,12 @@ def handle_invite(irc, source, command, args):
                                          remotechan)
 utils.add_hook(handle_invite, 'INVITE')
 
-def handle_endburst(irc, numeric, command, args):
+def handle_endburst(irc, numeric: str, command: str, args: dict):
     if numeric == irc.uplink:
         initialize_all(irc)
 utils.add_hook(handle_endburst, "ENDBURST")
 
-def handle_services_login(irc, numeric, command, args):
+def handle_services_login(irc, numeric: str, command: str, args: dict):
     """
     Relays services account changes as a hook, for integration with plugins like Automode.
     """
@@ -2304,7 +2306,7 @@ def handle_services_login(irc, numeric, command, args):
 
 utils.add_hook(handle_services_login, 'CLIENT_SERVICES_LOGIN')
 
-def handle_disconnect(irc, numeric, command, args):
+def handle_disconnect(irc, numeric: str, command: str, args: dict):
     """Handles IRC network disconnections (internal hook)."""
 
     # Quit all of our users' representations on other nets, and remove
@@ -2409,7 +2411,7 @@ def forcetag_nick(irc, target):
     irc.nick(target, newnick)
     return newnick
 
-def handle_save(irc, numeric, command, args):
+def handle_save(irc, numeric: str, command: str, args: dict):
     target = args['target']
 
     if is_relay_client(irc, target):
@@ -2424,7 +2426,7 @@ def handle_save(irc, numeric, command, args):
 
 utils.add_hook(handle_save, "SAVE")
 
-def handle_svsnick(irc, numeric, command, args):
+def handle_svsnick(irc, numeric: str, command: str, args: dict):
     """
     Handles forced nick change attempts to relay clients, tagging their nick.
     """
@@ -2435,7 +2437,7 @@ def handle_svsnick(irc, numeric, command, args):
 
 utils.add_hook(handle_svsnick, "SVSNICK")
 
-def handle_knock(irc, source, command, args):
+def handle_knock(irc, source: str, command: str, args: dict):
     def _handle_knock_loop(irc, remoteirc, source, command, args):
         channel = args['channel']
         remotechan = get_remote_channel(irc, remoteirc, channel)
@@ -2471,7 +2473,7 @@ utils.add_hook(handle_knock, 'KNOCK')
 
 ### PUBLIC COMMANDS
 
-def create(irc, source, args):
+def create(irc, source: str, args: list):
     """<channel>
 
     Opens up the given channel over PyLink Relay."""
@@ -2523,7 +2525,7 @@ def stop_relay(entry):
         remove_channel(world.networkobjects.get(link[0]), link[1])
     remove_channel(world.networkobjects.get(network), channel)
 
-def destroy(irc, source, args):
+def destroy(irc, source: str, args: list):
     """[<home network>] <channel>
 
     Removes the given channel from the PyLink Relay, delinking all networks linked to it. If the home network is given and you are logged in as admin, this can also remove relay channels from other networks."""
@@ -2568,7 +2570,7 @@ def destroy(irc, source, args):
 destroy = utils.add_cmd(destroy, featured=True)
 
 @utils.add_cmd
-def purge(irc, source, args):
+def purge(irc, source: str, args: list):
     """<network>
 
     Destroys all links relating to the target network."""
@@ -2602,7 +2604,7 @@ link_parser.add_argument('remotenet')
 link_parser.add_argument('channel')
 link_parser.add_argument('localchannel', nargs='?')
 link_parser.add_argument("-f", "--force-ts", action='store_true')
-def link(irc, source, args):
+def link(irc, source: str, args: list):
     """<remotenet> <channel> [<local channel>] [-f/--force-ts]
 
     Links the specified channel on \x02remotenet\x02 over PyLink Relay as \x02local channel\x02.
@@ -2720,7 +2722,7 @@ def link(irc, source, args):
     irc.reply('Done.')
 link = utils.add_cmd(link, featured=True)
 
-def delink(irc, source, args):
+def delink(irc, source: str, args: list):
     """<local channel> [<network>]
 
     Delinks the given channel from PyLink Relay. \x02network\x02 must and can only be specified if you are on the host network for the channel given, and allows you to pick which network to delink.
@@ -2767,7 +2769,7 @@ def delink(irc, source, args):
         irc.error('No such relay %r.' % channel)
 delink = utils.add_cmd(delink, featured=True)
 
-def linked(irc, source, args):
+def linked(irc, source: str, args: list):
     """[<network>]
 
     Returns a list of channels shared across PyLink Relay. If \x02network\x02 is given, filters output to channels linked to the given network."""
@@ -2859,7 +2861,7 @@ def linked(irc, source, args):
 linked = utils.add_cmd(linked, featured=True)
 
 @utils.add_cmd
-def linkacl(irc, source, args):
+def linkacl(irc, source: str, args: list):
     """ALLOW|DENY <channel> <remotenet> [OR] LIST <channel> [OR] WHITELIST <channel> [true/false]
 
     Allows managing link access control lists.
@@ -2954,7 +2956,7 @@ def linkacl(irc, source, args):
         irc.error('Unknown subcommand %r: valid ones are ALLOW, DENY, and LIST.' % cmd)
 
 @utils.add_cmd
-def save(irc, source, args):
+def save(irc, source: str, args: list):
     """takes no arguments.
 
     Saves the relay database to disk."""
@@ -2963,7 +2965,7 @@ def save(irc, source, args):
     irc.reply('Done.')
 
 @utils.add_cmd
-def claim(irc, source, args):
+def claim(irc, source: str, args: list):
     """<channel> [<comma separated list of networks>]
 
     Sets the CLAIM for a channel to a case-sensitive list of networks. If no list of networks is
@@ -3007,7 +3009,7 @@ def claim(irc, source, args):
             (channel, ', '.join(claimed) or '\x1D(none)\x1D'))
 
 @utils.add_cmd
-def modedelta(irc, source, args):
+def modedelta(irc, source: str, args: list):
     """<channel> [<named modes>]
 
     Sets the relay mode delta for the given channel: a list of named mode pairs to apply on leaf
@@ -3129,7 +3131,7 @@ def modedelta(irc, source, args):
             remoteirc.mode(remoteirc.pseudoclient.uid, remotechan, remote_modes)
 
 @utils.add_cmd
-def chandesc(irc, source, args):
+def chandesc(irc, source: str, args: list):
     """<channel> [<text> or "-"]
 
     Sets a description for the given relay channel, which will be shown in the LINKED command.
@@ -3168,7 +3170,7 @@ def chandesc(irc, source, args):
         irc.reply('Description for \x02%s\x02: %s' % (channel, db[relay].get('description') or  '\x1D(none)\x1D'))
 
 @utils.add_cmd
-def forcetag(irc, source, args):
+def forcetag(irc, source: str, args: list):
     """<nick>
 
     Attempts to forcetag the given nick, if it is a relay client.

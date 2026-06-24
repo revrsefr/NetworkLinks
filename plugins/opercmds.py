@@ -1,6 +1,8 @@
 """
 opercmds.py: Provides a subset of network management commands.
 """
+
+from __future__ import annotations
 import argparse
 
 from pylinkirc import utils, world
@@ -68,7 +70,7 @@ def checkban(irc, source, args, use_regex=False):
             irc.reply('No, \x02%s\x02 does not match \x02%s\x02.' % (args.target, args.banmask))
 utils.add_cmd(checkban, aliases=('cban', 'trace'))
 
-def checkbanre(irc, source, args):
+def checkbanre(irc, source: str, args: list):
     """<regular expression> [<target nick or hostmask>] [--channel #channel] [--maxresults <num>]
 
     CHECKBANRE provides a ban checker command based on regular expressions matched against
@@ -167,7 +169,7 @@ def massban(irc, source, args, use_regex=False):
                  irc.get_hostmask(source), args.channel, results)
 utils.add_cmd(massban, aliases=('mban',))
 
-def massbanre(irc, source, args):
+def massbanre(irc, source: str, args: list):
     """<channel> <regular expression> [<kick reason>] [--quiet/-q] [--include-opers/-o]
 
     Bans users on the specified channel whose "nick!user@host [gecos]" mask matches the given Python-style regular expression.
@@ -282,7 +284,7 @@ def masskill(irc, source, args, use_regex=False):
         irc.reply('Masskilled %s/%s users.' % (killed, results))
 utils.add_cmd(masskill, aliases=('mkill',))
 
-def masskillre(irc, source, args):
+def masskillre(irc, source: str, args: list):
     """<regular expression> [<kill/ban reason>] [--akill/ak] [--force-kb/-f] [--include-opers/-o]
 
     Kills all users whose "nick!user@host [gecos]" mask matches the given Python-style regular expression.
@@ -307,7 +309,7 @@ def masskillre(irc, source, args):
 utils.add_cmd(masskillre, aliases=('rkill',))
 
 @utils.add_cmd
-def jupe(irc, source, args):
+def jupe(irc, source: str, args: list):
     """<server> [<reason>]
 
     Jupes the given server."""
@@ -357,7 +359,7 @@ def _try_find_target(irc, nick):
         return potential_targets[0]
 
 @utils.add_cmd
-def kick(irc, source, args):
+def kick(irc, source: str, args: list):
     """<channel> <user> [<reason>]
 
     Kicks <user> from the specified channel."""
@@ -383,7 +385,7 @@ def kick(irc, source, args):
                                               'text': reason, 'parse_as': 'KICK'}])
 
 @utils.add_cmd
-def kill(irc, source, args):
+def kill(irc, source: str, args: list):
     """<target> [<reason>]
 
     Kills the given target."""
@@ -415,7 +417,7 @@ def kill(irc, source, args):
                                               'userdata': userdata, 'parse_as': 'KILL'}])
 
 @utils.add_cmd
-def mode(irc, source, args):
+def mode(irc, source: str, args: list):
     """<channel> <modes>
 
     Sets the given modes on the target channel."""
@@ -454,7 +456,7 @@ def mode(irc, source, args):
     irc.reply("Done.")
 
 @utils.add_cmd
-def topic(irc, source, args):
+def topic(irc, source: str, args: list):
     """<channel> <topic>
 
     Changes the topic in a channel."""
@@ -478,21 +480,21 @@ def topic(irc, source, args):
                     'parse_as': 'TOPIC'}])
 
 @utils.add_cmd
-def chghost(irc, source, args):
+def chghost(irc, source: str, args: list):
     """<user> <new host>
 
     Changes the visible host of the target user."""
     _chgfield(irc, source, args, 'host')
 
 @utils.add_cmd
-def chgident(irc, source, args):
+def chgident(irc, source: str, args: list):
     """<user> <new ident>
 
     Changes the ident of the target user."""
     _chgfield(irc, source, args, 'ident')
 
 @utils.add_cmd
-def chgname(irc, source, args):
+def chgname(irc, source: str, args: list):
     """<user> <new name>
 
     Changes the GECOS (realname) of the target user."""

@@ -1,6 +1,8 @@
 """
 games.py: Creates a bot providing a few simple games.
 """
+
+from __future__ import annotations
 import random
 
 from pylinkirc import utils
@@ -11,7 +13,7 @@ gameclient = utils.register_service("Games", default_nick="Games", manipulatable
 reply = gameclient.reply  # TODO find a better syntax for ServiceBot.reply()
 error = gameclient.error  # TODO find a better syntax for ServiceBot.error()
 # commands
-def dice(irc, source, args):
+def dice(irc, source: str, args: list):
     """<num>d<sides>
 
     Rolls a die with <sides> sides <num> times.
@@ -61,7 +63,7 @@ eightball_responses = ["It is certain.",
              "My sources say no.",
              "Outlook not so good.",
              "Very doubtful."]
-def eightball(irc, source, args):
+def eightball(irc, source: str, args: list):
     """[<question>]
 
     Asks the Magic 8-ball a question.

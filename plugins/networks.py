@@ -1,4 +1,6 @@
 """Networks plugin - allows you to manipulate connections to various configured networks."""
+
+from __future__ import annotations
 import importlib
 import threading
 import types
@@ -11,7 +13,7 @@ from pylinkirc.log import log
 REMOTE_IN_USE = threading.Event()
 
 @utils.add_cmd
-def disconnect(irc, source, args):
+def disconnect(irc, source: str, args: list):
     """<network>
 
     Disconnects the network <network>. When all networks are disconnected, PyLink will automatically exit.
@@ -37,7 +39,7 @@ def disconnect(irc, source, args):
     irc.reply("Done. If you want to reconnect this network, use the 'rehash' command.")
 
 @utils.add_cmd
-def autoconnect(irc, source, args):
+def autoconnect(irc, source: str, args: list):
     """<network> <seconds>
 
     Sets the autoconnect time for <network> to <seconds>.
@@ -64,7 +66,7 @@ remote_parser.add_argument('--service', type=str, default='pylink')
 remote_parser.add_argument('network')
 remote_parser.add_argument('command', nargs=utils.IRCParser.REMAINDER)
 @utils.add_cmd
-def remote(irc, source, args):
+def remote(irc, source: str, args: list):
     """[--service <service name>] <network> <command>
 
     Runs <command> on the remote network <network>. Plugin responses sent using irc.reply() are
@@ -171,7 +173,7 @@ def remote(irc, source, args):
             REMOTE_IN_USE.clear()
 
 @utils.add_cmd
-def reloadproto(irc, source, args):
+def reloadproto(irc, source: str, args: list):
     """<protocol module name>
 
     Reloads the given protocol module without restart. You will have to manually disconnect and reconnect any network using the module for changes to apply."""

@@ -1,6 +1,8 @@
 """
 exec.py: Provides commands for executing raw code and debugging PyLink.
 """
+
+from __future__ import annotations
 import pprint
 # These imports are not strictly necessary, but make the following modules
 # easier to access through eval and exec.
@@ -50,7 +52,7 @@ def _exec(irc, source, args, locals_dict=None):
 utils.add_cmd(_exec, 'exec')
 
 @utils.add_cmd
-def iexec(irc, source, args):
+def iexec(irc, source: str, args: list):
     """<code>
 
     Admin-only. Executes <code> in the current PyLink instance with a persistent, isolated
@@ -104,7 +106,7 @@ def _eval(irc, source, args, locals_dict=None, pretty_print=False):
 utils.add_cmd(_eval, 'eval')
 
 @utils.add_cmd
-def peval(irc, source, args):
+def peval(irc, source: str, args: list):
     """<Python expression>
 
     Admin-only. This command is the same as 'eval', except that results are pretty formatted.
@@ -114,7 +116,7 @@ def peval(irc, source, args):
     _eval(irc, source, args, pretty_print=True)
 
 @utils.add_cmd
-def ieval(irc, source, args):
+def ieval(irc, source: str, args: list):
     """<Python expression>
 
     Admin-only. Evaluates the given Python expression using a persistent, isolated
@@ -128,7 +130,7 @@ def ieval(irc, source, args):
     _eval(irc, source, args, locals_dict=exec_locals_dict)
 
 @utils.add_cmd
-def pieval(irc, source, args):
+def pieval(irc, source: str, args: list):
     """<Python expression>
 
     Admin-only. This command is the same as 'ieval', except that results are pretty formatted.
@@ -138,7 +140,7 @@ def pieval(irc, source, args):
     _eval(irc, source, args, locals_dict=exec_locals_dict, pretty_print=True)
 
 @utils.add_cmd
-def inject(irc, source, args):
+def inject(irc, source: str, args: list):
     """<text>
 
     Admin-only. Injects raw text into the running PyLink protocol module, replying with the hook data returned.
@@ -156,7 +158,7 @@ def inject(irc, source, args):
     irc.reply(repr(irc.parse_irc_command(args)))
 
 @utils.add_cmd
-def threadinfo(irc, source, args):
+def threadinfo(irc, source: str, args: list):
     """takes no arguments.
 
     Lists all threads currently present in this PyLink instance."""

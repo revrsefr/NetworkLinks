@@ -1,5 +1,7 @@
 # global.py: Global Noticing Plugin
 
+from __future__ import annotations
+
 import string
 
 from pylinkirc import conf, utils, world
@@ -8,7 +10,7 @@ from pylinkirc.log import log
 
 DEFAULT_FORMAT = "[$sender@$fullnetwork] $text"
 
-def g(irc, source, args):
+def g(irc, source: str, args: list):
     """<message text>
 
     Sends out a Instance-wide notice.
