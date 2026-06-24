@@ -2,6 +2,8 @@
 exttargets.py - Implements extended targets like $account:xyz, $oper, etc.
 """
 
+from __future__ import annotations
+
 from pylinkirc import world
 from pylinkirc.log import log
 
@@ -16,7 +18,7 @@ def bind(func):
     return func
 
 @bind
-def account(irc, host, uid):
+def account(irc, host: str, uid: str) -> bool:
     """
     $account exttarget handler. The following forms are supported, with groups separated by a
     literal colon. Account matching is case insensitive, while network name matching IS case
@@ -63,7 +65,7 @@ def account(irc, host, uid):
         return slogin and (irc.to_lower(groups[1]) in ('*', slogin)) and (homenet == groups[2])
 
 @bind
-def ircop(irc, host, uid):
+def ircop(irc, host: str, uid: str) -> bool:
     """
     $ircop exttarget handler. The following forms are supported, with groups separated by a
     literal colon. Oper types are matched case insensitively.
@@ -83,7 +85,7 @@ def ircop(irc, host, uid):
         return irc.match_text(groups[1], irc.users[uid].opertype)
 
 @bind
-def server(irc, host, uid):
+def server(irc, host: str, uid: str) -> bool:
     """
     $server exttarget handler. The following forms are supported, with groups separated by a
     literal colon. Server names are matched case insensitively, but SIDs ARE case sensitive.
@@ -104,7 +106,7 @@ def server(irc, host, uid):
     return False
 
 @bind
-def channel(irc, host, uid):
+def channel(irc, host: str, uid: str) -> bool:
     """
     $channel exttarget handler. The following forms are supported, with groups separated by a
     literal colon. Channel names are matched case insensitively.
@@ -131,9 +133,10 @@ def channel(irc, host, uid):
     elif len(groups) >= 3:
         # For things like #channel:op, check if the query is in the user's prefix modes.
         return (uid in irc.channels[channel].users) and (groups[2].lower() in irc.channels[channel].get_prefix_modes(uid))
+    return False
 
 @bind
-def pylinkacc(irc, host, uid):
+def pylinkacc(irc, host: str, uid: str) -> bool:
     """
     $pylinkacc (PyLink account) exttarget handler. The following forms are supported, with groups
     separated by a literal colon. Account matching is case insensitive.
@@ -151,9 +154,10 @@ def pylinkacc(irc, host, uid):
     elif len(groups) == 2:
         # Second scenario. Return True if the user's login matches the one given.
         return login == groups[1]
+    return False
 
 @bind
-def network(irc, host, uid):
+def network(irc, host: str, uid: str) -> bool:
     """
     $network exttarget handler. This exttarget takes one argument: a network name, and returns
     a match for all users on that network.
@@ -175,7 +179,7 @@ def network(irc, host, uid):
     return homenet == targetnet
 
 # Note: "and" can't be a function name so we use this.
-def exttarget_and(irc, host, uid):
+def exttarget_and(irc, host: str, uid: str) -> bool:
     """
     $and exttarget handler. This exttarget takes a series of exttargets (or hostmasks) joined with
     a "+", and returns True if all sub exttargets match.
@@ -191,15 +195,14 @@ def exttarget_and(irc, host, uid):
     if not (targets.startswith('(') and targets.endswith(')')):
         return False
 
-    targets = targets[1:-1]
-    targets = list(filter(None, targets.split('+')))
-    log.debug('exttargets_and: using raw subtargets list %r (original query=%r)', targets, host)
+    subtargets = list(filter(None, targets[1:-1].split('+')))
+    log.debug('exttargets_and: using raw subtargets list %r (original query=%r)', subtargets, host)
     # Wrap every subtarget into irc.match_host and return True if all subtargets return True.
-    return all(map(lambda sub_exttarget: irc.match_host(sub_exttarget, uid), targets))
+    return all(map(lambda sub_exttarget: irc.match_host(sub_exttarget, uid), subtargets))
 world.exttarget_handlers['and'] = exttarget_and
 
 @bind
-def realname(irc, host, uid):
+def realname(irc, host: str, uid: str) -> bool:
     """
     $realname exttarget handler. This takes one argument: a glob, which is compared case-insensitively to the user's real name.
 
@@ -209,9 +212,10 @@ def realname(irc, host, uid):
     groups = host.split(':')
     if len(groups) >= 2:
         return irc.match_text(groups[1], irc.users[uid].realname)
+    return False
 
 @bind
-def service(irc, host, uid):
+def service(irc, host: str, uid: str) -> bool:
     """
     $service exttarget handler. This takes one optional argument: a glob, which is compared case-insensitively to the target user's service name (if present).
 

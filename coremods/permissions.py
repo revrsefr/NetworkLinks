@@ -2,6 +2,8 @@
 permissions.py - Permissions Abstraction for PyLink IRC Services.
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
 
 from pylinkirc import conf, utils
@@ -11,24 +13,24 @@ __all__ = ['default_permissions', 'add_default_permissions',
            'remove_default_permissions', 'check_permissions']
 
 # Global variables: these store mappings of hostmasks/exttargets to lists of permissions each target has.
-default_permissions = defaultdict(set)
+default_permissions: defaultdict[str, set] = defaultdict(set)
 
 
-def add_default_permissions(perms):
+def add_default_permissions(perms: dict) -> None:
     """Adds default permissions to the index."""
     global default_permissions
     for target, permlist in perms.items():
         default_permissions[target] |= set(permlist)
 addDefaultPermissions = add_default_permissions
 
-def remove_default_permissions(perms):
+def remove_default_permissions(perms: dict) -> None:
     """Remove default permissions from the index."""
     global default_permissions
     for target, permlist in perms.items():
         default_permissions[target] -= set(permlist)
 removeDefaultPermissions = remove_default_permissions
 
-def check_permissions(irc, uid, perms, also_show=[]):
+def check_permissions(irc, uid: str, perms: list, also_show: list = []) -> bool:
     """
     Checks permissions of the caller. If the caller has any of the permissions listed in perms,
     this function returns True. Otherwise, NotAuthorizedError is raised.
@@ -41,7 +43,7 @@ def check_permissions(irc, uid, perms, also_show=[]):
                   irc.get_hostmask(uid))
         return True
 
-    permissions = defaultdict(set)
+    permissions: defaultdict[str, set] = defaultdict(set)
     # Enumerate the configured permissions list.
     for k, v in (conf.conf.get('permissions') or {}).items():
         permissions[k] |= set(v)

@@ -1,6 +1,8 @@
 """
 handlers.py - Implements miscellaneous IRC command handlers (WHOIS, services login, etc.)
 """
+
+from __future__ import annotations
 import time
 
 from pylinkirc import conf, utils
@@ -9,7 +11,7 @@ from pylinkirc.log import log
 __all__ = []
 
 
-def handle_whois(irc, source, command, args):
+def handle_whois(irc, source: str, command: str, args: dict):
     """Handle WHOIS queries."""
     target = args['target']
     user = irc.users.get(target)
@@ -125,7 +127,7 @@ def handle_whois(irc, source, command, args):
     f(318, source, "%s :End of /WHOIS list" % nick)
 utils.add_hook(handle_whois, 'WHOIS')
 
-def handle_mode(irc, source, command, args):
+def handle_mode(irc, source: str, command: str, args: dict):
     """Protect against forced deoper attempts."""
     target = args['target']
     modes = args['modes']
@@ -136,7 +138,7 @@ def handle_mode(irc, source, command, args):
             irc.mode(irc.sid, target, {('+o', None)})
 utils.add_hook(handle_mode, 'MODE')
 
-def handle_operup(irc, source, command, args):
+def handle_operup(irc, source: str, command: str, args: dict):
     """Logs successful oper-ups on networks."""
     otype = args.get('text', 'IRC Operator')
     log.debug("(%s) Successful oper-up (opertype %r) from %s", irc.name, otype, irc.get_hostmask(source))
@@ -144,7 +146,7 @@ def handle_operup(irc, source, command, args):
 
 utils.add_hook(handle_operup, 'CLIENT_OPERED')
 
-def handle_services_login(irc, source, command, args):
+def handle_services_login(irc, source: str, command: str, args: dict):
     """Sets services login status for users."""
 
     try:
@@ -154,20 +156,20 @@ def handle_services_login(irc, source, command, args):
 
 utils.add_hook(handle_services_login, 'CLIENT_SERVICES_LOGIN')
 
-def handle_version(irc, source, command, args):
+def handle_version(irc, source: str, command: str, args: dict):
     """Handles requests for the PyLink server version."""
     # 351 syntax is usually "<server version>. <server hostname> :<anything else you want to add>
     fullversion = irc.version()
     irc.numeric(irc.sid, 351, source, fullversion)
 utils.add_hook(handle_version, 'VERSION')
 
-def handle_time(irc, source, command, args):
+def handle_time(irc, source: str, command: str, args: dict):
     """Handles requests for the PyLink server time."""
     timestring = time.ctime()
     irc.numeric(irc.sid, 391, source, '%s :%s' % (irc.hostname(), timestring))
 utils.add_hook(handle_time, 'TIME')
 
-def _state_cleanup_core(irc, source, channel):
+def _state_cleanup_core(irc, source: str, channel: str):
     """
     Handles PART and KICK on clientbot-like networks (where only the users and channels we see are available)
     by deleting channels when we leave and users when they leave all shared channels.
@@ -190,16 +192,16 @@ def _state_cleanup_core(irc, source, channel):
         log.debug('(%s) state_cleanup: removing empty channel %s', irc.name, channel)
         del irc._channels[channel]
 
-def _state_cleanup_part(irc, source, command, args):
+def _state_cleanup_part(irc, source: str, command: str, args: dict):
     for channel in args['channels']:
         _state_cleanup_core(irc, source, channel)
 utils.add_hook(_state_cleanup_part, 'PART', priority=-100)
 
-def _state_cleanup_kick(irc, source, command, args):
+def _state_cleanup_kick(irc, source: str, command: str, args: dict):
     _state_cleanup_core(irc, args['target'], args['channel'])
 utils.add_hook(_state_cleanup_kick, 'KICK', priority=-100)
 
-def _state_cleanup_mode(irc, source, command, args):
+def _state_cleanup_mode(irc, source: str, command: str, args: dict):
     """
     Cleans up and removes empty channels when -P (permanent mode) is removed from them.
     """

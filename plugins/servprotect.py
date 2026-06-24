@@ -1,5 +1,7 @@
 # servprotect.py: Protects against KILL and nick collision floods
 
+from __future__ import annotations
+
 import threading
 
 from pylinkirc import conf, utils
@@ -23,7 +25,7 @@ savecache = _new_cache_dict()
 killcache = _new_cache_dict()
 lock = threading.Lock()
 
-def handle_kill(irc, numeric, command, args):
+def handle_kill(irc, numeric: str, command: str, args: dict):
     """
     Tracks kills against PyLink clients. If too many are received,
     automatically disconnects from the network.
@@ -40,7 +42,7 @@ def handle_kill(irc, numeric, command, args):
 
 utils.add_hook(handle_kill, 'KILL')
 
-def handle_save(irc, numeric, command, args):
+def handle_save(irc, numeric: str, command: str, args: dict):
     """
     Tracks SAVEs (nick collision) against PyLink clients. If too many are received,
     automatically disconnects from the network.

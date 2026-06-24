@@ -1,6 +1,11 @@
 """
-inspircd.py: InspIRCd 2.0, 3.x, 4.x protocol module for PyLink.
+inspircd.py: InspIRCd 4.x protocol module for PyLink.
+
+This module targets InspIRCd 4 only (S2S protocol 1206); the uplink must report
+that protocol version or higher at CAPAB time or the link is refused.
 """
+
+from __future__ import annotations
 
 import threading
 import time
@@ -16,8 +21,8 @@ __all__ = ['InspIRCdProtocol']
 class InspIRCdProtocol(TS6BaseProtocol):
 
     S2S_BUFSIZE = 0  # InspIRCd allows infinitely long S2S messages, so set bufsize to infinite
-    SUPPORTED_IRCDS = ['insp20', 'insp3', 'insp4']
-    DEFAULT_IRCD = SUPPORTED_IRCDS[1]
+    SUPPORTED_IRCDS = ['insp4']
+    DEFAULT_IRCD = 'insp4'
 
     MAX_PROTO_VER = 1206  # anything above this warns (not officially supported)
 
@@ -39,14 +44,11 @@ class InspIRCdProtocol(TS6BaseProtocol):
                          'SAKICK': 'KICK', 'IJOIN': 'JOIN'}
 
         ircd_target = self.serverdata.get('target_version', self.DEFAULT_IRCD).lower()
-        if ircd_target == 'insp20':
-            self.proto_ver = 1202
-        elif ircd_target == 'insp3':
-            self.proto_ver = 1205
-        elif ircd_target == 'insp4':
+        if ircd_target == 'insp4':
             self.proto_ver = 1206
         else:
-            raise ProtocolError("Unsupported target_version %r: supported values include %s" % (ircd_target, self.SUPPORTED_IRCDS))
+            raise ProtocolError("Unsupported target_version %r: this module supports only %s "
+                                "(InspIRCd 4)" % (ircd_target, self.SUPPORTED_IRCDS))
         log.debug('(%s) inspircd: using protocol version %s for target_version %r', self.name, self.proto_ver, ircd_target)
 
         # Track prefix mode levels on InspIRCd 3
@@ -543,7 +545,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
                                  # it actually behaves as a matching one...
                                  'ban_unregistered_matching': 'U:'}
 
-    def handle_capab(self, source, command, args):
+    def handle_capab(self, source: str, command: str, args: list):
         """
         Handles the CAPAB command, used for capability negotiation with our
         uplink.
@@ -723,7 +725,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
             for module in args[-1].split():
                 self._add_module_support(module)
 
-    def handle_kick(self, source, command, args):
+    def handle_kick(self, source: str, command: str, args: list):
         """Handles incoming KICKs."""
         # InspIRCD 3 adds membership IDs to KICK messages when forwarding across servers
         # <- :3INAAAAAA KICK #endlessvoid 3INAAAAAA :test (local)
@@ -733,7 +735,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         return super().handle_kick(source, command, args)
 
-    def handle_ping(self, source, command, args):
+    def handle_ping(self, source: str, command: str, args: list):
         """Handles incoming PING commands, so we don't time out."""
         # InspIRCd 2:
         # <- :70M PING 70M 0AL
@@ -747,7 +749,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         else:
             self._send_with_prefix(args[0], 'PONG %s' % source, queue=False)
 
-    def handle_fjoin(self, servernumeric, command, args):
+    def handle_fjoin(self, servernumeric: str, command: str, args: list):
         """Handles incoming FJOIN commands (InspIRCd equivalent of JOIN/SJOIN)."""
         # insp2:
         # <- :70M FJOIN #chat 1423790411 +AFPfjnt 6:5 7:5 9:5 :o,1SRAABIT4 v,1IOAAF53R <...>
@@ -799,7 +801,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         return {'channel': channel, 'users': namelist, 'modes': parsedmodes, 'ts': their_ts,
                 'channeldata': chandata}
 
-    def handle_ijoin(self, source, command, args):
+    def handle_ijoin(self, source: str, command: str, args: list):
         """Handles InspIRCd 3 joins with membership ID."""
         # insp3:
         # EX: regular /join on an existing channel
@@ -824,7 +826,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         return {'channel': channel, 'users': [source], 'modes':
                 self._channels[channel].modes}
 
-    def handle_uid(self, numeric, command, args):
+    def handle_uid(self, numeric: str, command: str, args: list):
         """Handles incoming UID commands (user introduction)."""
         # :70M UID 70MAAAAAB 1429934638 jlu5 0::1 hidden-7j810p.9mdf.lrek.0000.0000.IP jlu5 0::1 1429934638 +Wioswx +ACGKNOQXacfgklnoqvx :realname
         uid = args[0]
@@ -864,7 +866,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         # InspIRCd sends SSL status in the metadata command, so the info is not known at this point
         return {'uid': uid, 'ts': ts, 'nick': nick, 'realhost': realhost, 'host': host, 'ident': ident, 'ip': ip, 'secure': None}
 
-    def handle_server(self, source, command, args):
+    def handle_server(self, source: str, command: str, args: list):
         """Handles incoming SERVER commands (introduction of servers)."""
 
         if self.uplink is None:
@@ -906,7 +908,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         return {'name': servername, 'sid': sid, 'text': sdesc}
 
-    def handle_fmode(self, numeric, command, args):
+    def handle_fmode(self, numeric: str, command: str, args: list):
         """Handles the FMODE command, used for channel mode changes."""
         # <- :70MAAAAAA FMODE #chat 1433653462 +hhT 70MAAAAAA 70MAAAAAD
         channel = args[0]
@@ -918,7 +920,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         return {'target': channel, 'modes': changedmodes, 'ts': ts,
                 'channeldata': oldobj}
 
-    def handle_idle(self, source, command, args):
+    def handle_idle(self, source: str, command: str, args: list):
         """
         Handles the IDLE command, sent between servers in remote WHOIS queries.
         """
@@ -937,7 +939,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         # First arg = source, second = signon time, third = idle time
         self._send_with_prefix(target, 'IDLE %s %s 0' % (source, start_time))
 
-    def handle_ftopic(self, source, command, args):
+    def handle_ftopic(self, source: str, command: str, args: list):
         """Handles incoming topic changes."""
         # insp2 (only used for server senders):
         # <- :70M FTOPIC #channel 1434510754 jlu5!jlu5@escape.the.dreamland.ca :Some channel topic
@@ -969,7 +971,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
     # SVSTOPIC is used by InspIRCd module m_topiclock - its arguments are the same as insp2 FTOPIC
     handle_svstopic = handle_ftopic
 
-    def handle_opertype(self, target, command, args):
+    def handle_opertype(self, target: str, command: str, args: list):
         """Handles incoming OPERTYPE, which is used to denote an oper up.
 
         This calls the internal hook CLIENT_OPERED, sets the internal
@@ -989,7 +991,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self.call_hooks([target, 'CLIENT_OPERED', {'text': opertype}])
         return {'target': target, 'modes': omode}
 
-    def handle_fident(self, numeric, command, args):
+    def handle_fident(self, numeric: str, command: str, args: list):
         """Handles FIDENT, used for denoting ident changes."""
         # <- :70MAAAAAB FIDENT test
         display_ident = args[0]
@@ -1002,7 +1004,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         return {'target': numeric, 'newident': self.users[numeric].ident}
 
-    def handle_fhost(self, numeric, command, args):
+    def handle_fhost(self, numeric: str, command: str, args: list):
         """Handles FHOST, used for denoting hostname changes."""
         # <- :70MAAAAAB FHOST some.host
         display_host = args[0]
@@ -1015,20 +1017,20 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         return {'target': numeric, 'newhost': self.users[numeric].host}
 
-    def handle_fname(self, numeric, command, args):
+    def handle_fname(self, numeric: str, command: str, args: list):
         """Handles FNAME, used for denoting real name/gecos changes."""
         # <- :70MAAAAAB FNAME :afdsafasf
         self.users[numeric].realname = newgecos = args[0]
         return {'target': numeric, 'newgecos': newgecos}
 
-    def handle_endburst(self, numeric, command, args):
+    def handle_endburst(self, numeric: str, command: str, args: list):
         """ENDBURST handler; sends a hook with empty contents."""
         self.servers[numeric].has_eob = True
         if numeric == self.uplink:
             self.connected.set()
         return {}
 
-    def handle_away(self, numeric, command, args):
+    def handle_away(self, numeric: str, command: str, args: list):
         """Handles incoming AWAY messages."""
         # <- :1MLAAAAIG AWAY 1439371390 :Auto-away
         try:
@@ -1039,7 +1041,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
             self.users[numeric].away = ''
             return {'text': ''}
 
-    def handle_rsquit(self, numeric, command, args):
+    def handle_rsquit(self, numeric: str, command: str, args: list):
         """
         Handles the RSQUIT command, which is sent by opers to SQUIT remote
         servers.
@@ -1068,7 +1070,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
             log.debug("(%s) Got RSQUIT for '%s', which is either invalid or not "
                       "a server of ours!", self.name, args[0])
 
-    def handle_metadata(self, numeric, command, args):
+    def handle_metadata(self, numeric: str, command: str, args: list):
         """
         Handles the METADATA command, used by servers to send metadata for various objects.
         """
@@ -1106,12 +1108,12 @@ class InspIRCdProtocol(TS6BaseProtocol):
             if len(certdata) == 2 and 'E' not in flags:
                 user.certfp = certdata[1].strip()
 
-    def handle_version(self, numeric, command, args):
+    def handle_version(self, numeric: str, command: str, args: list):
         """
         Stub VERSION handler (does nothing) to override the one in ts6_common.
         """
 
-    def handle_sakick(self, source, command, args):
+    def handle_sakick(self, source: str, command: str, args: list):
         """Handles forced kicks (SAKICK)."""
         # <- :1MLAAAAAD ENCAP 0AL SAKICK #test 0ALAAAAAB :test
         # ENCAP -> SAKICK args: ['#test', '0ALAAAAAB', 'test']
@@ -1135,7 +1137,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self.kick(server, channel, target, reason)
         return {'channel': channel, 'target': target, 'text': reason}
 
-    def handle_alltime(self, source, command, args):
+    def handle_alltime(self, source: str, command: str, args: list):
         """Handles /ALLTIME requests."""
         # -> :9PYAAAAAA ENCAP * ALLTIME
         # <- :70M PUSH 0ALAAAAAC ::midnight.vpn NOTICE PyLink-devel :System time is 2016-08-13 02:23:06 (1471054986) on midnight.vpn

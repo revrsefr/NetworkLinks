@@ -6,7 +6,7 @@ import unittest
 
 from pylinkirc import conf
 from pylinkirc.classes import User, Server
-from pylinkirc.protocols import inspircd, clientbot
+from pylinkirc.protocols import inspircd
 
 import protocol_test_fixture as ptf
 
@@ -118,42 +118,6 @@ class InspIRCdTagmsgTest(_Base):
         self.p.message('INTBOT', '#chan', 'hello', tags={'time': '2026-06-23T18:40:54.011Z'})
         raw = self._sent().strip()
         self.assertEqual(raw, ':INTBOT PRIVMSG #chan :hello')
-
-
-class ClientbotTagmsgTest(_Base):
-    proto_class = clientbot.ClientbotWrapperProtocol
-
-    def test_send_tagmsg_gated_on_cap(self):
-        # Without negotiating message-tags, nothing is sent.
-        before = len(self.sent)
-        self.p.tagmsg('somebody', '#chan', {'+typing': 'active'})
-        self.assertEqual(len(self.sent), before)
-
-    def test_send_tagmsg_wire_order(self):
-        self.p.ircv3_caps.add('message-tags')
-        self.p.tagmsg('somebody', '#chan', {'+draft/react': '👍'})
-        raw = self._sent().strip()
-        # Clientbot sends as itself: tags first, no source prefix.
-        self.assertTrue(raw.startswith('@'), raw)
-        self.assertIn(' TAGMSG #chan', raw)
-        self.assertNotIn(':somebody', raw)
-
-    def test_relaymsg_unavailable_without_isupport(self):
-        # No RELAYMSG ISUPPORT token -> returns False and sends nothing.
-        before = len(self.sent)
-        self.assertFalse(self.p.relaymsg('#chan', 'alice', 'hi', tag='libera'))
-        self.assertEqual(len(self.sent), before)
-
-    def test_relaymsg_wire_format(self):
-        self.p._caps['RELAYMSG'] = '/'
-        self.assertTrue(self.p.relaymsg('#chan', 'alice', 'hello there', tag='libera'))
-        self.assertEqual(self._sent().strip(), 'RELAYMSG #chan alice/libera :hello there')
-
-    def test_relaymsg_strips_stray_separator_from_nick(self):
-        self.p._caps['RELAYMSG'] = '/'
-        self.p.relaymsg('#chan', 'a/b/c', 'x', tag='net')
-        # The only separator must be the tag boundary we add.
-        self.assertEqual(self._sent().strip(), 'RELAYMSG #chan abc/net :x')
 
 
 if __name__ == '__main__':

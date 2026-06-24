@@ -25,7 +25,7 @@ __all__ = ['KeyedDefaultdict', 'CopyWrapper', 'CaseInsensitiveFixedSet',
           'PickleDataStore']
 
 
-_BLACKLISTED_COPY_TYPES = []
+_BLACKLISTED_COPY_TYPES: list = []
 
 class KeyedDefaultdict(collections.defaultdict):
     """
@@ -232,7 +232,7 @@ class DataStore:
         else:
             self.store = {}
         self.store_lock = threading.Lock()
-        self.exportdb_timer = None
+        self.exportdb_timer: threading.Timer | None = None
 
         self.load()
 

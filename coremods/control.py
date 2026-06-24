@@ -1,6 +1,8 @@
 """
 control.py - Implements SHUTDOWN and REHASH functionality.
 """
+
+from __future__ import annotations
 import atexit
 import os
 import signal
@@ -14,17 +16,17 @@ from . import login
 __all__ = ['remove_network', 'shutdown', 'rehash']
 
 
-def remove_network(ircobj):
+def remove_network(ircobj) -> None:
     """Removes a network object from the pool."""
     # Disable autoconnect first by setting the delay negative.
     ircobj.serverdata['autoconnect'] = -1
     ircobj.disconnect()
     del world.networkobjects[ircobj.name]
 
-def _print_remaining_threads():
+def _print_remaining_threads() -> None:
     log.debug('shutdown(): Remaining threads: %s', ['%s/%s' % (t.name, t.ident) for t in threading.enumerate()])
 
-def _remove_pid():
+def _remove_pid() -> None:
     pidfile = "%s.pid" % conf.confname
     if world._should_remove_pid:
         # Remove our pid file.
@@ -36,7 +38,7 @@ def _remove_pid():
     else:
         log.debug('Not removing PID file %s as world._should_remove_pid is False.' % pidfile)
 
-def _kill_plugins(irc=None):
+def _kill_plugins(irc=None) -> None:
     if not world.plugins:
         # No plugins were loaded or we were in a pre-initialized state, ignore.
         return
@@ -56,7 +58,7 @@ def _kill_plugins(irc=None):
 atexit.register(_remove_pid)
 atexit.register(_kill_plugins)
 
-def shutdown(irc=None):
+def shutdown(irc=None) -> None:
     """Shuts down the Pylink daemon."""
     if world.shutting_down.is_set():  # We froze on shutdown last time, so immediately abort.
         _print_remaining_threads()
@@ -85,7 +87,7 @@ def shutdown(irc=None):
 
     # Done.
 
-def _sigterm_handler(signo, stack_frame):
+def _sigterm_handler(signo: int, stack_frame) -> None:
     """Handles SIGTERM and SIGINT gracefully by shutting down the PyLink daemon."""
     log.info("Shutting down on signal %s." % signo)
     shutdown()
@@ -93,7 +95,7 @@ def _sigterm_handler(signo, stack_frame):
 signal.signal(signal.SIGTERM, _sigterm_handler)
 signal.signal(signal.SIGINT, _sigterm_handler)
 
-def rehash():
+def rehash() -> None:
     """Rehashes the PyLink daemon."""
     log.info('Reloading PyLink configuration...')
     old_conf = conf.conf.copy()

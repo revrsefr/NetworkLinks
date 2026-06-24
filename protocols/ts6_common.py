@@ -2,6 +2,8 @@
 ts6_common.py: Common base protocol class with functions shared by the UnrealIRCd, InspIRCd, and TS6 protocol modules.
 """
 
+from __future__ import annotations
+
 import string
 import time
 
@@ -200,7 +202,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
 
     ### HANDLERS
 
-    def handle_knock(self, numeric, command, args):
+    def handle_knock(self, numeric: str, command: str, args: list):
         """Handles channel KNOCKs."""
         # InspIRCd:
         # <- :70MAAAAAA ENCAP * KNOCK #blah :abcdefg
@@ -214,7 +216,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
             text = ''
         return {'channel': channel, 'text': text}
 
-    def handle_nick(self, numeric, command, args):
+    def handle_nick(self, numeric: str, command: str, args: list):
         """Handles incoming NICK changes."""
         # <- :70MAAAAAA NICK jlu5-devel 1434744242
         oldnick = self.users[numeric].nick
@@ -225,7 +227,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
 
         return {'newnick': newnick, 'oldnick': oldnick, 'ts': ts}
 
-    def handle_save(self, numeric, command, args):
+    def handle_save(self, numeric: str, command: str, args: list):
         """Handles incoming SAVE messages, used to handle nick collisions."""
         # In this below example, the client Derp_ already exists,
         # and trying to change someone's nick to it will cause a nick
@@ -245,7 +247,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
 
         return {'target': user, 'ts': 100, 'oldnick': oldnick}
 
-    def handle_server(self, numeric, command, args):
+    def handle_server(self, numeric: str, command: str, args: list):
         """Handles the SERVER command, used for introducing older (TS5) servers."""
         # <- :services.int SERVER a.bc 2 :(H) [jlu5] test jupe
         servername = args[0].lower()
@@ -253,7 +255,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
         self.servers[servername] = Server(self, numeric, servername, desc=sdesc)
         return {'name': servername, 'sid': None, 'text': sdesc}
 
-    def handle_sid(self, numeric, command, args):
+    def handle_sid(self, numeric: str, command: str, args: list):
         """Handles the SID command, used for introducing remote servers by our uplink."""
         # <- SID services.int 2 00A :Shaltúre IRC Services
         # parameters: server name, hopcount, sid, server description
@@ -263,7 +265,7 @@ class TS6BaseProtocol(IRCS2SProtocol):
         self.servers[sid] = Server(self, numeric, sname, desc=sdesc)
         return {'name': sname, 'sid': sid, 'text': sdesc}
 
-    def handle_svsnick(self, source, command, args):
+    def handle_svsnick(self, source: str, command: str, args: list):
         """Handles SVSNICK (forced nickname change attempts)."""
         # InspIRCd:
         # <- :00A ENCAP 902 SVSNICK 902AAAAAB Guest53593 :1468299404

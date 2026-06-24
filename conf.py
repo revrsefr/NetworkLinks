@@ -14,6 +14,7 @@ import logging
 import os.path
 import sys
 from collections import defaultdict
+from typing import Any
 
 from . import world
 
@@ -24,7 +25,7 @@ __all__ = ['ConfigurationError', 'conf', 'confname', 'validate', 'load_conf',
 class ConfigurationError(RuntimeError):
     """Error when config conditions aren't met."""
 
-conf = {'bot':
+conf: dict[str, Any] = {'bot':
                 {
                     'nick': 'PyLink',
                     'user': 'pylink',
@@ -52,6 +53,8 @@ conf = {'bot':
         }
 conf['pylink'] = conf['bot']
 confname = 'unconfigured'
+# Path to the loaded config file; set by load_conf().
+fname = ''
 
 def validate(condition, errmsg):
     """Raises ConfigurationError with errmsg unless the given condition is met."""

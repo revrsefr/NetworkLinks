@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 #!/usr/bin/env python3
 """
 PyLink IRC Services launcher.
@@ -17,7 +19,7 @@ except ImportError:
 
 args = {}
 
-def _main():
+def _main() -> None:
     conf.load_conf(args.config)
 
     from pylinkirc.log import log
@@ -165,7 +167,7 @@ def _main():
     log.info("Loaded plugins: %s", ', '.join(sorted(world.plugins.keys())))
     selectdriver.start()
 
-def main():
+def main() -> None:
     import argparse
 
     global args

@@ -2,12 +2,14 @@
 bots.py: Spawn virtual users/bots on a PyLink server and make them interact
 with things.
 """
+
+from __future__ import annotations
 from pylinkirc import utils
 from pylinkirc.coremods import permissions
 
 
 @utils.add_cmd
-def spawnclient(irc, source, args):
+def spawnclient(irc, source: str, args: list):
     """<nick> <ident> <host>
 
     Spawns the specified client on the PyLink server.
@@ -27,7 +29,7 @@ def spawnclient(irc, source, args):
     irc.reply("Done.")
 
 @utils.add_cmd
-def quit(irc, source, args):
+def quit(irc, source: str, args: list):
     """<target> [<reason>]
 
     Quits the PyLink client with nick <target>, if one exists."""
@@ -58,7 +60,7 @@ def quit(irc, source, args):
     irc.reply("Done.")
     irc.call_hooks([u, 'PYLINK_BOTSPLUGIN_QUIT', {'text': quitmsg, 'parse_as': 'QUIT'}])
 
-def joinclient(irc, source, args):
+def joinclient(irc, source: str, args: list):
     """[<target>] <channel1>[,<channel2>,<channel3>,...]
 
     Joins <target>, the nick of a PyLink client, to a comma-separated list of channels.
@@ -124,7 +126,7 @@ def joinclient(irc, source, args):
 utils.add_cmd(joinclient, name='join')
 
 @utils.add_cmd
-def nick(irc, source, args):
+def nick(irc, source: str, args: list):
     """[<target>] <newnick>
 
     Changes the nick of <target>, a PyLink client, to <newnick>. If <target> is not given, it defaults to the main PyLink client."""
@@ -160,7 +162,7 @@ def nick(irc, source, args):
     irc.call_hooks([u, 'PYLINK_BOTSPLUGIN_NICK', {'newnick': newnick, 'oldnick': nick, 'parse_as': 'NICK'}])
 
 @utils.add_cmd
-def part(irc, source, args):
+def part(irc, source: str, args: list):
     """[<target>] <channel1>,[<channel2>],... [<reason>]
 
     Parts <target>, the nick of a PyLink client, from a comma-separated list of channels. If <target> is not given, it defaults to the main PyLink client."""
@@ -206,7 +208,7 @@ def part(irc, source, args):
     irc.reply("Done.")
     irc.call_hooks([u, 'PYLINK_BOTSPLUGIN_PART', {'channels': clist, 'text': reason, 'parse_as': 'PART'}])
 
-def msg(irc, source, args):
+def msg(irc, source: str, args: list):
     """[<source>] <target> <text>
 
     Sends message <text> from <source>, where <source> is the nick of a PyLink client. If <source> is not given, it defaults to the main PyLink client."""

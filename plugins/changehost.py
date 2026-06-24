@@ -1,6 +1,8 @@
 """
 Changehost plugin - automatically changes the hostname of matching users.
 """
+
+from __future__ import annotations
 import string
 
 from pylinkirc import conf, utils, world
@@ -72,7 +74,7 @@ def _changehost(irc, target):
             # Only operate on the first match.
             break
 
-def handle_uid(irc, sender, command, args):
+def handle_uid(irc, sender: str, command: str, args: dict):
     """
     Changehost listener for new connections.
     """
@@ -81,7 +83,7 @@ def handle_uid(irc, sender, command, args):
     _changehost(irc, target)
 utils.add_hook(handle_uid, 'UID')
 
-def handle_chghost(irc, sender, command, args):
+def handle_chghost(irc, sender: str, command: str, args: dict):
     """
     Handles incoming CHGHOST requests for optional host-change enforcement.
     """
@@ -105,7 +107,7 @@ def handle_chghost(irc, sender, command, args):
                 _changehost(irc, target)
 utils.add_hook(handle_chghost, 'CHGHOST')
 
-def handle_svslogin(irc, sender, command, args):
+def handle_svslogin(irc, sender: str, command: str, args: dict):
     """
     Handles services account changes for changehost.
     """
@@ -113,7 +115,7 @@ def handle_svslogin(irc, sender, command, args):
 utils.add_hook(handle_svslogin, 'CLIENT_SERVICES_LOGIN')
 
 @utils.add_cmd
-def applyhosts(irc, sender, args):
+def applyhosts(irc, sender: str, args: list):
     """[<network>]
 
     Applies all configured hosts for users on the given network, or the current network if none is specified."""

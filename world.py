@@ -5,6 +5,7 @@ world.py: Stores global variables for PyLink, including lists of active IRC obje
 import threading
 import time
 from collections import defaultdict, deque
+from typing import Any
 
 __all__ = ['testing', 'hooks', 'networkobjects', 'plugins', 'services',
            'exttarget_handlers', 'started', 'start_ts', 'shutting_down',
@@ -14,15 +15,18 @@ __all__ = ['testing', 'hooks', 'networkobjects', 'plugins', 'services',
 # though is control whether IRC connections should be threaded or not.
 testing = False
 
+# The console log handler, assigned by log.py at import time.
+console_handler: Any = None
+
 # Statekeeping for our hooks list, IRC objects, loaded plugins, and initialized
 # service bots.
-hooks = defaultdict(list)
-networkobjects = {}
-plugins = {}
-services = {}
+hooks: defaultdict = defaultdict(list)
+networkobjects: dict = {}
+plugins: dict = {}
+services: dict = {}
 
 # Registered extarget handlers. This maps exttarget names (strings) to handling functions.
-exttarget_handlers = {}
+exttarget_handlers: dict = {}
 
 # Trigger to be set when all IRC objects are initially created.
 started = threading.Event()
@@ -41,7 +45,7 @@ fallback_hostname = 'pylink.int'
 
 # Defines messages to be logged as soon as the log system is set up, for modules like conf that are
 # initialized before log. This is processed (and then not used again) when the log module loads.
-_log_queue = deque()
+_log_queue: deque = deque()
 
 # Determines whether we have a PID file that needs to be removed.
 _should_remove_pid = False

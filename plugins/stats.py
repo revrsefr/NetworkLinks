@@ -1,6 +1,8 @@
 """
 stats.py: Simple statistics for PyLink IRC Services.
 """
+
+from __future__ import annotations
 import datetime
 import time
 
@@ -28,7 +30,7 @@ def timediff(before, now):
 DEFAULT_TIME_FORMAT = "%a, %d %b %Y %H:%M:%S +0000"
 
 @utils.add_cmd
-def uptime(irc, source, args):
+def uptime(irc, source: str, args: list):
     """[<network> / --all]
 
     Returns the uptime for PyLink and the given network's connection (or the current network if not specified).
@@ -70,7 +72,7 @@ def uptime(irc, source, args):
                   )
                  )
 
-def handle_stats(irc, source, command, args):
+def handle_stats(irc, source: str, command: str, args: dict):
     """/STATS handler. Currently supports the following:
 
     c - link blocks

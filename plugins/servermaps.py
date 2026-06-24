@@ -1,5 +1,7 @@
 # servermaps.py: Maps out connected IRC servers.
 
+from __future__ import annotations
+
 import collections
 
 from pylinkirc import utils, world
@@ -117,7 +119,7 @@ def _map(irc, source, args, show_relay=True):
 utils.add_cmd(_map, 'map')
 
 @utils.add_cmd
-def localmap(irc, source, args):
+def localmap(irc, source: str, args: list):
     """[<network>]
 
     Shows the network map for the given network, or the current network if not specified.

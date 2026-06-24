@@ -2,6 +2,8 @@
 ircs2s_common.py: Common base protocol class with functions shared by TS6 and P10-based protocols.
 """
 
+from __future__ import annotations
+
 import re
 import time
 
@@ -150,7 +152,7 @@ class IRCCommonProtocol(IRCNetwork):
             return results
         return {}
 
-    def handle_tagmsg(self, source, command, args):
+    def handle_tagmsg(self, source: str, command: str, args: list):
         """
         Handles incoming TAGMSG (IRCv3 message-tags extension).
         TAGMSG carries only message tags and a target — no text body.
@@ -172,7 +174,7 @@ class IRCCommonProtocol(IRCNetwork):
         # by handle_events(); here we only validate and forward the target.
         return {'target': target}
 
-    def handle_away(self, source, command, args):
+    def handle_away(self, source: str, command: str, args: list):
         """Handles incoming AWAY messages."""
         # TS6:
         # <- :6ELAAAAAB AWAY :Auto-away
@@ -189,16 +191,16 @@ class IRCCommonProtocol(IRCNetwork):
             self.users[source].away = text = ''
         return {'text': text}
 
-    def handle_error(self, numeric, command, args):
+    def handle_error(self, numeric: str, command: str, args: list):
         """Handles ERROR messages - these mean that our uplink has disconnected us!"""
         raise ProtocolError('Received an ERROR, disconnecting!')
 
-    def handle_pong(self, source, command, args):
+    def handle_pong(self, source: str, command: str, args: list):
         """Handles incoming PONG commands."""
         if source == self.uplink:
             self.lastping = time.time()
 
-    def handle_005(self, source, command, args):
+    def handle_005(self, source: str, command: str, args: list):
         """
         Handles 005 / RPL_ISUPPORT. This is used by at least Clientbot and ngIRCd (for server negotiation).
         """
@@ -284,7 +286,7 @@ class IRCCommonProtocol(IRCNetwork):
         self.send(':%s %s' % (self._expandPUID(source), msg), **kwargs)
 
 class IRCS2SProtocol(IRCCommonProtocol):
-    COMMAND_TOKENS = {}
+    COMMAND_TOKENS: dict = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -526,7 +528,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
         self._channels[target].topicset = True
     topic_burst = topic
 
-    def handle_invite(self, numeric, command, args):
+    def handle_invite(self, numeric: str, command: str, args: list):
         """Handles incoming INVITEs."""
         # TS6:
         #  <- :70MAAAAAC INVITE 0ALAAAAAA #blah 12345
@@ -547,7 +549,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
 
         return {'target': target, 'channel': channel, 'ts': ts}
 
-    def handle_kick(self, source, command, args):
+    def handle_kick(self, source: str, command: str, args: list):
         """Handles incoming KICKs."""
         # :70MAAAAAA KICK #test 70MAAAAAA :some reason
         channel = args[0]
@@ -562,7 +564,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
         self.handle_part(kicked, 'KICK', [channel, reason])
         return {'channel': channel, 'target': kicked, 'text': reason}
 
-    def handle_kill(self, source, command, args):
+    def handle_kill(self, source: str, command: str, args: list):
         """Handles incoming KILLs."""
         killed = self._get_UID(args[0])
         # Some IRCds send explicit QUIT messages for their killed clients in addition to KILL,
@@ -637,7 +639,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
             if ('+o', None) in modes:
                 self.call_hooks([uid, 'CLIENT_OPERED', {'text': opertype}])
 
-    def handle_mode(self, source, command, args):
+    def handle_mode(self, source: str, command: str, args: list):
         """Handles mode changes."""
         # InspIRCd:
         # <- :70MAAAAAA MODE 70MAAAAAA -i+xc
@@ -664,7 +666,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
 
         return {'target': target, 'modes': changedmodes, 'channeldata': channeldata}
 
-    def handle_part(self, source, command, args):
+    def handle_part(self, source: str, command: str, args: list):
         """Handles incoming PART commands."""
         channels = args[0].split(',')
 
@@ -687,7 +689,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
         if channels:
             return {'channels': channels, 'text': reason}
 
-    def handle_privmsg(self, source, command, args):
+    def handle_privmsg(self, source: str, command: str, args: list):
         """Handles incoming PRIVMSG/NOTICE."""
         # TS6:
         # <- :70MAAAAAA PRIVMSG #dev :afasfsa
@@ -748,7 +750,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
 
     handle_notice = handle_privmsg
 
-    def handle_quit(self, numeric, command, args):
+    def handle_quit(self, numeric: str, command: str, args: list):
         """Handles incoming QUIT commands."""
         # TS6:
         # <- :1SRAAGB4T QUIT :Quit: quit message goes here
@@ -762,14 +764,14 @@ class IRCS2SProtocol(IRCCommonProtocol):
                 reason = ''
             return {'text': reason, 'userdata': userdata}
 
-    def handle_stats(self, numeric, command, args):
+    def handle_stats(self, numeric: str, command: str, args: list):
         """Handles the IRC STATS command."""
         # IRCds are mostly consistent with this syntax, with the caller being the source,
         # the stats type as arg 0, and the target server (SID or hostname) as arg 1
         # <- :42XAAAAAB STATS c :7PY
         return {'stats_type': args[0], 'target': self._get_SID(args[1])}
 
-    def handle_topic(self, numeric, command, args):
+    def handle_topic(self, numeric: str, command: str, args: list):
         """Handles incoming TOPIC changes from clients."""
         # <- :70MAAAAAA TOPIC #test :test
         channel = args[0]
@@ -782,11 +784,11 @@ class IRCS2SProtocol(IRCCommonProtocol):
         return {'channel': channel, 'setter': numeric, 'text': topic,
                 'oldtopic': oldtopic}
 
-    def handle_time(self, numeric, command, args):
+    def handle_time(self, numeric: str, command: str, args: list):
         """Handles incoming /TIME requests."""
         return {'target': args[0]}
 
-    def handle_whois(self, numeric, command, args):
+    def handle_whois(self, numeric: str, command: str, args: list):
         """Handles incoming WHOIS commands.."""
         # TS6:
         # <- :42XAAAAAB WHOIS 5PYAAAAAA :pylink-devel
@@ -800,6 +802,6 @@ class IRCS2SProtocol(IRCCommonProtocol):
 
         return {'target': self._get_UID(args[-1])}
 
-    def handle_version(self, numeric, command, args):
+    def handle_version(self, numeric: str, command: str, args: list):
         """Handles requests for the PyLink server version."""
         return {}  # See coremods/handlers.py for how this hook is used

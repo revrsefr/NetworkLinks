@@ -2,13 +2,15 @@
 service_support.py - Implements handlers for the PyLink ServiceBot API.
 """
 
+from __future__ import annotations
+
 from pylinkirc import conf, utils, world
 from pylinkirc.log import log
 
 __all__ = []
 
 
-def spawn_service(irc, source, command, args):
+def spawn_service(irc, source: str, command: str, args: dict):
     """Handles new service bot introductions."""
 
     if not irc.connected.is_set():
@@ -81,7 +83,7 @@ def spawn_service(irc, source, command, args):
 
 utils.add_hook(spawn_service, 'PYLINK_NEW_SERVICE')
 
-def handle_disconnect(irc, source, command, args):
+def handle_disconnect(irc, source: str, command: str, args: dict):
     """Handles network disconnections."""
     for name, sbot in world.services.items():
         try:
@@ -92,7 +94,7 @@ def handle_disconnect(irc, source, command, args):
 
 utils.add_hook(handle_disconnect, 'PYLINK_DISCONNECT')
 
-def handle_endburst(irc, source, command, args):
+def handle_endburst(irc, source: str, command: str, args: dict):
     """Handles network bursts."""
     if source == irc.uplink:
         log.debug('(%s): spawning service bots now.', irc.name)
@@ -103,7 +105,7 @@ def handle_endburst(irc, source, command, args):
 
 utils.add_hook(handle_endburst, 'ENDBURST', priority=500)
 
-def handle_kill(irc, source, command, args):
+def handle_kill(irc, source: str, command: str, args: dict):
     """Handle KILLs to PyLink service bots, respawning them as needed."""
     target = args['target']
     if irc.pseudoclient and target == irc.pseudoclient.uid:
@@ -123,7 +125,7 @@ def handle_kill(irc, source, command, args):
 
 utils.add_hook(handle_kill, 'KILL')
 
-def handle_join(irc, source, command, args):
+def handle_join(irc, source: str, command: str, args: dict):
     """Monitors channel joins for dynamic service bot joining."""
     if irc.has_cap('visible-state-only'):
         # No-op on bot-only servers.
@@ -139,7 +141,7 @@ def handle_join(irc, source, command, args):
 utils.add_hook(handle_join, 'JOIN')
 utils.add_hook(handle_join, 'PYLINK_SERVICE_JOIN')
 
-def _services_dynamic_part(irc, channel):
+def _services_dynamic_part(irc, channel: str):
     """Dynamically removes service bots from empty channels."""
     if irc.has_cap('visible-state-only'):
         # No-op on bot-only servers.
@@ -156,13 +158,13 @@ def _services_dynamic_part(irc, channel):
                 irc.part(u, channel)
         return True
 
-def handle_part(irc, source, command, args):
+def handle_part(irc, source: str, command: str, args: dict):
     """Monitors channel joins for dynamic service bot joining."""
     for channel in args['channels']:
         _services_dynamic_part(irc, channel)
 utils.add_hook(handle_part, 'PART')
 
-def handle_kick(irc, source, command, args):
+def handle_kick(irc, source: str, command: str, args: dict):
     """Handle KICKs to the PyLink service bots, rejoining channels as needed."""
     channel = args['channel']
     # Skip autorejoin routines if the channel is now empty.
@@ -173,7 +175,7 @@ def handle_kick(irc, source, command, args):
             sbot.join(irc, channel)
 utils.add_hook(handle_kick, 'KICK')
 
-def handle_commands(irc, source, command, args):
+def handle_commands(irc, source: str, command: str, args: dict):
     """Handle commands sent to the PyLink service bots (PRIVMSG)."""
     target = args['target']
     text = args['text']
