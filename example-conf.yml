@@ -799,8 +799,8 @@ relay:
 
     # This determines whether private messages & notices will be forwarded over Clientbot relay,
     # and whether the 'rpm' command will be allowed from Clientbot networks. This defaults to
-    # False.
-    allow_clientbot_pms: false
+    # True (PMs work out of the box); set it to false to administratively disable them.
+    allow_clientbot_pms: true
 
     # Sets whether Clientbot mode sync will be enabled. Valid options:
     # "full" - Sync bans, ban/invite exceptions, prefix modes, and all RFC1459-standard modes. The

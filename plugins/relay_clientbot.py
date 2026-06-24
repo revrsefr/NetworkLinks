@@ -71,7 +71,7 @@ def cb_relay_core(irc, source: str, command: str, args: dict):
 
             elif not irc.is_channel(target):
                 # Target is a user; handle this accordingly.
-                if relay_conf.get('allow_clientbot_pms'):
+                if relay_conf.get('allow_clientbot_pms', True):
                     real_command = 'PNOTICE' if args.get('is_notice') else 'PM'
                     private = True
 
@@ -262,7 +262,7 @@ def rpm(irc, source: str, args: list):
     elif not text:
         irc.error('No text given.')
         return
-    elif not (conf.conf.get('relay') or {}).get('allow_clientbot_pms'):
+    elif not (conf.conf.get('relay') or {}).get('allow_clientbot_pms', True):
         irc.error('Private messages with users connected via Clientbot have been '
                   'administratively disabled.')
         return

@@ -1766,7 +1766,7 @@ def handle_messages(irc, numeric: str, command: str, args: dict):
             return
         remoteirc = world.networkobjects[homenet]
 
-        if (not remoteirc.has_cap('can-spawn-clients')) and not conf.conf.get('relay', {}).get('allow_clientbot_pms'):
+        if (not remoteirc.has_cap('can-spawn-clients')) and not conf.conf.get('relay', {}).get('allow_clientbot_pms', True):
             if not irc.is_privileged_service(numeric):
                 irc.msg(numeric, 'Private messages to users connected via Clientbot have '
                         'been administratively disabled.', notice=True)
