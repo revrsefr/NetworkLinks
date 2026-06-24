@@ -51,17 +51,42 @@ class ProtocolError(RuntimeError):
     Exception raised when a network protocol violation is encountered in some way.
     """
 
-def add_cmd(func, name=None, **kwargs):
-    """Binds an IRC command function to the given command name."""
+def add_cmd(func=None, name=None, **kwargs):
+    """Binds an IRC command function to the given command name.
+
+    Usable as a direct call or as a decorator, with or without arguments:
+        utils.add_cmd(func, name='foo')
+        @utils.add_cmd
+        @utils.add_cmd(name='foo', aliases=('bar',))
+    """
+    if func is None:
+        # Parameterized decorator form: @add_cmd(name=...) -> bind once we get the function.
+        def decorator(realfunc):
+            return add_cmd(realfunc, name=name, **kwargs)
+        return decorator
     world.services['netlink'].add_cmd(func, name=name, **kwargs)
     return func
 
-def add_hook(func, command: str, priority: int = 100):
+def add_hook(func=None, command: str = None, priority: int = 100):
     """
     Binds a hook function to the given command name.
 
     A custom priority can also be given (defaults to 100), and hooks with
-    higher priority values will be called first."""
+    higher priority values will be called first.
+
+    Usable as a direct call or as a decorator, with the command as the first
+    positional argument:
+        utils.add_hook(func, 'KILL')
+        @utils.add_hook('KILL')
+        @utils.add_hook('KILL', priority=50)
+    """
+    # Decorator form: the command string lands in the first positional slot.
+    if isinstance(func, str) and command is None:
+        func, command = None, func
+    if func is None:
+        def decorator(realfunc):
+            return add_hook(realfunc, command, priority=priority)
+        return decorator
     command = command.upper()
     world.hooks[command].append((priority, func))
     world.hooks[command].sort(key=lambda pair: pair[0], reverse=True)
