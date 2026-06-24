@@ -6,6 +6,8 @@ access the global logger object by importing "log" from this module
 (from log import log).
 """
 
+from __future__ import annotations
+
 import logging
 import logging.handlers
 import os
@@ -15,13 +17,13 @@ from . import conf, world
 __all__ = ['log']
 
 # Stores a list of active file loggers.
-fileloggers = []
+fileloggers: list = []
 
 # TODO: perhaps make this format configurable?
 _format = '%(asctime)s [%(levelname)s] %(message)s'
 logformatter = logging.Formatter(_format)
 
-def _get_console_log_level():
+def _get_console_log_level() -> str | int:
     """
     Returns the configured console log level.
     """
@@ -42,7 +44,7 @@ log.addHandler(world.console_handler)
 # the root logger. https://stackoverflow.com/questions/16624695
 log.setLevel(1)
 
-def _make_file_logger(filename, level=None):
+def _make_file_logger(filename: str, level=None):
     """
     Initializes a file logging target with the given filename and level.
     """
@@ -80,7 +82,7 @@ def _make_file_logger(filename, level=None):
 
     return filelogger
 
-def _stop_file_loggers():
+def _stop_file_loggers() -> None:
     """
     De-initializes all file loggers.
     """

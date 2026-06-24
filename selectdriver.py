@@ -3,6 +3,8 @@ Socket handling driver using the selectors module. epoll, kqueue, and devpoll
 are used internally when available.
 """
 
+from __future__ import annotations
+
 import selectors
 import threading
 
@@ -16,7 +18,7 @@ SELECT_TIMEOUT = 0.5
 
 selector = selectors.DefaultSelector()
 
-def _process_conns():
+def _process_conns() -> None:
     """Main loop which processes connected sockets."""
 
     while not world.shutting_down.is_set():
@@ -29,14 +31,14 @@ def _process_conns():
                 log.exception('Error in select driver loop:')
                 continue
 
-def register(irc):
+def register(irc) -> None:
     """
     Registers a network to the global selectors instance.
     """
     log.debug('selectdriver: registering %s for network %s', irc._socket, irc.name)
     selector.register(irc._socket, selectors.EVENT_READ, data=irc)
 
-def unregister(irc):
+def unregister(irc) -> None:
     """
     Removes a network from the global selectors instance.
     """
@@ -46,7 +48,7 @@ def unregister(irc):
     else:
         log.debug('selectdriver: skipping de-registering %s for network %s', irc._socket, irc.name)
 
-def start():
+def start() -> None:
     """
     Starts a thread to process connections.
     """

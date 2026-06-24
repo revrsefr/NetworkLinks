@@ -52,6 +52,8 @@ jobs:
             "$RUNNER_TEMP/mp/pylinkirc/conf.py" \
             "$RUNNER_TEMP/mp/pylinkirc/world.py" \
             "$RUNNER_TEMP/mp/pylinkirc/utils.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/log.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/selectdriver.py" \
             "$RUNNER_TEMP/mp/pylinkirc/protocols/ircs2s_common.py" \
             "$RUNNER_TEMP/mp/pylinkirc/protocols/ts6_common.py" \
             "$RUNNER_TEMP/mp/pylinkirc/protocols/inspircd.py" \
