@@ -1,5 +1,8 @@
 """
-inspircd.py: InspIRCd 2.0, 3.x, 4.x protocol module for PyLink.
+inspircd.py: InspIRCd 4.x protocol module for PyLink.
+
+This module targets InspIRCd 4 only (S2S protocol 1206); the uplink must report
+that protocol version or higher at CAPAB time or the link is refused.
 """
 
 from __future__ import annotations
@@ -18,8 +21,8 @@ __all__ = ['InspIRCdProtocol']
 class InspIRCdProtocol(TS6BaseProtocol):
 
     S2S_BUFSIZE = 0  # InspIRCd allows infinitely long S2S messages, so set bufsize to infinite
-    SUPPORTED_IRCDS = ['insp20', 'insp3', 'insp4']
-    DEFAULT_IRCD = SUPPORTED_IRCDS[1]
+    SUPPORTED_IRCDS = ['insp4']
+    DEFAULT_IRCD = 'insp4'
 
     MAX_PROTO_VER = 1206  # anything above this warns (not officially supported)
 
@@ -41,14 +44,11 @@ class InspIRCdProtocol(TS6BaseProtocol):
                          'SAKICK': 'KICK', 'IJOIN': 'JOIN'}
 
         ircd_target = self.serverdata.get('target_version', self.DEFAULT_IRCD).lower()
-        if ircd_target == 'insp20':
-            self.proto_ver = 1202
-        elif ircd_target == 'insp3':
-            self.proto_ver = 1205
-        elif ircd_target == 'insp4':
+        if ircd_target == 'insp4':
             self.proto_ver = 1206
         else:
-            raise ProtocolError("Unsupported target_version %r: supported values include %s" % (ircd_target, self.SUPPORTED_IRCDS))
+            raise ProtocolError("Unsupported target_version %r: this module supports only %s "
+                                "(InspIRCd 4)" % (ircd_target, self.SUPPORTED_IRCDS))
         log.debug('(%s) inspircd: using protocol version %s for target_version %r', self.name, self.proto_ver, ircd_target)
 
         # Track prefix mode levels on InspIRCd 3
