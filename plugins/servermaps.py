@@ -23,9 +23,10 @@ def _percent(num, total):
     return '%.1f' % (num/total*100)
 
 def _map(irc, source, args, show_relay=True):
-    """[<network>]
+    """[<network>] [<server>]
 
-    Shows the network map for the given network, or the current network if not specified."""
+    Shows the network map for the given network, or the current network if not
+    specified. An optional server name/SID roots the map at that server."""
 
     if show_relay:
         perm = 'servermaps.map'
@@ -44,8 +45,15 @@ def _map(irc, source, args, show_relay=True):
         irc.error('no such network %s' % netname)
         return
 
+    # Root the map at a given server if one was named, else our own SID.
+    rootsid = ircobj.sid
+    if len(args) >= 2:
+        rootsid = ircobj._get_SID(args[1])
+        if rootsid not in ircobj.servers:
+            irc.error('no such server %s on %s' % (args[1], netname))
+            return
+
     servers = collections.defaultdict(set)
-    hostsid = ircobj.sid
     usercount = len(ircobj.users)
 
     # Iterate over every connected server on every network.
@@ -109,9 +117,7 @@ def _map(irc, source, args, show_relay=True):
             # Afterwards, decrement the hopcount.
             hops -= 1
 
-    # Start the map at our NetLink server
-    firstserver = hostsid
-    showall(ircobj, firstserver)
+    showall(ircobj, rootsid)
     serverlist = irc.servers
     reply('Total %s users on %s local servers - average of %1.f per server' % (usercount, len(serverlist),
           usercount/len(serverlist)))
