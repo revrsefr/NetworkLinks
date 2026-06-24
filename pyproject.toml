@@ -60,7 +60,10 @@ version = {file = "VERSION"}
 testpaths = ["test"]
 
 [tool.mypy]
-python_version = "3.9"
+# Note: the supported runtime floor is 3.9 (requires-python), but recent mypy
+# only accepts a 3.10+ target here; annotations use `from __future__ import
+# annotations` so the checked syntax stays 3.9-compatible regardless.
+python_version = "3.10"
 ignore_missing_imports = true
 # Lenient to start: type-check annotated code without forcing annotations everywhere.
 check_untyped_defs = false

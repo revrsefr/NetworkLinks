@@ -5,6 +5,8 @@ This module targets UnrealIRCd 6 only (protocol 6000+); support for the legacy
 3.2/4.x/5.x link protocol has been removed.
 """
 
+from __future__ import annotations
+
 import codecs
 import re
 import socket
@@ -463,14 +465,14 @@ class UnrealProtocol(TS6BaseProtocol):
                                  'ban_account_legacy': '~R:',
                                  'ban_certfp': '~S:'}
 
-    def handle_eos(self, numeric, command, args):
+    def handle_eos(self, numeric: str, command: str, args: list):
         """EOS is used to denote end of burst."""
         self.servers[numeric].has_eob = True
         if numeric == self.uplink:
             self.connected.set()
         return {}
 
-    def handle_uid(self, numeric, command, args):
+    def handle_uid(self, numeric: str, command: str, args: list):
         # <- :001 UID jlu5 0 1441306929 jlu5 localhost 0018S7901 0 +iowx * midnight-1C620195 fwAAAQ== :realname
         # <- :001 UID jlu5| 0 1441389007 jlu5 10.120.0.6 001ZO8F03 0 +iwx * 391A9CB9.26A16454.D9847B69.IP CngABg== :realname
         # arguments: nick, hopcount?, ts, ident, real-host, UID, services account (0 if none), modes,
@@ -491,12 +493,12 @@ class UnrealProtocol(TS6BaseProtocol):
             ip = '0.0.0.0'
         else:
             # First, decode the Base64 string into a packed binary IP address.
-            ip = codecs.decode(raw_ip, "base64")
+            ip_bytes = codecs.decode(raw_ip, "base64")
 
             try:  # IPv4 address.
-                ip = socket.inet_ntop(socket.AF_INET, ip)
+                ip = socket.inet_ntop(socket.AF_INET, ip_bytes)
             except ValueError:  # IPv6 address.
-                ip = socket.inet_ntop(socket.AF_INET6, ip)
+                ip = socket.inet_ntop(socket.AF_INET6, ip_bytes)
                 # HACK: make sure a leading ":" in the IPv6 address (e.g. ::1)
                 # doesn't cause it to be misinterpreted as the last argument
                 # in a line, should it be mirrored to other networks.
@@ -538,7 +540,7 @@ class UnrealProtocol(TS6BaseProtocol):
         return {'uid': uid, 'ts': ts, 'nick': nick, 'realhost': realhost, 'host': host,
                 'ident': ident, 'ip': ip, 'parse_as': 'UID', 'secure': has_ssl}
 
-    def handle_md(self, numeric, command, args):
+    def handle_md(self, numeric: str, command: str, args: list):
         """Handles the MD (module data) command, used to attach metadata to objects."""
         # <- :maintest.test.net MD client Syzop certfp :1234567890abcdef...
         # args: <type> <object> <varname> [:<value>]; an empty value clears it.
@@ -556,16 +558,16 @@ class UnrealProtocol(TS6BaseProtocol):
                 if value:
                     self.users[uid].ssl = True
 
-    def handle_pass(self, numeric, command, args):
+    def handle_pass(self, numeric: str, command: str, args: list):
         # <- PASS :abcdefg
         if args[0] != self.serverdata['recvpass']:
             raise ProtocolError("RECVPASS from uplink does not match configuration!")
 
-    def handle_ping(self, numeric, command, args):
+    def handle_ping(self, numeric: str, command: str, args: list):
         if numeric == self.uplink:
             self.send('PONG %s :%s' % (self.serverdata['hostname'], args[-1]), queue=False)
 
-    def handle_server(self, numeric, command, args):
+    def handle_server(self, numeric: str, command: str, args: list):
         """Handles the SERVER command, which is used for both authentication and
         introducing legacy (non-SID) servers."""
         # <- SERVER unreal.midnight.vpn 1 :U3999-Fhin6OoEM UnrealIRCd test server
@@ -600,7 +602,7 @@ class UnrealProtocol(TS6BaseProtocol):
             # <- :services.int SERVER a.bc 2 :(H) [jlu5] a
             return super().handle_server(numeric, command, args)
 
-    def handle_protoctl(self, numeric, command, args):
+    def handle_protoctl(self, numeric: str, command: str, args: list):
         """Handles protocol negotiation."""
         # Make a list of all our capability names.
         self.caps += [arg.split('=')[0] for arg in args]
@@ -639,7 +641,7 @@ class UnrealProtocol(TS6BaseProtocol):
         self.cmodes.update({'halfop': 'h', 'admin': 'a', 'owner': 'q',
                             'op': 'o', 'voice': 'v'})
 
-    def handle_join(self, numeric, command, args):
+    def handle_join(self, numeric: str, command: str, args: list):
         """Handles the UnrealIRCd JOIN command."""
         # <- :jlu5 JOIN #pylink,#test
         if args[0] == '0':
@@ -662,7 +664,7 @@ class UnrealProtocol(TS6BaseProtocol):
                 self.call_hooks([numeric, command, {'channel': channel, 'users': [numeric], 'modes':
                                                        c.modes, 'ts': c.ts}])
 
-    def handle_sjoin(self, numeric, command, args):
+    def handle_sjoin(self, numeric: str, command: str, args: list):
         """Handles the UnrealIRCd SJOIN command."""
         # <- :001 SJOIN 1444361345 #test :001AAAAAA @001AAAAAB +001AAAAAC
         # <- :001 SJOIN 1483250129 #services +nt :+001OR9V02 @*~001DH6901 &*!*@test "*!*@blah.blah '*!*@yes.no
@@ -673,13 +675,12 @@ class UnrealProtocol(TS6BaseProtocol):
         namelist = []
         log.debug('(%s) handle_sjoin: got userlist %r for %r', self.name, userlist, channel)
 
-        modestring = ''
-
         # FIXME: Implement edge-case mode conflict handling as documented here:
         # https://www.unrealircd.org/files/docs/technical/serverprotocol.html#S5_1
 
         changedmodes = set()
         parsedmodes = []
+        modestring: list | str = ''
         try:
             if args[2].startswith('+'):
                 modestring = args[2:-1] or args[2]
@@ -710,6 +711,7 @@ class UnrealProtocol(TS6BaseProtocol):
                 # Note: don't be too zealous in matching here or we'll break with nicks
                 # like "[abcd]".
                 r = re.search(r'([~*@%+]*)(.*)', userpair)
+                assert r is not None  # this pattern always matches
                 user = r.group(2)
 
                 if not user:
@@ -750,13 +752,13 @@ class UnrealProtocol(TS6BaseProtocol):
         return {'channel': channel, 'users': namelist, 'modes': parsedmodes,
                 'ts': their_ts, 'channeldata': chandata}
 
-    def handle_nick(self, numeric, command, args):
+    def handle_nick(self, numeric: str, command: str, args: list):
         """Handles NICK changes."""
         # UnrealIRCd 6 introduces users via UID; NICK is only ever a nick change:
         # :70MAAAAAA NICK jlu5-devel 1434744242
         return super().handle_nick(numeric, command, args)
 
-    def handle_mode(self, numeric, command, args):
+    def handle_mode(self, numeric: str, command: str, args: list):
         # <- :unreal.midnight.vpn MODE #test +bb test!*@* *!*@bad.net
         # <- :unreal.midnight.vpn MODE #test +q jlu5 1444361345
         # <- :unreal.midnight.vpn MODE #test +ntCo jlu5 1444361345
@@ -833,14 +835,14 @@ class UnrealProtocol(TS6BaseProtocol):
             self.call_hooks([uid, 'SETHOST',
                                {'target': uid, 'newhost': newhost}])
 
-    def handle_svsmode(self, numeric, command, args):
+    def handle_svsmode(self, numeric: str, command: str, args: list):
         """Handles SVSMODE, used by services for setting user modes on others."""
         # <- :source SVSMODE target +usermodes
         target = self._get_UID(args[0])
 
         return self._handle_umode(target, self.parse_modes(target, args[1:]))
 
-    def handle_svs2mode(self, sender, command, args):
+    def handle_svs2mode(self, sender: str, command: str, args: list):
         """
         Handles SVS2MODE, which sets services login information on the given target.
         """
@@ -929,13 +931,13 @@ class UnrealProtocol(TS6BaseProtocol):
 
         return {'target': target, 'modes': parsedmodes}
 
-    def handle_umode2(self, source, command, args):
+    def handle_umode2(self, source: str, command: str, args: list):
         """Handles UMODE2, used to set user modes on oneself."""
         # <- :jlu5 UMODE2 +W
         target = self._get_UID(source)
         return self._handle_umode(target, self.parse_modes(target, args))
 
-    def handle_topic(self, numeric, command, args):
+    def handle_topic(self, numeric: str, command: str, args: list):
         """Handles the TOPIC command."""
         # <- jlu5 TOPIC #services jlu5 1444699395 :weeee
         # <- TOPIC #services devel.relay 1452399682 :test
@@ -951,13 +953,13 @@ class UnrealProtocol(TS6BaseProtocol):
         return {'channel': channel, 'setter': setter, 'ts': ts, 'text': topic,
                 'oldtopic': oldtopic}
 
-    def handle_setident(self, numeric, command, args):
+    def handle_setident(self, numeric: str, command: str, args: list):
         """Handles SETIDENT, used for self ident changes."""
         # <- :70MAAAAAB SETIDENT test
         self.users[numeric].ident = newident = args[0]
         return {'target': numeric, 'newident': newident}
 
-    def handle_sethost(self, numeric, command, args):
+    def handle_sethost(self, numeric: str, command: str, args: list):
         """Handles CHGHOST, used for self hostname changes."""
         # <- :70MAAAAAB SETIDENT some.host
         self.users[numeric].host = newhost = args[0]
@@ -968,13 +970,13 @@ class UnrealProtocol(TS6BaseProtocol):
 
         return {'target': numeric, 'newhost': newhost}
 
-    def handle_setname(self, numeric, command, args):
+    def handle_setname(self, numeric: str, command: str, args: list):
         """Handles SETNAME, used for self real name/gecos changes."""
         # <- :70MAAAAAB SETNAME :afdsafasf
         self.users[numeric].realname = newgecos = args[0]
         return {'target': numeric, 'newgecos': newgecos}
 
-    def handle_chgident(self, source, command, args):
+    def handle_chgident(self, source: str, command: str, args: list):
         """Handles CHGIDENT, used for denoting ident changes."""
         # <- :jlu5 CHGIDENT jlu5 test
         target = self._get_UID(args[0])
@@ -989,7 +991,7 @@ class UnrealProtocol(TS6BaseProtocol):
         self.users[target].ident = newident = args[1]
         return {'target': target, 'newident': newident}
 
-    def handle_chghost(self, source, command, args):
+    def handle_chghost(self, source: str, command: str, args: list):
         """Handles CHGHOST, used for denoting hostname changes."""
         # <- :jlu5 CHGHOST jlu5 some.host
         target = self._get_UID(args[0])
@@ -1008,7 +1010,7 @@ class UnrealProtocol(TS6BaseProtocol):
 
         return {'target': target, 'newhost': newhost}
 
-    def handle_chgname(self, source, command, args):
+    def handle_chgname(self, source: str, command: str, args: list):
         """Handles CHGNAME, used for denoting real name/gecos changes."""
         # <- :jlu5 CHGNAME jlu5 :afdsafasf
         target = self._get_UID(args[0])
@@ -1022,7 +1024,7 @@ class UnrealProtocol(TS6BaseProtocol):
         self.users[target].realname = newgecos = args[1]
         return {'target': target, 'newgecos': newgecos}
 
-    def handle_tsctl(self, source, command, args):
+    def handle_tsctl(self, source: str, command: str, args: list):
         """Handles /TSCTL alltime requests."""
         # <- :jlu5 TSCTL alltime
 
