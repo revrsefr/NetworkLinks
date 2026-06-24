@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true  # test/parser-tests holds the IRCv3 conformance data
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest passlib
+      - name: Run tests
+        run: python -m pytest test/ -q
+
+  typecheck:
+    name: mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . mypy
+      - name: Type-check the annotated modules
+        # The package maps the repo root to "pylinkirc" (package-dir = {pylinkirc = "."}),
+        # which mypy can't resolve directly, so expose it under that name via a symlink.
+        run: |
+          mkdir -p "$RUNNER_TEMP/mp"
+          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/mp/pylinkirc"
+          MYPYPATH="$RUNNER_TEMP/mp" python -m mypy --follow-imports=silent \
+            "$RUNNER_TEMP/mp/pylinkirc/classes.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/structures.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/conf.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/world.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/protocols/inspircd.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/protocols/unreal.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/coremods/login.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/coremods/permissions.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/coremods/control.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/coremods/corecommands.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/coremods/handlers.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/coremods/exttargets.py" \
+            "$RUNNER_TEMP/mp/pylinkirc/coremods/service_support.py"
+
+  lint:
+    name: Lint (crash classes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . pylint
+      - name: Check for use-before-assignment and duplicate keys
+        # These are the crash-class checks that caught real bugs (#674-style
+        # UnboundLocalError, duplicate dict keys). The codebase is clean for them.
+        run: |
+          python -m pylint --disable=all \
+            --enable=E0601,E0602,E0606,E0633,W0631,W0109 \
+            classes.py structures.py conf.py world.py utils.py \
+            protocols/*.py plugins/*.py coremods/*.py
