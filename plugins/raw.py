@@ -8,6 +8,9 @@ from pylinkirc.coremods import permissions
 from pylinkirc.log import log
 from pylinkirc import conf
 
+log.warning("The 'raw' plugin is loaded: it lets opers inject arbitrary protocol lines, "
+            "which can desync or crash the network. Use with caution; avoid on production.")
+
 @utils.add_cmd
 def raw(irc, source: str, args: list):
     """<text>

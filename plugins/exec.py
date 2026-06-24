@@ -12,6 +12,9 @@ from pylinkirc import utils, world, conf
 from pylinkirc.coremods import permissions
 from pylinkirc.log import log
 
+log.warning("The 'exec' plugin is loaded: it runs arbitrary Python via exec()/eval() "
+            "and is intended for debugging only. Do NOT load it on a production network.")
+
 exec_locals_dict = {}
 PPRINT_MAX_LINES = 20
 PPRINT_WIDTH = 200
