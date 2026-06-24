@@ -2,6 +2,8 @@
 login.py - Implement core login abstraction.
 """
 
+from __future__ import annotations
+
 from pylinkirc import conf, utils
 from pylinkirc.log import log
 
@@ -14,7 +16,7 @@ pwd_context = None
 _DEFAULT_CRYPTCONTEXT_SETTINGS = {
     'schemes': ["pbkdf2_sha256", "sha512_crypt"]
 }
-def _make_cryptcontext():
+def _make_cryptcontext() -> None:
     try:
         from passlib.context import CryptContext
     except ImportError:
@@ -33,7 +35,7 @@ def _make_cryptcontext():
 
 _make_cryptcontext()  # This runs at startup and in rehash (control.py)
 
-def _get_account(accountname):
+def _get_account(accountname: str):
     """
     Returns the login data block for the given account name (case-insensitive), or False if none
     exists.
@@ -46,7 +48,7 @@ def _get_account(accountname):
     except KeyError:
         return False
 
-def check_login(user, password):
+def check_login(user: str, password: str) -> bool:
     """Checks whether the given user and password is a valid combination."""
     account = _get_account(user)
 
@@ -65,7 +67,7 @@ def check_login(user, password):
 
     return False
 
-def verify_hash(password, passhash):
+def verify_hash(password: str, passhash: str) -> bool:
     """Checks whether the password given matches the hash."""
     if password:
         if not pwd_context:
@@ -75,7 +77,7 @@ def verify_hash(password, passhash):
         return pwd_context.verify(password, passhash)
     return False  # No password given!
 
-def _irc_try_login(irc, source, username, skip_checks=False):
+def _irc_try_login(irc, source: str, username: str, skip_checks: bool = False):
     """Internal function to process logins via IRC."""
     if irc.is_internal_client(source):
         irc.error("Cannot use 'identify' via a command proxy.")
@@ -107,7 +109,7 @@ def _irc_try_login(irc, source, username, skip_checks=False):
              irc.name, username, irc.get_hostmask(source))
     return True
 
-def identify(irc, source, args):
+def identify(irc, source: str, args: list) -> None:
     """<username> <password>
 
     Logs in to PyLink using the configured administrator account."""
