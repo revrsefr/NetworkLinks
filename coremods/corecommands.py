@@ -163,9 +163,11 @@ def reload(irc, source: str, args: list):
     if unload(irc, source, args):
         load(irc, source, args)
 
-# Coremods that hold accumulated state populated by other modules, so reloading
-# them in place would wipe it (permissions: the default_permissions registry).
-_UNRELOADABLE_COREMODS = {'permissions'}
+# Coremods that can't be reloaded in place: permissions holds the
+# default_permissions registry populated by other modules (reloading wipes it),
+# and service_support registers the main service at import (reloading re-runs
+# register_service and raises "already bound").
+_UNRELOADABLE_COREMODS = {'permissions', 'service_support'}
 
 @utils.add_cmd
 def reloadcore(irc, source: str, args: list):
