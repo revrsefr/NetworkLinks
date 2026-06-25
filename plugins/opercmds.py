@@ -7,6 +7,7 @@ import argparse
 
 from netlink import utils, world
 from netlink.coremods import permissions
+from netlink.i18n import _
 from netlink.log import log
 
 # Having a hard limit here is sensible because otherwise it can flood the client or server off.
@@ -45,7 +46,7 @@ def checkban(irc, source, args, use_regex=False):
         results = 0
 
         userlist_func = irc.match_all_re if use_regex else irc.match_all
-        irc.reply("Checking for hosts that match \x02%s\x02:" % args.banmask, private=True)
+        irc.reply(_("Checking for hosts that match \x02%s\x02:") % args.banmask, private=True)
         for uid in userlist_func(args.banmask, channel=args.channel):
             if results < args.maxresults:
                 userobj = irc.users[uid]
@@ -57,17 +58,17 @@ def checkban(irc, source, args, use_regex=False):
             results += 1
         else:
             if results:
-                irc.reply("\x02%s\x02 out of \x02%s\x02 results shown." %
+                irc.reply(_("\x02%s\x02 out of \x02%s\x02 results shown.") %
                           (min([results, args.maxresults]), results), private=True)
             else:
-                irc.reply("No results found.", private=True)
+                irc.reply(_("No results found."), private=True)
     else:
         # Target can be both a nick (of an online user) or a hostmask. irc.match_host() handles this
         # automatically.
         if irc.match_host(args.banmask, args.target):
-            irc.reply('Yes, \x02%s\x02 matches \x02%s\x02.' % (args.target, args.banmask))
+            irc.reply(_('Yes, \x02%s\x02 matches \x02%s\x02.') % (args.target, args.banmask))
         else:
-            irc.reply('No, \x02%s\x02 does not match \x02%s\x02.' % (args.target, args.banmask))
+            irc.reply(_('No, \x02%s\x02 does not match \x02%s\x02.') % (args.target, args.banmask))
 utils.add_cmd(checkban, aliases=('cban', 'trace'))
 
 def checkbanre(irc, source: str, args: list):
@@ -118,10 +119,10 @@ def massban(irc, source, args, use_regex=False):
         permissions.check_permissions(irc, source, ['opercmds.massban.force'])
 
     if args.channel not in irc.channels:
-        irc.error("Unknown channel %r." % args.channel)
+        irc.error(_("Unknown channel %r.") % args.channel)
         return
     if 'relay' in world.plugins and (not world.plugins['relay'].check_claim(irc, args.channel, source)) and (not args.force):
-        irc.error("You do not have access to set bans in %s. Ask someone to op you or use the --force option." % args.channel)
+        irc.error(_("You do not have access to set bans in %s. Ask someone to op you or use the --force option.") % args.channel)
         return
 
     results = 0
@@ -130,10 +131,10 @@ def massban(irc, source, args, use_regex=False):
     for uid in userlist_func(args.banmask, channel=args.channel):
 
         if irc.is_oper(uid) and not args.include_opers:
-            irc.reply('Skipping banning \x02%s\x02 because they are opered.' % irc.users[uid].nick)
+            irc.reply(_('Skipping banning \x02%s\x02 because they are opered.') % irc.users[uid].nick)
             continue
         if irc.get_service_bot(uid):
-            irc.reply('Skipping banning \x02%s\x02 because it is a service client.' % irc.users[uid].nick)
+            irc.reply(_('Skipping banning \x02%s\x02 because it is a service client.') % irc.users[uid].nick)
             continue
 
         # Remove the target's access before banning them.
@@ -164,7 +165,7 @@ def massban(irc, source, args, use_regex=False):
 
         results += 1
     else:
-        irc.reply('Banned %s users on %r.' % (results, args.channel))
+        irc.reply(_('Banned %s users on %r.') % (results, args.channel))
         log.info('(%s) Ran massban%s for %s on %s (%s user(s) removed)', irc.name, 're' if use_regex else '',
                  irc.get_hostmask(source), args.channel, results)
 utils.add_cmd(massban, aliases=('mban',))
@@ -243,10 +244,10 @@ def masskill(irc, source, args, use_regex=False):
         userobj = irc.users[uid]
 
         if irc.is_oper(uid) and not args.include_opers:
-            irc.reply('Skipping killing \x02%s\x02 because they are opered.' % userobj.nick)
+            irc.reply(_('Skipping killing \x02%s\x02 because they are opered.') % userobj.nick)
             continue
         if irc.get_service_bot(uid):
-            irc.reply('Skipping killing \x02%s\x02 because it is a service client.' % userobj.nick)
+            irc.reply(_('Skipping killing \x02%s\x02 because it is a service client.') % userobj.nick)
             continue
 
         relay = world.plugins.get('relay')
@@ -272,12 +273,12 @@ def masskill(irc, source, args, use_regex=False):
                     if uid not in seen_users:  # Don't count users multiple times on different channels
                         killed += 1
                 else:
-                    irc.reply("Not kicking \x02%s\x02 from \x02%s\x02 because you don't have CLAIM access. If this is "
-                              "another network's channel, ask someone to op you or use the --force-kb option." % (userobj.nick, channel))
+                    irc.reply(_("Not kicking \x02%s\x02 from \x02%s\x02 because you don't have CLAIM access. If this is "
+                              "another network's channel, ask someone to op you or use the --force-kb option.") % (userobj.nick, channel))
         else:
             if args.akill:
                 if not (userobj.realhost or userobj.ip):
-                    irc.reply("Skipping akill on %s because NetLink doesn't know the real host." % irc.get_hostmask(uid))
+                    irc.reply(_("Skipping akill on %s because NetLink doesn't know the real host.") % irc.get_hostmask(uid))
                     continue
                 irc.set_server_ban(irc.pseudoclient.uid, args.duration, host=userobj.realhost or userobj.ip or userobj.host, reason=reason)
             else:
@@ -294,7 +295,7 @@ def masskill(irc, source, args, use_regex=False):
     else:
         log.info('(%s) Ran masskill%s for %s (%s/%s user(s) removed)', irc.name, 're' if use_regex else '',
                  irc.get_hostmask(source), killed, results)
-        irc.reply('Masskilled %s/%s users.' % (killed, results))
+        irc.reply(_('Masskilled %s/%s users.') % (killed, results))
 utils.add_cmd(masskill, aliases=('mkill',))
 
 def masskillre(irc, source: str, args: list):
@@ -331,16 +332,16 @@ def delgline(irc, source: str, args: list):
     try:
         mask = args[0]
     except IndexError:
-        irc.error("Not enough arguments. Needs 1: user@host mask.")
+        irc.error(_("Not enough arguments. Needs 1: user@host mask."))
         return
     if not hasattr(irc, 'del_server_ban'):
-        irc.error("Server bans aren't supported on this network.")
+        irc.error(_("Server bans aren't supported on this network."))
         return
     user, sep, host = mask.partition('@')
     if not sep:
         user, host = '*', mask
     irc.del_server_ban(irc.pseudoclient.uid, user=user, host=host)
-    irc.reply("Done.")
+    irc.reply(_("Done."))
 utils.add_cmd(delgline, aliases=('delakill',))
 
 @utils.add_cmd
@@ -356,11 +357,11 @@ def jupe(irc, source: str, args: list):
         reason = ' '.join(args[1:]) or "No reason given"
         desc = "Juped by %s: [%s]" % (irc.get_hostmask(source), reason)
     except IndexError:
-        irc.error('Not enough arguments. Needs 1-2: servername, reason (optional).')
+        irc.error(_('Not enough arguments. Needs 1-2: servername, reason (optional).'))
         return
 
     if not irc.is_server_name(servername):
-        irc.error("Invalid server name %r." % servername)
+        irc.error(_("Invalid server name %r.") % servername)
         return
 
     # SQUIT any pre-existing server with this name first, so re-juping doesn't fail
@@ -377,7 +378,7 @@ def jupe(irc, source: str, args: list):
     irc.call_hooks([irc.pseudoclient.uid, 'OPERCMDS_SPAWNSERVER',
                    {'name': servername, 'sid': sid, 'text': desc}])
 
-    irc.reply("Done.")
+    irc.reply(_("Done."))
 
 @utils.add_cmd
 def globops(irc, source: str, args: list):
@@ -389,12 +390,12 @@ def globops(irc, source: str, args: list):
 
     message = ' '.join(args).strip()
     if not message:
-        irc.error("No message given.")
+        irc.error(_("No message given."))
         return
 
     irc.oper_notice(irc.pseudoclient.uid, message)
     log.info('(%s) %s sent globops: %s', irc.name, irc.get_hostmask(source), message)
-    irc.reply("Done.")
+    irc.reply(_("Done."))
 
 def _try_find_target(irc, nick):
     """
@@ -429,18 +430,18 @@ def kick(irc, source: str, args: list):
         target = args[1]
         reason = ' '.join(args[2:])
     except IndexError:
-        irc.error("Not enough arguments. Needs 2-3: channel, target, reason (optional).")
+        irc.error(_("Not enough arguments. Needs 2-3: channel, target, reason (optional)."))
         return
 
     if channel not in irc.channels:  # KICK only works on channels that exist.
-        irc.error("Unknown channel %r." % channel)
+        irc.error(_("Unknown channel %r.") % channel)
         return
 
     targetu = _try_find_target(irc, target)
 
     sender = irc.pseudoclient.uid
     irc.kick(sender, channel, targetu, reason)
-    irc.reply("Done.")
+    irc.reply(_("Done."))
     irc.call_hooks([sender, 'OPERCMDS_KICK', {'channel': channel, 'target': targetu,
                                               'text': reason, 'parse_as': 'KICK'}])
 
@@ -454,7 +455,7 @@ def kill(irc, source: str, args: list):
         target = args[0]
         reason = ' '.join(args[1:])
     except IndexError:
-        irc.error("Not enough arguments. Needs 1-2: target, reason (optional).")
+        irc.error(_("Not enough arguments. Needs 1-2: target, reason (optional)."))
         return
 
     # Convert the source and target nicks to UIDs.
@@ -463,7 +464,7 @@ def kill(irc, source: str, args: list):
     targetu = _try_find_target(irc, target)
 
     if irc.pseudoclient.uid == targetu:
-        irc.error("Cannot kill the main NetLink client!")
+        irc.error(_("Cannot kill the main NetLink client!"))
         return
 
     userdata = irc.users.get(targetu)
@@ -472,7 +473,7 @@ def kill(irc, source: str, args: list):
 
     irc.kill(sender, targetu, reason)
 
-    irc.reply("Done.")
+    irc.reply(_("Done."))
     irc.call_hooks([source, 'OPERCMDS_KILL', {'target': targetu, 'text': reason,
                                               'userdata': userdata, 'parse_as': 'KILL'}])
 
@@ -487,15 +488,15 @@ def mode(irc, source: str, args: list):
     try:
         target, modes = args[0], args[1:]
     except IndexError:
-        irc.error('Not enough arguments. Needs 2: target, modes to set.')
+        irc.error(_('Not enough arguments. Needs 2: target, modes to set.'))
         return
 
     if target not in irc.channels:
-        irc.error("Unknown channel %r." % target)
+        irc.error(_("Unknown channel %r.") % target)
         return
     if not modes:
         # No modes were given before parsing (i.e. mode list was blank).
-        irc.error("No valid modes were given.")
+        irc.error(_("No valid modes were given."))
         return
 
     parsedmodes = irc.parse_modes(target, modes)
@@ -504,7 +505,7 @@ def mode(irc, source: str, args: list):
         # Modes were given but they failed to parse into anything meaningful.
         # For example, "mode #somechan +o" would be erroneous because +o
         # requires an argument!
-        irc.error("No valid modes were given.")
+        irc.error(_("No valid modes were given."))
         return
 
     irc.mode(irc.pseudoclient.uid, target, parsedmodes)
@@ -513,7 +514,7 @@ def mode(irc, source: str, args: list):
     irc.call_hooks([irc.pseudoclient.uid, 'OPERCMDS_MODE',
                    {'target': target, 'modes': parsedmodes, 'parse_as': 'MODE'}])
 
-    irc.reply("Done.")
+    irc.reply(_("Done."))
 
 @utils.add_cmd
 def topic(irc, source: str, args: list):
@@ -525,16 +526,16 @@ def topic(irc, source: str, args: list):
         channel = args[0]
         topic = ' '.join(args[1:])
     except IndexError:
-        irc.error("Not enough arguments. Needs 2: channel, topic.")
+        irc.error(_("Not enough arguments. Needs 2: channel, topic."))
         return
 
     if channel not in irc.channels:
-        irc.error("Unknown channel %r." % channel)
+        irc.error(_("Unknown channel %r.") % channel)
         return
 
     irc.topic(irc.pseudoclient.uid, channel, topic)
 
-    irc.reply("Done.")
+    irc.reply(_("Done."))
     irc.call_hooks([irc.pseudoclient.uid, 'OPERCMDS_TOPIC',
                    {'channel': channel, 'text': topic, 'setter': source,
                     'parse_as': 'TOPIC'}])
@@ -567,7 +568,7 @@ def _chgfield(irc, source, args, human_field, internal_field=None):
         target = args[0]
         new = args[1]
     except IndexError:
-        irc.error("Not enough arguments. Needs 2: target, new %s." % human_field)
+        irc.error(_("Not enough arguments. Needs 2: target, new %s.") % human_field)
         return
 
     # Find the user
@@ -575,4 +576,4 @@ def _chgfield(irc, source, args, human_field, internal_field=None):
 
     internal_field = internal_field or human_field.upper()
     irc.update_client(targetu, internal_field, new)
-    irc.reply("Done.")
+    irc.reply(_("Done."))

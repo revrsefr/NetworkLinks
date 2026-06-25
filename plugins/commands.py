@@ -5,6 +5,7 @@ import sys
 import time
 
 from netlink import __version__, conf, real_version, utils, world
+from netlink.i18n import _
 from netlink.coremods import permissions
 from netlink.coremods.login import pwd_context
 
@@ -27,10 +28,10 @@ def status(irc, source: str, args: list):
     permissions.check_permissions(irc, source, ['commands.status'])
     identified = irc.users[source].account
     if identified:
-        irc.reply('You are identified as \x02%s\x02.' % identified)
+        irc.reply(_('You are identified as \x02%s\x02.') % identified)
     else:
-        irc.reply('You are not identified as anyone.')
-    irc.reply('Operator access: \x02%s\x02' % bool(irc.is_oper(source)))
+        irc.reply(_('You are not identified as anyone.'))
+    irc.reply(_('Operator access: \x02%s\x02') % bool(irc.is_oper(source)))
 
 _none = '\x1D(none)\x1D'
 _notavail = '\x1DN/A\x1D'
@@ -50,14 +51,14 @@ def _do_showuser(irc, source, u):
     verbose = irc.is_oper(source) or u == source
 
     if u not in irc.users:
-        irc.error('Unknown user %r.' % u)
+        irc.error(_('Unknown user %r.') % u)
         return
 
     def f(s):
         return irc.reply('  ' + s, private=True)
 
     userobj = irc.users[u]
-    irc.reply('Showing information on user \x02%s\x02 (%s@%s): %s' % (userobj.nick, userobj.ident,
+    irc.reply(_('Showing information on user \x02%s\x02 (%s@%s): %s') % (userobj.nick, userobj.ident,
                userobj.host, userobj.realname), private=True)
 
     sid = irc.get_server(u)
@@ -119,7 +120,7 @@ def showuser(irc, source: str, args: list):
     target = ' '.join(args)
 
     if not target:
-        irc.error("Not enough arguments. Needs 1: nick.")
+        irc.error(_("Not enough arguments. Needs 1: nick."))
         return
 
     users = irc.nick_to_uid(target, multi=True) or [target]
@@ -153,7 +154,7 @@ def shownet(irc, source: str, args: list):
         if extended and target in conf.conf['servers']:
             serverdata = conf.conf['servers'][target]
         else:
-            irc.error('Unknown network %r' % target)
+            irc.error(_('Unknown network %r') % target)
             return
 
     # Get extended protocol details: IRCd type, virtual server info
@@ -177,21 +178,21 @@ def shownet(irc, source: str, args: list):
             parent_name = None
         protocol_name = 'none; virtual server defined by \x02%s\x02' % parent_name
 
-    irc.reply('Information on network \x02%s\x02: \x02%s\x02' %
+    irc.reply(_('Information on network \x02%s\x02: \x02%s\x02') %
               (target, netobj.get_full_network_name() if netobj else '\x1dCurrently not connected\x1d'))
 
-    irc.reply('\x02NetLink protocol module\x02: %s; \x02Encoding\x02: %s' %
+    irc.reply(_('\x02NetLink protocol module\x02: %s; \x02Encoding\x02: %s') %
               (protocol_name, netobj.encoding if netobj else serverdata.get('encoding', 'utf-8[default]')))
 
     # Extended info: target host, defined hostname / SID
     if extended:
         connected = netobj and netobj.connected.is_set()
-        irc.reply('\x02Connected?\x02 %s' % ('\x0303true' if connected else '\x0304false'))
+        irc.reply(_('\x02Connected?\x02 %s') % ('\x0303true' if connected else '\x0304false'))
 
         if serverdata.get('ip'):
-            irc.reply('\x02Server target\x02: \x1f%s:%s' % (serverdata['ip'], serverdata.get('port')))
+            irc.reply(_('\x02Server target\x02: \x1f%s:%s') % (serverdata['ip'], serverdata.get('port')))
         if serverdata.get('hostname'):
-            irc.reply('\x02NetLink hostname\x02: %s; \x02SID:\x02 %s; \x02SID range:\x02 %s' %
+            irc.reply(_('\x02NetLink hostname\x02: %s; \x02SID:\x02 %s; \x02SID range:\x02 %s') %
                       (serverdata.get('hostname') or _none,
                         serverdata.get('sid') or _none,
                         serverdata.get('sidrange') or _none))
@@ -205,10 +206,10 @@ def showchan(irc, source: str, args: list):
     try:
         channel = args[0]
     except IndexError:
-        irc.error("Not enough arguments. Needs 1: channel.")
+        irc.error(_("Not enough arguments. Needs 1: channel."))
         return
     if channel not in irc.channels:
-        irc.error('Unknown channel %r.' % channel)
+        irc.error(_('Unknown channel %r.') % channel)
         return
 
     def f(s):
@@ -220,7 +221,7 @@ def showchan(irc, source: str, args: list):
     secret = ('s', None) in c.modes
     if secret and not verbose:
         # Hide secret channels from normal users.
-        irc.error('Unknown channel %r.' % channel)
+        irc.error(_('Unknown channel %r.') % channel)
         return
 
     nicks = [irc.users[u].nick for u in c.users]
@@ -265,8 +266,8 @@ def version(irc, source: str, args: list):
 
     Returns the version of the currently running NetLink instance."""
     py_version = utils.NORMALIZEWHITESPACE_RE.sub(' ', sys.version)
-    irc.reply("NetLink version \x02%s\x02 (in VCS: %s), running on Python %s." % (__version__, real_version, py_version))
-    irc.reply("The source of this program is available at \x02%s\x02." % world.source)
+    irc.reply(_("NetLink version \x02%s\x02 (in VCS: %s), running on Python %s.") % (__version__, real_version, py_version))
+    irc.reply(_("The source of this program is available at \x02%s\x02.") % world.source)
 
 @utils.add_cmd
 def echo(irc, source: str, args: list):
@@ -275,7 +276,7 @@ def echo(irc, source: str, args: list):
     Echoes the text given."""
     permissions.check_permissions(irc, source, ['commands.echo'])
     if not args:
-        irc.error('No text to send!')
+        irc.error(_('No text to send!'))
         return
     irc.reply(' '.join(args))
 
@@ -309,21 +310,21 @@ def logout(irc, source: str, args: list):
         if irc.users[source].account:
             irc.users[source].account = ''
         else:
-            irc.error("You are not logged in!")
+            irc.error(_("You are not logged in!"))
             return
     else:
         otheruid = irc.nick_to_uid(othernick)
         if not otheruid:
-            irc.error("Unknown user %s." % othernick)
+            irc.error(_("Unknown user %s.") % othernick)
             return
         _check_logout_access(irc, source, otheruid, ['commands.logout.force'])
         if irc.users[otheruid].account:
             irc.users[otheruid].account = ''
         else:
-            irc.error("%s is not logged in." % othernick)
+            irc.error(_("%s is not logged in.") % othernick)
             return
 
-    irc.reply("Done.")
+    irc.reply(_("Done."))
 
 loglevels = {'DEBUG': 10, 'INFO': 20, 'WARNING': 30, 'ERROR': 40, 'CRITICAL': 50}
 @utils.add_cmd
@@ -338,11 +339,11 @@ def loglevel(irc, source: str, args: list):
         try:
             loglevel = loglevels[level]
         except KeyError:
-            irc.error('Unknown log level "%s".' % level)
+            irc.error(_('Unknown log level "%s".') % level)
             return
         else:
             world.console_handler.setLevel(loglevel)
-            irc.reply("Done.")
+            irc.reply(_("Done."))
     except IndexError:
         irc.reply(world.console_handler.level)
 
@@ -354,14 +355,14 @@ def mkpasswd(irc, source: str, args: list):
     try:
         password = args[0]
     except IndexError:
-        irc.error("Not enough arguments. (Needs 1, password)")
+        irc.error(_("Not enough arguments. (Needs 1, password)"))
         return
     if not password:
-        irc.error("Password cannot be empty.")
+        irc.error(_("Password cannot be empty."))
         return
 
     if not pwd_context:
-        irc.error("Password encryption is not available (missing passlib).")
+        irc.error(_("Password encryption is not available (missing passlib)."))
         return
 
     hashed_pass = pwd_context.encrypt(password)

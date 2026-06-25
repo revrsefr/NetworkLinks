@@ -5,6 +5,7 @@ with things.
 
 from __future__ import annotations
 from netlink import utils
+from netlink.i18n import _
 from netlink.coremods import permissions
 
 
@@ -16,17 +17,17 @@ def spawnclient(irc, source: str, args: list):
     Note: this doesn't check the validity of any fields you give it!"""
 
     if not irc.has_cap('can-spawn-clients'):
-        irc.error("This network does not support client spawning.")
+        irc.error(_("This network does not support client spawning."))
         return
 
     permissions.check_permissions(irc, source, ['bots.spawnclient'])
     try:
         nick, ident, host = args[:3]
     except ValueError:
-        irc.error("Not enough arguments. Needs 3: nick, user, host.")
+        irc.error(_("Not enough arguments. Needs 3: nick, user, host."))
         return
     irc.spawn_client(nick, ident, host, manipulatable=True)
-    irc.reply("Done.")
+    irc.reply(_("Done."))
 
 @utils.add_cmd
 def quit(irc, source: str, args: list):
@@ -38,26 +39,26 @@ def quit(irc, source: str, args: list):
     try:
         nick = args[0]
     except IndexError:
-        irc.error("Not enough arguments. Needs 1-2: nick, reason (optional).")
+        irc.error(_("Not enough arguments. Needs 1-2: nick, reason (optional)."))
         return
 
     u = irc.nick_to_uid(nick, filterfunc=irc.is_internal_client)
     if u is None:
-        irc.error("Unknown user %r" % nick)
+        irc.error(_("Unknown user %r") % nick)
         return
 
     if irc.pseudoclient.uid == u:
-        irc.error("Cannot quit the main NetLink client!")
+        irc.error(_("Cannot quit the main NetLink client!"))
         return
 
     quitmsg = ' '.join(args[1:]) or 'Client Quit'
 
     if not irc.is_manipulatable_client(u):
-        irc.error("Cannot force quit a protected NetLink services client.")
+        irc.error(_("Cannot force quit a protected NetLink services client."))
         return
 
     irc.quit(u, quitmsg)
-    irc.reply("Done.")
+    irc.reply(_("Done."))
     irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_QUIT', {'text': quitmsg, 'parse_as': 'QUIT'}])
 
 def joinclient(irc, source: str, args: list):
@@ -91,20 +92,20 @@ def joinclient(irc, source: str, args: list):
         try:
             clist = args[0]
         except IndexError:
-            irc.error("Not enough arguments. Needs 1-3: nick (optional), comma separated list of "
-                      "channels, comma separated list of keys (optional).")
+            irc.error(_("Not enough arguments. Needs 1-3: nick (optional), comma separated list of "
+                      "channels, comma separated list of keys (optional)."))
             return
         if len(args) > 1:
             keys_arg = args[1]
 
     clist = clist.split(',')
     if not clist:
-        irc.error("No valid channels given.")
+        irc.error(_("No valid channels given."))
         return
     keys = keys_arg.split(',') if keys_arg else []
 
     if not (irc.is_manipulatable_client(u) or irc.get_service_bot(u)):
-        irc.error("Cannot force join a protected NetLink services client.")
+        irc.error(_("Cannot force join a protected NetLink services client."))
         return
 
     prefix_to_mode = {v: k for k, v in irc.prefixmodes.items()}
@@ -116,7 +117,7 @@ def joinclient(irc, source: str, args: list):
         key = keys[idx] if idx < len(keys) and keys[idx] else None
 
         if not irc.is_channel(real_channel):
-            irc.error("Invalid channel name %r." % real_channel)
+            irc.error(_("Invalid channel name %r.") % real_channel)
             return
 
         # join() doesn't support prefixes.
@@ -133,7 +134,7 @@ def joinclient(irc, source: str, args: list):
         # Signal the join to other plugins
         irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_JOIN', {'channel': real_channel, 'users': [u],
                                                      'modes': modes, 'parse_as': 'JOIN'}])
-    irc.reply("Done.")
+    irc.reply(_("Done."))
 utils.add_cmd(joinclient, name='join')
 
 @utils.add_cmd
@@ -152,7 +153,7 @@ def nick(irc, source: str, args: list):
             nick = irc.pseudoclient.nick
             newnick = args[0]
         except IndexError:
-            irc.error("Not enough arguments. Needs 1-2: nick (optional), newnick.")
+            irc.error(_("Not enough arguments. Needs 1-2: nick (optional), newnick."))
             return
     u = irc.nick_to_uid(nick, filterfunc=irc.is_internal_client)
 
@@ -160,15 +161,15 @@ def nick(irc, source: str, args: list):
         newnick = u
 
     elif not irc.is_nick(newnick):
-        irc.error('Invalid nickname %r.' % newnick)
+        irc.error(_('Invalid nickname %r.') % newnick)
         return
 
     elif not (irc.is_manipulatable_client(u) or irc.get_service_bot(u)):
-        irc.error("Cannot force nick changes for a protected NetLink services client.")
+        irc.error(_("Cannot force nick changes for a protected NetLink services client."))
         return
 
     irc.nick(u, newnick)
-    irc.reply("Done.")
+    irc.reply(_("Done."))
     # Signal the nick change to other plugins
     irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_NICK', {'newnick': newnick, 'oldnick': nick, 'parse_as': 'NICK'}])
 
@@ -197,26 +198,26 @@ def part(irc, source: str, args: list):
         try:
             clist = args[0]
         except IndexError:
-            irc.error("Not enough arguments. Needs 1-2: nick (optional), comma separated list of channels.")
+            irc.error(_("Not enough arguments. Needs 1-2: nick (optional), comma separated list of channels."))
             return
         reason = ' '.join(args[1:])
 
     clist = clist.split(',')
     if not clist:
-        irc.error("No valid channels given.")
+        irc.error(_("No valid channels given."))
         return
 
     if not (irc.is_manipulatable_client(u) or irc.get_service_bot(u)):
-        irc.error("Cannot force part a protected NetLink services client.")
+        irc.error(_("Cannot force part a protected NetLink services client."))
         return
 
     for channel in clist:
         if not irc.is_channel(channel):
-            irc.error("Invalid channel name %r." % channel)
+            irc.error(_("Invalid channel name %r.") % channel)
             return
         irc.part(u, channel, reason)
 
-    irc.reply("Done.")
+    irc.reply(_("Done."))
     irc.call_hooks([u, 'NETLINK_BOTSPLUGIN_PART', {'channels': clist, 'text': reason, 'parse_as': 'PART'}])
 
 def msg(irc, source: str, args: list):
@@ -244,11 +245,11 @@ def msg(irc, source: str, args: list):
             target = args[0]
             text = ' '.join(args[1:])
         except IndexError:
-            irc.error('Not enough arguments. Needs 2-3: source nick (optional), target, text.')
+            irc.error(_('Not enough arguments. Needs 2-3: source nick (optional), target, text.'))
             return
 
     if not text:
-        irc.error('No text given.')
+        irc.error(_('No text given.'))
         return
 
     try:
@@ -264,16 +265,16 @@ def msg(irc, source: str, args: list):
         # Convert nick of the message target to a UID, if the target isn't a channel or UID
         potential_targets = irc.nick_to_uid(target, multi=True)
         if not potential_targets:  # Unknown target user, if target isn't a valid channel name
-            irc.error('Unknown user %r.' % target)
+            irc.error(_('Unknown user %r.') % target)
             return
         if len(potential_targets) > 1:
-            irc.error('Multiple users with the nick %r found: please select the right UID: %s' % (target, str(potential_targets)))
+            irc.error(_('Multiple users with the nick %r found: please select the right UID: %s') % (target, str(potential_targets)))
             return
         real_target = potential_targets[0]
     else:
         real_target = target
 
     irc.message(sourceuid, real_target, text)
-    irc.reply("Done.")
+    irc.reply(_("Done."))
     irc.call_hooks([sourceuid, 'NETLINK_BOTSPLUGIN_MSG', {'target': real_target, 'text': text, 'parse_as': 'PRIVMSG'}])
 utils.add_cmd(msg, aliases=('say',))

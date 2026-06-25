@@ -4,7 +4,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: NetLink\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-25 20:22+0000\n"
+"POT-Creation-Date: 2026-06-25 20:34+0000\n"
+"PO-Revision-Date: 2026-06-25 20:34+0000\n"
+"Last-Translator: NetLink <netlink@swaygo.fr>\n"
+"Language-Team: French\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -116,8 +119,13 @@ msgstr "Filtres de texte : %s"
 msgid "Not enough arguments. Needs: %s <glob>"
 msgstr "Pas assez d'arguments. Requis : %s <glob>"
 
-#: plugins/antispam.py:453 plugins/antispam.py:458 plugins/ignore.py:66
-#: plugins/ignore.py:72
+#: plugins/antispam.py:453 plugins/antispam.py:458 plugins/bots.py:30
+#: plugins/bots.py:61 plugins/bots.py:137 plugins/bots.py:172
+#: plugins/bots.py:220 plugins/bots.py:278 plugins/commands.py:327
+#: plugins/commands.py:346 plugins/ignore.py:66 plugins/ignore.py:72
+#: plugins/opercmds.py:344 plugins/opercmds.py:381 plugins/opercmds.py:398
+#: plugins/opercmds.py:444 plugins/opercmds.py:476 plugins/opercmds.py:517
+#: plugins/opercmds.py:538 plugins/opercmds.py:579
 msgid "Done."
 msgstr "Terminé."
 
@@ -125,6 +133,208 @@ msgstr "Terminé."
 #, python-format
 msgid "Unknown subcommand %r. Use add, del, or list."
 msgstr "Sous-commande inconnue %r. Utilisez add, del ou list."
+
+#: plugins/bots.py:20
+msgid "This network does not support client spawning."
+msgstr "Ce réseau ne prend pas en charge la création de clients."
+
+#: plugins/bots.py:27
+msgid "Not enough arguments. Needs 3: nick, user, host."
+msgstr "Pas assez d'arguments. Requis : 3 (pseudo, utilisateur, hôte)."
+
+#: plugins/bots.py:42
+msgid "Not enough arguments. Needs 1-2: nick, reason (optional)."
+msgstr "Pas assez d'arguments. Requis : 1-2 (pseudo, raison facultative)."
+
+#: plugins/bots.py:47
+#, python-format
+msgid "Unknown user %r"
+msgstr "Utilisateur %r inconnu"
+
+#: plugins/bots.py:51
+msgid "Cannot quit the main NetLink client!"
+msgstr "Impossible de déconnecter le client principal de NetLink !"
+
+#: plugins/bots.py:57
+msgid "Cannot force quit a protected NetLink services client."
+msgstr "Impossible de forcer la déconnexion d'un client de services NetLink protégé."
+
+#: plugins/bots.py:95
+msgid ""
+"Not enough arguments. Needs 1-3: nick (optional), comma separated list of "
+"channels, comma separated list of keys (optional)."
+msgstr "Pas assez d'arguments. Requis : 1-3 (pseudo facultatif, liste de salons séparés par des virgules, liste de clés séparées par des virgules, facultative)."
+
+#: plugins/bots.py:103 plugins/bots.py:207
+msgid "No valid channels given."
+msgstr "Aucun salon valide fourni."
+
+#: plugins/bots.py:108
+msgid "Cannot force join a protected NetLink services client."
+msgstr "Impossible de forcer un client de services NetLink protégé à rejoindre un salon."
+
+#: plugins/bots.py:120 plugins/bots.py:216
+#, python-format
+msgid "Invalid channel name %r."
+msgstr "Nom de salon invalide : %r."
+
+#: plugins/bots.py:156
+msgid "Not enough arguments. Needs 1-2: nick (optional), newnick."
+msgstr "Pas assez d'arguments. Requis : 1-2 (pseudo facultatif, nouveau pseudo)."
+
+#: plugins/bots.py:164
+#, python-format
+msgid "Invalid nickname %r."
+msgstr "Pseudo invalide : %r."
+
+#: plugins/bots.py:168
+msgid "Cannot force nick changes for a protected NetLink services client."
+msgstr "Impossible de forcer le changement de pseudo d'un client de services NetLink protégé."
+
+#: plugins/bots.py:201
+msgid ""
+"Not enough arguments. Needs 1-2: nick (optional), comma separated list of "
+"channels."
+msgstr "Pas assez d'arguments. Requis : 1-2 (pseudo facultatif, liste de salons séparés par des virgules)."
+
+#: plugins/bots.py:211
+msgid "Cannot force part a protected NetLink services client."
+msgstr "Impossible de forcer un client de services NetLink protégé à quitter un salon."
+
+#: plugins/bots.py:248
+msgid "Not enough arguments. Needs 2-3: source nick (optional), target, text."
+msgstr "Pas assez d'arguments. Requis : 2-3 (pseudo source facultatif, cible, texte)."
+
+#: plugins/bots.py:252
+msgid "No text given."
+msgstr "Aucun texte fourni."
+
+#: plugins/bots.py:268 plugins/commands.py:54
+#, python-format
+msgid "Unknown user %r."
+msgstr "Utilisateur %r inconnu."
+
+#: plugins/bots.py:271
+#, python-format
+msgid "Multiple users with the nick %r found: please select the right UID: %s"
+msgstr "Plusieurs utilisateurs portant le pseudo %r ont été trouvés : veuillez sélectionner le bon UID : %s"
+
+#: plugins/commands.py:31
+#, python-format
+msgid "You are identified as %s."
+msgstr "Vous êtes identifié comme %s."
+
+#: plugins/commands.py:33
+msgid "You are not identified as anyone."
+msgstr "Vous n'êtes identifié comme personne."
+
+#: plugins/commands.py:34
+#, python-format
+msgid "Operator access: %s"
+msgstr "Accès opérateur : %s"
+
+#: plugins/commands.py:61
+#, python-format
+msgid "Showing information on user %s (%s@%s): %s"
+msgstr "Informations sur l'utilisateur %s (%s@%s) : %s"
+
+#: plugins/commands.py:123
+msgid "Not enough arguments. Needs 1: nick."
+msgstr "Pas assez d'arguments. Requis : 1 (pseudo)."
+
+#: plugins/commands.py:157
+#, python-format
+msgid "Unknown network %r"
+msgstr "Réseau %r inconnu"
+
+#: plugins/commands.py:181
+#, python-format
+msgid "Information on network %s: %s"
+msgstr "Informations sur le réseau %s : %s"
+
+#: plugins/commands.py:184
+#, python-format
+msgid "NetLink protocol module: %s; Encoding: %s"
+msgstr "Module de protocole NetLink : %s ; Encodage : %s"
+
+#: plugins/commands.py:190
+#, python-format
+msgid "Connected? %s"
+msgstr "Connecté ? %s"
+
+#: plugins/commands.py:193
+#, python-format
+msgid "Server target: %s:%s"
+msgstr "Serveur cible : %s:%s"
+
+#: plugins/commands.py:195
+#, python-format
+msgid "NetLink hostname: %s; SID: %s; SID range: %s"
+msgstr "Nom d'hôte NetLink : %s ; SID : %s ; Plage de SID : %s"
+
+#: plugins/commands.py:209
+msgid "Not enough arguments. Needs 1: channel."
+msgstr "Pas assez d'arguments. Requis : 1 (salon)."
+
+#: plugins/commands.py:212 plugins/commands.py:224 plugins/opercmds.py:122
+#: plugins/opercmds.py:437 plugins/opercmds.py:495 plugins/opercmds.py:533
+#, python-format
+msgid "Unknown channel %r."
+msgstr "Salon %r inconnu."
+
+#: plugins/commands.py:269
+#, python-format
+msgid "NetLink version %s (in VCS: %s), running on Python %s."
+msgstr "NetLink version %s (dans le VCS : %s), exécuté sur Python %s."
+
+#: plugins/commands.py:270
+#, python-format
+msgid "The source of this program is available at %s."
+msgstr "Le code source de ce programme est disponible à l'adresse %s."
+
+#: plugins/commands.py:279
+msgid "No text to send!"
+msgstr "Aucun texte à envoyer !"
+
+#: plugins/commands.py:313
+msgid "You are not logged in!"
+msgstr "Vous n'êtes pas connecté !"
+
+#: plugins/commands.py:318
+#, python-format
+msgid "Unknown user %s."
+msgstr "Utilisateur %s inconnu."
+
+#: plugins/commands.py:324
+#, python-format
+msgid "%s is not logged in."
+msgstr "%s n'est pas connecté."
+
+#: plugins/commands.py:342
+#, python-format
+msgid "Unknown log level \"%s\"."
+msgstr "Niveau de journalisation « %s » inconnu."
+
+#: plugins/commands.py:358
+msgid "Not enough arguments. (Needs 1, password)"
+msgstr "Pas assez d'arguments. (Requis : 1, mot de passe)"
+
+#: plugins/commands.py:361
+msgid "Password cannot be empty."
+msgstr "Le mot de passe ne peut pas être vide."
+
+#: plugins/commands.py:365
+msgid "Password encryption is not available (missing passlib)."
+msgstr "Le chiffrement du mot de passe n'est pas disponible (passlib manquant)."
+
+#: plugins/global.py:23
+msgid "Refusing to send an empty message."
+msgstr "Refus d'envoyer un message vide."
+
+#: plugins/global.py:64
+#, python-format
+msgid "Done. Sent to %d channels across %d networks."
+msgstr "Terminé. Envoyé à %d salons sur %d réseaux."
 
 #: plugins/ignore.py:53
 #, python-format
@@ -135,6 +345,150 @@ msgstr "Masques ignorés : %s"
 #, python-format
 msgid "Not enough arguments. Needs: ignore %s <mask>"
 msgstr "Pas assez d'arguments. Requis : ignore %s <masque>"
+
+#: plugins/opercmds.py:49
+#, python-format
+msgid "Checking for hosts that match %s:"
+msgstr "Recherche des hôtes correspondant à %s :"
+
+#: plugins/opercmds.py:61
+#, python-format
+msgid "%s out of %s results shown."
+msgstr "%s résultats affichés sur %s."
+
+#: plugins/opercmds.py:64
+msgid "No results found."
+msgstr "Aucun résultat trouvé."
+
+#: plugins/opercmds.py:69
+#, python-format
+msgid "Yes, %s matches %s."
+msgstr "Oui, %s correspond à %s."
+
+#: plugins/opercmds.py:71
+#, python-format
+msgid "No, %s does not match %s."
+msgstr "Non, %s ne correspond pas à %s."
+
+#: plugins/opercmds.py:125
+#, python-format
+msgid ""
+"You do not have access to set bans in %s. Ask someone to op you or use the --"
+"force option."
+msgstr "Vous n'avez pas l'autorisation de définir des bannissements dans %s. Demandez à quelqu'un de vous opérer ou utilisez l'option --force."
+
+#: plugins/opercmds.py:134
+#, python-format
+msgid "Skipping banning %s because they are opered."
+msgstr "Bannissement de %s ignoré car il est opérateur IRC."
+
+#: plugins/opercmds.py:137
+#, python-format
+msgid "Skipping banning %s because it is a service client."
+msgstr "Bannissement de %s ignoré car c'est un client de services."
+
+#: plugins/opercmds.py:168
+#, python-format
+msgid "Banned %s users on %r."
+msgstr "%s utilisateurs bannis sur %r."
+
+#: plugins/opercmds.py:247
+#, python-format
+msgid "Skipping killing %s because they are opered."
+msgstr "Élimination de %s ignorée car il est opérateur IRC."
+
+#: plugins/opercmds.py:250
+#, python-format
+msgid "Skipping killing %s because it is a service client."
+msgstr "Élimination de %s ignorée car c'est un client de services."
+
+#: plugins/opercmds.py:276
+#, python-format
+msgid ""
+"Not kicking %s from %s because you don't have CLAIM access. If this is "
+"another network's channel, ask someone to op you or use the --force-kb "
+"option."
+msgstr "Expulsion de %s de %s refusée car vous n'avez pas l'accès CLAIM. S'il s'agit du salon d'un autre réseau, demandez à quelqu'un de vous opérer ou utilisez l'option --force-kb."
+
+#: plugins/opercmds.py:281
+#, python-format
+msgid "Skipping akill on %s because NetLink doesn't know the real host."
+msgstr "Akill sur %s ignoré car NetLink ne connaît pas l'hôte réel."
+
+#: plugins/opercmds.py:298
+#, python-format
+msgid "Masskilled %s/%s users."
+msgstr "%s/%s utilisateurs éliminés en masse."
+
+#: plugins/opercmds.py:335
+msgid "Not enough arguments. Needs 1: user@host mask."
+msgstr "Pas assez d'arguments. Requis : 1 (masque utilisateur@hôte)."
+
+#: plugins/opercmds.py:338
+msgid "Server bans aren't supported on this network."
+msgstr "Les bannissements de serveur ne sont pas pris en charge sur ce réseau."
+
+#: plugins/opercmds.py:360
+msgid "Not enough arguments. Needs 1-2: servername, reason (optional)."
+msgstr "Pas assez d'arguments. Requis : 1-2 (nom du serveur, raison facultative)."
+
+#: plugins/opercmds.py:364
+#, python-format
+msgid "Invalid server name %r."
+msgstr "Nom de serveur invalide : %r."
+
+#: plugins/opercmds.py:393
+msgid "No message given."
+msgstr "Aucun message fourni."
+
+#: plugins/opercmds.py:433
+msgid "Not enough arguments. Needs 2-3: channel, target, reason (optional)."
+msgstr "Pas assez d'arguments. Requis : 2-3 (salon, cible, raison facultative)."
+
+#: plugins/opercmds.py:458
+msgid "Not enough arguments. Needs 1-2: target, reason (optional)."
+msgstr "Pas assez d'arguments. Requis : 1-2 (cible, raison facultative)."
+
+#: plugins/opercmds.py:467
+msgid "Cannot kill the main NetLink client!"
+msgstr "Impossible d'éliminer le client principal de NetLink !"
+
+#: plugins/opercmds.py:491
+msgid "Not enough arguments. Needs 2: target, modes to set."
+msgstr "Pas assez d'arguments. Requis : 2 (cible, modes à définir)."
+
+#: plugins/opercmds.py:499 plugins/opercmds.py:508
+msgid "No valid modes were given."
+msgstr "Aucun mode valide n'a été fourni."
+
+#: plugins/opercmds.py:529
+msgid "Not enough arguments. Needs 2: channel, topic."
+msgstr "Pas assez d'arguments. Requis : 2 (salon, sujet)."
+
+#: plugins/opercmds.py:571
+#, python-format
+msgid "Not enough arguments. Needs 2: target, new %s."
+msgstr "Pas assez d'arguments. Requis : 2 (cible, nouveau %s)."
+
+#: plugins/stats.py:52
+#, python-format
+msgid "No such network %r."
+msgstr "Réseau %r introuvable."
+
+#: plugins/stats.py:55
+#, python-format
+msgid "Network %s is not connected."
+msgstr "Le réseau %s n'est pas connecté."
+
+#: plugins/stats.py:61
+#, python-format
+msgid "NetLink uptime: %s (started on %s)"
+msgstr "Temps de fonctionnement de NetLink : %s (démarré le %s)"
+
+#: plugins/stats.py:68
+#, python-format
+msgid "Connected to %s: %s (connected on %s)"
+msgstr "Connecté à %s : %s (connecté le %s)"
 
 #: utils.py:333 utils.py:542
 #, python-format

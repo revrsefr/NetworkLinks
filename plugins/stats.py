@@ -8,6 +8,7 @@ import time
 
 from netlink import conf, utils, world
 from netlink.coremods import permissions
+from netlink.i18n import _
 from netlink.log import log
 
 
@@ -48,23 +49,23 @@ def uptime(irc, source: str, args: list):
         try:
             ircobjs = {network: world.networkobjects[network]}
         except KeyError:
-            irc.error("No such network %r." % network)
+            irc.error(_("No such network %r.") % network)
             return
         if not world.networkobjects[network].connected.is_set():
-            irc.error("Network %s is not connected." % network)
+            irc.error(_("Network %s is not connected.") % network)
             return
 
     current_time = int(time.time())
     time_format = conf.conf.get('stats', {}).get('time_format', DEFAULT_TIME_FORMAT)
 
-    irc.reply("NetLink uptime: \x02%s\x02 (started on %s)" %
+    irc.reply(_("NetLink uptime: \x02%s\x02 (started on %s)") %
               (timediff(world.start_ts, current_time),
                time.strftime(time_format, time.gmtime(world.start_ts))
               )
              )
 
     for network, ircobj in sorted(ircobjs.items()):
-        irc.reply("Connected to %s: \x02%s\x02 (connected on %s)" %
+        irc.reply(_("Connected to %s: \x02%s\x02 (connected on %s)") %
                   (network,
                    timediff(ircobj.start_ts, current_time),
                    time.strftime(time_format, time.gmtime(ircobj.start_ts))

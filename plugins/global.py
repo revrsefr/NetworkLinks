@@ -6,6 +6,7 @@ import string
 
 from netlink import conf, utils, world
 from netlink.coremods import permissions
+from netlink.i18n import _
 from netlink.log import log
 
 DEFAULT_FORMAT = "[$sender@$fullnetwork] $text"
@@ -19,7 +20,7 @@ def g(irc, source: str, args: list):
     message = " ".join(args).strip()
 
     if not message:
-        irc.error("Refusing to send an empty message.")
+        irc.error(_("Refusing to send an empty message."))
         return
 
     global_conf = conf.conf.get('global') or {}
@@ -60,6 +61,6 @@ def g(irc, source: str, args: list):
 
                 chancount += 1
 
-    irc.reply('Done. Sent to %d channels across %d networks.' % (chancount, netcount))
+    irc.reply(_('Done. Sent to %d channels across %d networks.') % (chancount, netcount))
 
 utils.add_cmd(g, "global", featured=True)
