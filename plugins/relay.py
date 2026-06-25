@@ -1616,6 +1616,11 @@ def handle_messages(irc, numeric: str, command: str, args: dict):
         # For consistency, only read messages from clientbot networks if relay_clientbot is loaded
         return
 
+    ignore_plugin = world.plugins.get('ignore')
+    if ignore_plugin and ignore_plugin.is_ignored(irc, numeric):
+        # Don't relay messages from ignored users. (#495)
+        return
+
     remoteusers = relayusers[(irc.name, numeric)]
 
     avail_prefixes = {v: k for k, v in irc.prefixmodes.items()}

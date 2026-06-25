@@ -205,7 +205,15 @@ def handle_commands(irc, source: str, command: str, args: dict):
     text = args['text']
 
     sbot = irc.get_service_bot(target)
-    if sbot and not _command_flood_check(irc, source):
+    if not sbot:
+        return
+
+    ignore_plugin = world.plugins.get('ignore')
+    if ignore_plugin and ignore_plugin.is_ignored(irc, source):
+        log.debug("(%s) Ignoring command from %s (matches the ignore list).", irc.name, source)
+        return
+
+    if not _command_flood_check(irc, source):
         sbot.call_cmd(irc, source, text)
 
 utils.add_hook(handle_commands, 'PRIVMSG')

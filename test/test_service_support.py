@@ -2,7 +2,7 @@
 import time
 import unittest
 
-from netlink import conf
+from netlink import conf, world
 from netlink.coremods import service_support as ss
 
 
@@ -49,6 +49,53 @@ class CommandFloodTest(unittest.TestCase):
         # An entry older than the window must be purged, so the next call is allowed.
         ss._recent_command_times.append(time.time() - 100)
         self.assertFalse(ss._command_flood_check(self.irc, 'u'))
+
+
+class _Sbot:
+    def __init__(self):
+        self.called = []
+
+    def call_cmd(self, irc, source, text):
+        self.called.append(source)
+
+
+class HandleCommandsIgnoreTest(unittest.TestCase):
+    """The dispatcher consults a loaded ignore plugin (#495)."""
+
+    def setUp(self):
+        ss._recent_command_times.clear()
+        conf.conf['netlink'].pop('command_flood_count', None)
+        self.sbot = _Sbot()
+
+        class _IRC:
+            name = 'testnet'
+
+            def get_service_bot(_self, target):
+                return self.sbot
+
+            def get_hostmask(_self, s):
+                return 's!u@h'
+
+        self.irc = _IRC()
+
+        class _Ignore:
+            @staticmethod
+            def is_ignored(irc, uid):
+                return uid == 'spammer'
+
+        world.plugins['ignore'] = _Ignore
+
+    def tearDown(self):
+        world.plugins.pop('ignore', None)
+        ss._recent_command_times.clear()
+
+    def test_ignored_source_is_dropped(self):
+        ss.handle_commands(self.irc, 'spammer', 'PRIVMSG', {'target': 'bot', 'text': 'help'})
+        self.assertEqual(self.sbot.called, [])
+
+    def test_normal_source_is_processed(self):
+        ss.handle_commands(self.irc, 'normal', 'PRIVMSG', {'target': 'bot', 'text': 'help'})
+        self.assertEqual(self.sbot.called, ['normal'])
 
 
 if __name__ == '__main__':
