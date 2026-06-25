@@ -253,7 +253,7 @@ def msg(irc, source: str, args: list):
 
     try:
         int_u = int(target)
-    except:
+    except Exception:
         int_u = None
 
     if int_u and int_u in irc.users:

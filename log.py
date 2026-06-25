@@ -158,7 +158,7 @@ class NetLinkChannelLogger(logging.Handler):
             for line in msg.splitlines():
                 try:
                     self.irc.msg(self.channel, line)
-                except:
+                except Exception:
                     return
                 else:
                     self.called = False

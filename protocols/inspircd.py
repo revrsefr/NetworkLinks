@@ -291,6 +291,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
             self._send_with_prefix(source, 'FTOPIC %s %s %s :%s' % (target, self._channels[target].ts, int(time.time()), text))
         else:
             return super().topic(source, target, text)
+        return None
 
     def topic_burst(self, source, target, text):
         """Sends a topic change from a NetLink server. This is usually used on burst."""
@@ -932,6 +933,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         # First arg = source, second = signon time, third = idle time
         self._send_with_prefix(target, 'IDLE %s %s 0' % (source, start_time))
+        return None
 
     def handle_ftopic(self, source: str, command: str, args: list):
         """Handles incoming topic changes."""
@@ -1059,6 +1061,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
             return self.handle_squit(numeric, 'SQUIT', [target, reason])
         log.debug("(%s) Got RSQUIT for '%s', which is either invalid or not "
                   "a server of ours!", self.name, args[0])
+        return None
 
     def handle_metadata(self, numeric: str, command: str, args: list):
         """

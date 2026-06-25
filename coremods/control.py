@@ -69,7 +69,7 @@ def _kill_plugins(irc=None) -> None:
             log.debug('coremods.control: Running die() on plugin %s due to shutdown.', name)
             try:
                 plugin.die(irc=irc)
-            except:  # But don't allow it to crash the server.
+            except Exception:  # But don't allow it to crash the server.
                 log.exception('coremods.control: Error occurred in die() of plugin %s, skipping...', name)
 
 # We use atexit to register certain functions so that when NetLink cleans up after itself if it
@@ -312,7 +312,7 @@ def rehash() -> list:
                 # API note: 2.0.x style of starting network connections
                 world.networkobjects[network] = newirc = proto.Class(network)
                 newirc.connect()
-            except:
+            except Exception:
                 log.exception('Failed to initialize network %r, skipping it...', network)
 
     if errors:

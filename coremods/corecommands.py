@@ -72,6 +72,7 @@ def unload(irc, source: str, args: list):
         irc.reply("Unloaded plugin %r." % name)
         return True  # We succeeded, make it clear (this status is used by reload() below)
     irc.reply("Unknown plugin %r." % name)
+    return None
 
 @utils.add_cmd
 def reload(irc, source: str, args: list):

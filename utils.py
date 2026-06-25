@@ -631,7 +631,7 @@ class ServiceBot:
             plugin_filter = None
 
         # Don't show CTCP handlers or aliases in the public command list.
-        cmds = sorted(cmd for cmd in self.commands.keys() if '\x01' not in cmd and cmd not in self.alias_cmds)
+        cmds = sorted(cmd for cmd in self.commands if '\x01' not in cmd and cmd not in self.alias_cmds)
 
         if plugin_filter is not None:
             # Filter by plugin, if the option was given.
@@ -937,3 +937,4 @@ def merge_iterables(A, B):
         return A | B
     if isinstance(A, dict):
         return {**A, **B}
+    return None

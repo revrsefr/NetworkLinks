@@ -82,7 +82,7 @@ def _map(irc, source, args, show_relay=True):
         # Every time we descend a server to process its map, raise the hopcount used in formatting.
         hops += 1
         leaves = servers[(netname, sid)]
-        for leafcount, leaf in enumerate(leaves):
+        for _leafcount, leaf in enumerate(leaves):
             if is_relay_server and hasattr(serverlist[leaf], 'remote'):
                 # Don't show relay subservers more than once.
                 continue

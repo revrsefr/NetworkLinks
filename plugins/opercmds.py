@@ -146,7 +146,7 @@ def massban(irc, source, args, use_regex=False):
         try:
             irc.call_hooks([irc.pseudoclient.uid, 'OPERCMDS_MASSBAN',
                             {'target': args.channel, 'modes': bans, 'parse_as': 'MODE'}])
-        except:
+        except Exception:
             log.exception('(%s) Failed to send process massban hook; some bans may have not '
                           'been sent to plugins / relay networks!', irc.name)
 
@@ -158,7 +158,7 @@ def massban(irc, source, args, use_regex=False):
                 irc.call_hooks([irc.pseudoclient.uid, 'OPERCMDS_MASSKICK',
                                 {'channel': args.channel, 'target': uid, 'text': reason, 'parse_as': 'KICK'}])
 
-            except:
+            except Exception:
                 log.exception('(%s) Failed to send process massban hook; some kicks may have not '
                               'been sent to plugins / relay networks!', irc.name)
 
@@ -265,7 +265,7 @@ def masskill(irc, source, args, use_regex=False):
                                         {'target': channel, 'modes': bans, 'parse_as': 'MODE'}])
                         irc.call_hooks([irc.pseudoclient.uid, 'OPERCMDS_MASSKILL_KICK',
                                         {'channel': channel, 'target': uid, 'text': reason, 'parse_as': 'KICK'}])
-                    except:
+                    except Exception:
                         log.exception('(%s) Failed to send process massban hook; some kickbans may have not '
                                       'been sent to plugins / relay networks!', irc.name)
 
@@ -285,7 +285,7 @@ def masskill(irc, source, args, use_regex=False):
                 try:
                     irc.call_hooks([irc.pseudoclient.uid, 'OPERCMDS_MASSKILL',
                                     {'target': uid, 'parse_as': 'KILL', 'userdata': userobj, 'text': reason}])
-                except:
+                except Exception:
                     log.exception('(%s) Failed to send process massban hook; some kickbans may have not '
                                   'been sent to plugins / relay networks!', irc.name)
             killed += 1
@@ -402,7 +402,7 @@ def _try_find_target(irc, nick):
     """
     try:
         int_u = int(nick)
-    except:
+    except Exception:
         int_u = None
 
     if int_u and int_u in irc.users:

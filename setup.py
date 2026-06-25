@@ -8,8 +8,6 @@ which is read at runtime by the launcher.
 import subprocess
 import sys
 
-if sys.version_info < (3, 9):
-    raise RuntimeError("NetLink requires Python 3.9 or higher.")
 
 from setuptools import setup
 

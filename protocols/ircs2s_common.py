@@ -679,6 +679,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
 
         if channels:
             return {'channels': channels, 'text': reason}
+        return None
 
     def handle_privmsg(self, source: str, command: str, args: list):
         """Handles incoming PRIVMSG/NOTICE."""
@@ -754,6 +755,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
             except IndexError:
                 reason = ''
             return {'text': reason, 'userdata': userdata}
+        return None
 
     def handle_stats(self, numeric: str, command: str, args: list):
         """Handles the IRC STATS command."""

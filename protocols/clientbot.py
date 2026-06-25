@@ -714,9 +714,8 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
 
             # Only send CAP END immediately if SASL is disabled. Otherwise, wait for the 90x responses
             # to do so.
-            if not self._try_sasl_auth():
-                if not self.has_eob:
-                    self._do_cap_end()
+            if not self._try_sasl_auth() and not self.has_eob:
+                self._do_cap_end()
         elif subcmd == 'NAK':
             log.warning('(%s) Got NAK for IRCv3 capabilities %s, even though they were supposedly available',
                         self.name, args[-1])
@@ -844,6 +843,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
                       self.name, channel)
             return {'channel': channel, 'users': names, 'modes': self._channels[channel].modes,
                     'parse_as': "JOIN"}
+        return None
 
     def _send_who(self, channel):
         """Sends /WHO to a channel, with WHOX args if that is supported."""
@@ -963,6 +963,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         if queued_users:
             return {'channel': channel, 'users': users, 'modes': modes,
                     'parse_as': "JOIN"}
+        return None
 
     def handle_433(self, source, command, args):
         # <- :millennium.overdrivenetworks.com 433 * ice :Nickname is already in use.
@@ -1016,6 +1017,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         else:
             self.call_hooks([source, 'CLIENTBOT_JOIN', {'channel': channel}])
             return {'channel': channel, 'users': [source], 'modes': self._channels[channel].modes}
+        return None
 
     def handle_kick(self, source, command, args):
         """
@@ -1075,6 +1077,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
             # somehow gets desynced, this may not catch everything it's supposed to.
             if (self.pseudoclient and source != self.pseudoclient.uid) or not self.pseudoclient:
                 return {'target': target, 'modes': changedmodes, 'channeldata': oldobj}
+        return None
 
     def handle_324(self, source, command, args):
         """Handles MODE announcements via RPL_CHANNELMODEIS (i.e. the response to /mode #channel)"""
@@ -1164,6 +1167,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         if notify_channels:
             log.debug('(%s) clientbot.handle_part: returning part hook for %s (original: %s)', self.name, notify_channels, channels)
             return {'channels': notify_channels, 'text': reason}
+        return None
 
     def handle_ping(self, source, command, args):
         """
@@ -1187,6 +1191,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
 
         if target:
             return {'target': target, 'text': args[1]}
+        return None
     handle_notice = handle_privmsg
 
     def handle_tagmsg(self, source, command, args):
@@ -1204,6 +1209,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         if target:
             # Message tags are attached to the hook payload by handle_events().
             return {'target': target}
+        return None
 
     def handle_quit(self, source, command, args):
         """Handles incoming QUITs."""
@@ -1272,6 +1278,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         if modes:
             return {'target': channel, 'parse_as': 'MODE',
                     'modes': modes}
+        return None
 
     def handle_346(self, *args):
         """

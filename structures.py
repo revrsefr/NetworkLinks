@@ -46,6 +46,7 @@ class KeyedDefaultdict(collections.defaultdict):
         else:
             value = self[key] = self.default_factory(key)
             return value
+        return None
 
 class CopyWrapper:
     """

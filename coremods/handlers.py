@@ -211,4 +211,5 @@ def _state_cleanup_mode(irc, source: str, command: str, args: dict):
             log.debug('(%s) _state_cleanup_mode: deleting empty channel %s as %s was set', irc.name, target, mode)
             del irc._channels[target]
             return False  # Block further hooks from running
+    return None
 utils.add_hook(_state_cleanup_mode, 'MODE', priority=10000)

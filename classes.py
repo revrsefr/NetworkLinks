@@ -779,7 +779,7 @@ class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
         # Look for the "service" attribute in the User object,sname = userobj.service
         # Warn if the service name we fetched isn't a registered service.
         sname = userobj.service
-        if sname is not None and sname not in world.services.keys():
+        if sname is not None and sname not in world.services:
             log.warning("(%s) User %s / %s had a service bot record to a service that doesn't "
                         "exist (%s)!", self.name, uid, userobj.nick, sname)
         return world.services.get(sname)
@@ -1592,7 +1592,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         if channel:
             banmask = "$and:(%s+$channel:%s)" % (banmask, channel)
 
-        for uid in self.users.copy().keys():
+        for uid in self.users.copy():
             if self.match_host(banmask, uid) and uid in self.users:
                 yield uid
 
@@ -1960,7 +1960,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
             self.autoconnect_active_multiplier = 1  # Reset any extra autoconnect delays
 
         # _run_irc() or the protocol module it called raised an exception, meaning we've disconnected
-        except:
+        except Exception:
             self._log_connection_error('(%s) Disconnected from IRC:', self.name, exc_info=True)
             if not self._aborted.is_set():
                 self.disconnect()
@@ -1996,7 +1996,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
             try:
                 log.debug('(%s) disconnect: shutting down read half of socket %s', self.name, self._socket)
                 self._socket.shutdown(socket.SHUT_RD)
-            except:
+            except Exception:
                 log.debug('(%s) Error on socket shutdown:', self.name, exc_info=True)
 
             log.debug('(%s) disconnect: waiting for write half of socket %s to shutdown', self.name, self._socket)
@@ -2126,7 +2126,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
                 if self._aborted.wait(throttle_time):
                     break
                 continue
-            except:
+            except Exception:
                 log.exception("(%s) Failed to send message %r; aborting!", self.name, data)
                 self.disconnect()
                 return

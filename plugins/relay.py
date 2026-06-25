@@ -435,6 +435,7 @@ def spawn_relay_server(irc, remoteirc):
               irc.name, irc.name, remoteirc.name, irc.name)
     log.debug('(%s) spawn_relay_server: current thread is %s',
               irc.name, threading.current_thread().name)
+    return None
 
 def get_relay_server_sid(irc, remoteirc, spawn_if_missing=True):
     """
@@ -610,6 +611,7 @@ def get_remote_user(irc, remoteirc, user, spawn_if_missing=True, times_tagged=0,
                   irc.name, irc.name, remoteirc.name, user, irc.name)
         log.debug('(%s) get_remote_user: current thread is %s',
                   irc.name, threading.current_thread().name)
+    return None
 
 def get_orig_user(irc, user, targetirc=None):
     """
@@ -643,6 +645,7 @@ def get_orig_user(irc, user, targetirc=None):
                       res, remoteuser[1], user, irc.name)
             return res
         return remoteuser
+    return None
 
 def get_relay(irc, channel):
     """Finds the matching relay entry name for the given network, channel
@@ -656,6 +659,7 @@ def get_relay(irc, channel):
     for name, dbentry in db.items():
         if chanpair in dbentry['links']:
             return name
+    return None
 
 def get_remote_channel(irc, remoteirc, channel):
     """Returns the linked channel name for the given channel on remoteirc,
@@ -670,6 +674,7 @@ def get_remote_channel(irc, remoteirc, channel):
     for link in db[chanpair]['links']:
         if link[0] == remotenetname:
             return link[1]
+    return None
 
 def initialize_channel(irc, channel):
     """Initializes a relay channel (merge local/remote users, set modes, etc.)."""
@@ -1365,7 +1370,7 @@ def handle_relay_whois(irc, source: str, command: str, args: dict):
         Returns whether we should send the given info line in WHOIS. This validates the
         corresponding configuration option for being either "all" or "opers"."""
         setting = conf.conf.get('relay', {}).get(infoline, '').lower()
-        return bool(setting == 'all' or setting == 'opers' and irc.is_oper(source))
+        return bool(setting == 'all' or (setting == 'opers' and irc.is_oper(source)))
 
     # Get the real user for the WHOIS target.
     origuser = get_orig_user(irc, target)
@@ -1736,7 +1741,7 @@ def handle_messages(irc, numeric: str, command: str, args: dict):
         # messages from.
         # Note: don't spam ulined senders (e.g. services announcers) with
         # these notices.
-        if homenet not in remoteusers.keys():
+        if homenet not in remoteusers:
             if not irc.is_privileged_service(numeric):
                 irc.msg(numeric, 'You must be in a common channel '
                         'with %r in order to send messages.' % \
@@ -2767,7 +2772,7 @@ def linked(irc, source: str, args: list):
     net = ''
     try:
         net = args[0]
-    except:
+    except Exception:
         pass
     else:
         irc.reply("Showing channels linked to %s:" % net, private=True)

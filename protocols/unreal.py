@@ -607,6 +607,7 @@ class UnrealProtocol(TS6BaseProtocol):
             # Legacy (non-SID) servers can still be introduced using the SERVER command.
             # <- :services.int SERVER a.bc 2 :(H) [jlu5] a
             return super().handle_server(numeric, command, args)
+        return None
 
     def handle_protoctl(self, numeric: str, command: str, args: list):
         """Handles protocol negotiation."""
@@ -668,6 +669,7 @@ class UnrealProtocol(TS6BaseProtocol):
             # have multiple channels...
             self.call_hooks([numeric, command, {'channel': channel, 'users': [numeric], 'modes':
                                                    c.modes, 'ts': c.ts}])
+        return None
 
     def handle_sjoin(self, numeric: str, command: str, args: list):
         """Handles the UnrealIRCd SJOIN command."""

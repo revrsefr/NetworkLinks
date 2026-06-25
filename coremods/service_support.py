@@ -100,7 +100,7 @@ def handle_endburst(irc, source: str, command: str, args: dict):
         log.debug('(%s): spawning service bots now.', irc.name)
 
         # We just connected. Burst all our registered services.
-        for name in world.services.keys():
+        for name in world.services:
             spawn_service(irc, source, command, {'name': name})
 
 utils.add_hook(handle_endburst, 'ENDBURST', priority=500)
@@ -157,6 +157,7 @@ def _services_dynamic_part(irc, channel: str):
                 log.debug('(%s) Dynamically parting service %r from channel %r.', irc.name, sbot.name, channel)
                 irc.part(u, channel)
         return True
+    return None
 
 def handle_part(irc, source: str, command: str, args: dict):
     """Monitors channel joins for dynamic service bot joining."""

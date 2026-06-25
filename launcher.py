@@ -158,7 +158,7 @@ def _main() -> None:
                 world.networkobjects[network] = irc = proto.Class(network)
                 log.debug('Connecting to network %r', network)
                 irc.connect()
-            except:
+            except Exception:
                 log.exception('(%s) Failed to connect to network %r, skipping it...',
                               network, network)
                 continue

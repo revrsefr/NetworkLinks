@@ -27,7 +27,7 @@ def _process_conns() -> None:
             try:
                 if mask & selectors.EVENT_READ and not irc._aborted.is_set():
                     irc._run_irc()
-            except:
+            except Exception:
                 log.exception('Error in select driver loop:')
                 continue
 

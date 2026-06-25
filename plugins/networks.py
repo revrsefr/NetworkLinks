@@ -132,7 +132,7 @@ def remote(irc, source: str, args: list):
 
         # Set the identification override to the caller's account.
         remoteirc.pseudoclient.account = irc.users[source].account
-    except:
+    except Exception:
         REMOTE_IN_USE.clear()
         raise
 
@@ -166,7 +166,7 @@ def remote(irc, source: str, args: list):
             # Remove the identification override after we finish.
             try:
                 remoteirc.pseudoclient.account = ''
-            except:
+            except Exception:
                 log.warning('(%s) networks.remote: failed to restore pseudoclient account for %s; '
                             'did the remote network disconnect while running this command?', irc.name, netname)
             REMOTE_IN_USE.clear()
