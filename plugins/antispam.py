@@ -2,18 +2,24 @@
 
 from __future__ import annotations
 
-from netlink import conf, utils
+from netlink import conf, structures, utils
 from netlink.coremods import permissions
 from netlink.log import log
 
-# Text filter globs added at runtime via the 'spamfilter' command. Merged with
-# the config/serverdata lists in handle_textfilter.
-RUNTIME_TEXTFILTERS = set()
+# Text filter globs added at runtime via the 'spamfilter' command, persisted to
+# disk and merged with the config/serverdata lists in handle_textfilter.
+_dbname = conf.get_database_name('antispam-spamfilters')
+datastore = structures.JSONDataStore('antispam-spamfilters', _dbname, default_db={'globs': []})
+db = datastore.store
 
 mydesc = ("Provides anti-spam functionality.")
 sbot = utils.register_service("antispam", default_nick="AntiSpam", desc=mydesc)
 
+def main(irc=None):
+    datastore.load()
+
 def die(irc=None):
+    datastore.die()
     utils.unregister_service("antispam")
 
 _UNICODE_CHARMAP = {
@@ -349,7 +355,7 @@ def handle_textfilter(irc, source: str, command: str, args: dict):
     # Merge together global, per-network, and runtime (added via IRC) textfilter lists.
     txf_globs = set(conf.conf.get('antispam', {}).get('textfilter_globs', [])) | \
                 set(irc.serverdata.get('antispam_textfilter_globs', [])) | \
-                RUNTIME_TEXTFILTERS
+                set(db.get('globs', []))
 
     punishment = txf_settings.get('punishment', TEXTFILTER_DEFAULTS['punishment']).lower()
     reason = txf_settings.get('reason', TEXTFILTER_DEFAULTS['reason'])
@@ -425,13 +431,14 @@ def spamfilter(irc, source: str, args: list):
     matched against channel (and PM, if watch_pms is on) messages, punishing the
     sender per the antispam::textfilter config."""
     permissions.check_permissions(irc, source, ['antispam.spamfilter'])
+    globs = db.setdefault('globs', [])
     sub = args[0].lower() if args else 'list'
 
     if sub in ('list', 'ls'):
-        if not RUNTIME_TEXTFILTERS:
-            irc.reply("No runtime text filters set.")
+        if not globs:
+            irc.reply("No text filters set.")
         else:
-            irc.reply("Runtime text filters: %s" % ', '.join(sorted(RUNTIME_TEXTFILTERS)))
+            irc.reply("Text filters: %s" % ', '.join(sorted(globs)))
         return
 
     glob = ' '.join(args[1:]).strip()
@@ -440,10 +447,14 @@ def spamfilter(irc, source: str, args: list):
         return
 
     if sub == 'add':
-        RUNTIME_TEXTFILTERS.add(glob)
+        if glob not in globs:
+            globs.append(glob)
+            datastore.save()
         irc.reply("Done.")
     elif sub in ('del', 'rm', 'remove'):
-        RUNTIME_TEXTFILTERS.discard(glob)
+        if glob in globs:
+            globs.remove(glob)
+            datastore.save()
         irc.reply("Done.")
     else:
         irc.error("Unknown subcommand %r. Use add, del, or list." % sub)
