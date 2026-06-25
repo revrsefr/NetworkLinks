@@ -1,0 +1,12 @@
+#!/bin/sh
+# NetLink pre-commit hook: run the quality gate before allowing a commit.
+# Install with `make install-hooks`. Bypass once with `git commit --no-verify`.
+
+if [ -x .venv/bin/ruff ]; then
+    if ! make check; then
+        echo "✗ quality gate failed -- commit blocked (override with: git commit --no-verify)" >&2
+        exit 1
+    fi
+else
+    echo "note: .venv not found; run 'make dev' to enable the pre-commit gate. Skipping checks." >&2
+fi

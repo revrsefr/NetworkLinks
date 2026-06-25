@@ -102,6 +102,7 @@ def add_hook(func=None, command: str | None = None, priority: int = 100):
         def decorator(realfunc):
             return add_hook(realfunc, command, priority=priority)
         return decorator
+    assert command is not None, "add_hook requires a command name"
     command = command.upper()
     world.hooks[command].append((priority, func))
     world.hooks[command].sort(key=lambda pair: pair[0], reverse=True)

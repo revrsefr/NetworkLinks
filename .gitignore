@@ -32,3 +32,9 @@ log/
 .coverage.*
 htmlcov/
 .pytest_cache/
+
+# Dev tooling / quality gate
+.venv/
+.mypy_cache/
+.pytest_cache/
+netlink.egg-info/

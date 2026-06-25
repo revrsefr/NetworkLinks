@@ -38,6 +38,17 @@ dependencies = [
 password-hashing = ["passlib>=1.7.0"]
 cron-support = ["psutil"]
 relay-unicode = ["unidecode"]
+# Tooling for the local quality gate (make check). Includes the optional runtime
+# extras so the test suite and type checker can import everything.
+dev = [
+    "ruff>=0.6",
+    "pytest>=7",
+    "pytest-cov",
+    "mypy>=1.8",
+    "passlib",
+    "unidecode",
+    "cachetools",
+]
 
 [project.urls]
 Homepage = "https://github.com/revrsefr/NetworkLinks"
@@ -70,3 +81,44 @@ check_untyped_defs = false
 warn_redundant_casts = true
 warn_unused_ignores = true
 exclude = ['test/parser-tests/']
+
+# Modules not yet type-clean: ignore their errors so the gate protects the
+# annotated core (classes, utils, structures, protocols, coremods, ...). Annotating
+# these is future work; drop each from this list once it type-checks clean.
+[[tool.mypy.overrides]]
+module = [
+    "netlink.launcher",
+    "netlink.plugins.relay",
+    "netlink.plugins.relay_clientbot",
+    "netlink.plugins.networks",
+    "netlink.plugins.exec",
+    "netlink.plugins.raw",
+    "netlink.plugins.servprotect",
+]
+ignore_errors = true
+
+[tool.ruff]
+target-version = "py39"
+extend-exclude = ["run", "test/parser-tests"]
+
+[tool.ruff.lint]
+# The rule set the package is kept clean against. Categories deliberately left out
+# of `select` (or ignored below) are either noise or readability judgment calls --
+# see the cleanup history. Keep this green; that's the point of `make lint`.
+select = ["F", "E", "W", "UP", "B", "C4", "PIE", "RUF", "FLY", "RET", "SIM", "PERF", "ISC"]
+ignore = [
+    "E501",                              # line length: no house policy
+    "E402",                              # import position: intentional (circular-import avoidance)
+    "RUF001",                            # ambiguous unicode in strings: antispam homoglyph table is intentional
+    "UP031",                             # %-format: correct/idiomatic for lazy logging calls
+    "SIM102", "SIM105", "SIM108",        # collapsible-if / suppress / ternary: readability judgment
+    "SIM110", "SIM113", "SIM114",
+    "PERF203", "PERF401",                # try/except-in-loop, manual list comp: not always clearer
+    "ISC001", "ISC002",                  # implicit string concatenation: fine for long messages
+    "F403", "F405",                      # `from netlink.classes import *`: structural re-export
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test scaffolding legitimately assigns lambdas and unused setup locals, and the
+# antispam tests use real homoglyph characters in comments on purpose.
+"test/*" = ["F841", "E731", "F401", "RUF003", "RUF015", "UP039"]
