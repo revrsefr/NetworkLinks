@@ -14,6 +14,7 @@ from collections import defaultdict
 from netlink import conf, structures, utils, world
 from netlink.coremods import permissions
 from netlink.log import log
+import contextlib
 
 CHANNEL_DELINKED_MSG = "Channel delinked."
 RELAY_UNLOADED_MSG = "Relay plugin unloaded."
@@ -741,10 +742,8 @@ def remove_channel(irc, channel):
                 # have the channel registered.
                 sbot = irc.get_service_bot(user)
                 if sbot:
-                    try:
+                    with contextlib.suppress(KeyError):
                         sbot.remove_persistent_channel(irc, 'relay', channel, part_reason=CHANNEL_DELINKED_MSG)
-                    except KeyError:
-                        pass
                 else:
                     irc.part(user, channel, CHANNEL_DELINKED_MSG)
                     if user != irc.pseudoclient.uid and not irc.users[user].channels:
@@ -800,7 +799,7 @@ def check_claim(irc, channel, sender, chanobj=None):
     # XXX: stop hardcoding modes to check for and support mlist in isHalfopPlus and friends
     success = (not relay) or irc.name == relay[0] or not db[relay]['claim'] or \
         irc.name in db[relay]['claim'] or \
-        (any([mode in sender_modes for mode in {'y', 'q', 'a', 'o', 'h'}])
+        (any(mode in sender_modes for mode in {'y', 'q', 'a', 'o', 'h'})
          and not irc.is_privileged_service(sender)) \
         or irc.is_internal_client(sender) or \
         irc.is_internal_server(sender)
@@ -1050,10 +1049,8 @@ def relay_part(irc, *args, **kwargs):
         # Remove any persistent channel entries from the remote end.
         sbot = irc.get_service_bot(user)
         if sbot:
-            try:
+            with contextlib.suppress(KeyError):
                 sbot.remove_persistent_channel(remoteirc, 'relay', remotechan, try_part=False)
-            except KeyError:
-                pass
 
         # Part the relay client with the channel delinked message.
         remoteirc.part(remoteuser, remotechan, CHANNEL_DELINKED_MSG)
@@ -1368,9 +1365,7 @@ def handle_relay_whois(irc, source: str, command: str, args: dict):
         Returns whether we should send the given info line in WHOIS. This validates the
         corresponding configuration option for being either "all" or "opers"."""
         setting = conf.conf.get('relay', {}).get(infoline, '').lower()
-        if setting == 'all' or (setting == 'opers' and irc.is_oper(source)):
-            return True
-        return False
+        return bool(setting == 'all' or setting == 'opers' and irc.is_oper(source))
 
     # Get the real user for the WHOIS target.
     origuser = get_orig_user(irc, target)
@@ -1517,10 +1512,8 @@ def handle_squit(irc, numeric: str, command: str, args: dict):
                             irc.name, args.get('uplink'))
 
         def _quit(irc, remoteirc, user):
-            try:
+            with contextlib.suppress(LookupError):
                 remoteirc.quit(user, text)
-            except LookupError:
-                pass
 
         with spawnlocks[irc.name]:
             for user in users:
@@ -2981,10 +2974,7 @@ def claim(irc, source: str, args: list):
         irc.reply('Channel \x02%s\x02 is claimed by: %s' %
                 (channel, ', '.join(claimed) or '\x1D(none)\x1D'))
     else:
-        if nets == '-' or not nets:
-            claimed = set()
-        else:
-            claimed = set(nets.split(','))
+        claimed = set() if nets == '-' or not nets else set(nets.split(','))
     db[relay]["claim"] = claimed
     irc.reply('CLAIM for channel \x02%s\x02 set to: %s' %
             (channel, ', '.join(claimed) or '\x1D(none)\x1D'))

@@ -237,10 +237,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         # InspIRCd 2.x uses _ in OPERTYPE to denote spaces, while InspIRCd 3.x does not.
         # This is one of the few things not fixed by 2.0/3.0 link compat, so here's a workaround
-        if self.remote_proto_ver < 1205:
-            otype = otype.replace(" ", "_")
-        else:
-            otype = ':' + otype
+        otype = otype.replace(" ", "_") if self.remote_proto_ver < 1205 else ':' + otype
 
         self._send_with_prefix(target, 'OPERTYPE %s' % otype)
 
@@ -951,10 +948,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         if self.proto_ver >= 1205 and command == 'FTOPIC':
             ts = args[2]
-            if source in self.users:
-                setter = source
-            else:
-                setter = args[3]
+            setter = source if source in self.users else args[3]
         else:
             ts = args[1]
             setter = args[2]

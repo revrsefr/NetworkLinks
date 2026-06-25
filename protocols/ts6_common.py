@@ -86,8 +86,7 @@ class TS6SIDGenerator:
         while ''.join(self.output) in self.irc.servers:
             # Increment until the SID we have doesn't already exist.
             self.increment()
-        sid = ''.join(self.output)
-        return sid
+        return ''.join(self.output)
 
 class TS6UIDGenerator(UIDGenerator):
      """Implements an incremental TS6 UID Generator."""

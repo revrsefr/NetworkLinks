@@ -26,6 +26,7 @@ import time
 from . import __version__, conf, selectdriver, structures, utils, world
 from .log import log, NetLinkChannelLogger
 from .utils import ProtocolError  # Compatibility with NetLink 1.x
+import contextlib
 
 __all__ = [
     'Channel',
@@ -549,8 +550,7 @@ class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
         Returns a detailed version string including the NetLink daemon version,
         the protocol module in use, and the server hostname.
         """
-        fullversion = 'NetLink-%s. %s :[protocol:%s, encoding:%s]' % (__version__, self.hostname(), self.protoname, self.encoding)
-        return fullversion
+        return 'NetLink-%s. %s :[protocol:%s, encoding:%s]' % (__version__, self.hostname(), self.protoname, self.encoding)
 
     def hostname(self):
         """
@@ -745,9 +745,7 @@ class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
         This returns False if the numeric doesn't exist.
         """
         sid = self.get_server(uid)
-        if sid and self.servers[sid].internal:
-            return True
-        return False
+        return bool(sid and self.servers[sid].internal)
 
     def is_internal_server(self, sid: str) -> bool:
         """Returns whether the given SID is an internal NetLink server."""
@@ -884,8 +882,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         if target in self.users:
             return target
 
-        target = self.nick_to_uid(target) or target
-        return target
+        return self.nick_to_uid(target) or target
 
     def _squit(self, numeric, command, args):
         """Handles incoming SQUITs."""
@@ -1095,10 +1092,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         modelist = set(old_modelist)
         mapping = collections.defaultdict(set)
 
-        if is_channel:
-            supported_modes = self.cmodes
-        else:
-            supported_modes = self.umodes
+        supported_modes = self.cmodes if is_channel else self.umodes
 
         for modepair in modelist:  # Make a mapping of mode chars to values
             mapping[modepair[0]].add(modepair[1])
@@ -1478,10 +1472,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         """
         ulines = self.serverdata.get('ulines', [])
 
-        if entityid in self.users:
-            sid = self.get_server(entityid)
-        else:
-            sid = entityid
+        sid = self.get_server(entityid) if entityid in self.users else entityid
 
         return self.get_friendly_name(sid) in ulines
 
@@ -1498,9 +1489,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
                         'NetLink account status, instead check the User.account attribute directly.',
                         self.name)
 
-        if uid in self.users and ("o", None) in self.users[uid].modes:
-            return True
-        return False
+        return bool(uid in self.users and ("o", None) in self.users[uid].modes)
 
     def match_host(self, glob, target, ip=True, realhost=True):
         """
@@ -1570,7 +1559,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
                         if ipaddress.ip_address(real_ip) in network:
                             # If the CIDR matches, hack around the host matcher by pretending that
                             # the lookup target was the IP and not the CIDR range!
-                            glob = '@'.join((header, real_ip))
+                            glob = f'{header}@{real_ip}'
                             log.debug('(%s) Found matching CIDR %s for %s, replacing target glob with IP %s', self.name,
                                       cidrtarget, target, real_ip)
                     except ValueError:
@@ -1583,11 +1572,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
                 hosts = [target]
 
             # Iterate over the hosts to match, since we may have multiple (check IP/real host)
-            for host in hosts:
-                if self.match_text(glob, host):
-                    return True
-
-            return False
+            return any(self.match_text(glob, host) for host in hosts)
 
         result = match_host_core()
         if invert:
@@ -1607,7 +1592,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         if channel:
             banmask = "$and:(%s+$channel:%s)" % (banmask, channel)
 
-        for uid, userobj in self.users.copy().items():
+        for uid in self.users.copy().keys():
             if self.match_host(banmask, uid) and uid in self.users:
                 yield uid
 
@@ -2006,10 +1991,8 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
                 self._queue.put(None)
 
         if self._socket is not None:
-            try:
+            with contextlib.suppress(KeyError):
                 selectdriver.unregister(self)
-            except KeyError:
-                pass
             try:
                 log.debug('(%s) disconnect: shutting down read half of socket %s', self.name, self._socket)
                 self._socket.shutdown(socket.SHUT_RD)
@@ -2329,10 +2312,7 @@ class Channel(TSObject, structures.CamelCaseToSnakeCase, structures.CopyWrapper)
 
     def is_op_plus(self, uid):
         """Returns whether the given user is op or above in the channel."""
-        for mode in ('op', 'admin', 'owner'):
-            if uid in self.prefixmodes[mode]:
-                return True
-        return False
+        return any(uid in self.prefixmodes[mode] for mode in ('op', 'admin', 'owner'))
 
     @staticmethod
     def sort_prefixes(key):

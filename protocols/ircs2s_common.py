@@ -148,8 +148,7 @@ class IRCCommonProtocol(IRCNetwork):
                 tag = tag.replace('\x00', '\\')    # restore \\
                 tagdata[idx] = tag
 
-            results = cls.parse_isupport(tagdata, fallback='')
-            return results
+            return cls.parse_isupport(tagdata, fallback='')
         return {}
 
     def handle_tagmsg(self, source: str, command: str, args: list):

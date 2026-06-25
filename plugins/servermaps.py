@@ -28,10 +28,7 @@ def _map(irc, source, args, show_relay=True):
     Shows the network map for the given network, or the current network if not
     specified. An optional server name/SID roots the map at that server."""
 
-    if show_relay:
-        perm = 'servermaps.map'
-    else:
-        perm = 'servermaps.localmap'
+    perm = 'servermaps.map' if show_relay else 'servermaps.localmap'
     permissions.check_permissions(irc, source, [perm])
 
     try:

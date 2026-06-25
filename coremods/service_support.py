@@ -85,7 +85,7 @@ utils.add_hook(spawn_service, 'NETLINK_NEW_SERVICE')
 
 def handle_disconnect(irc, source: str, command: str, args: dict):
     """Handles network disconnections."""
-    for name, sbot in world.services.items():
+    for sbot in world.services.values():
         try:
             del sbot.uids[irc.name]
             log.debug("coremods.service_support: removing uids[%s] from service bot %s", irc.name, sbot.name)
@@ -100,7 +100,7 @@ def handle_endburst(irc, source: str, command: str, args: dict):
         log.debug('(%s): spawning service bots now.', irc.name)
 
         # We just connected. Burst all our registered services.
-        for name, sbot in world.services.items():
+        for name in world.services.keys():
             spawn_service(irc, source, command, {'name': name})
 
 utils.add_hook(handle_endburst, 'ENDBURST', priority=500)

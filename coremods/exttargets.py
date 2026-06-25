@@ -196,7 +196,7 @@ def exttarget_and(irc, host: str, uid: str) -> bool:
     subtargets = list(filter(None, targets[1:-1].split('+')))
     log.debug('exttargets_and: using raw subtargets list %r (original query=%r)', subtargets, host)
     # Wrap every subtarget into irc.match_host and return True if all subtargets return True.
-    return all(map(lambda sub_exttarget: irc.match_host(sub_exttarget, uid), subtargets))
+    return all((irc.match_host(sub_exttarget, uid) for sub_exttarget in subtargets))
 world.exttarget_handlers['and'] = exttarget_and
 
 @bind

@@ -15,6 +15,7 @@ from netlink import conf, utils, world
 from netlink.classes import *
 from netlink.log import log
 from netlink.protocols.ircs2s_common import *
+import contextlib
 
 __all__ = ['ClientbotBaseProtocol', 'ClientbotWrapperProtocol']
 
@@ -1042,10 +1043,8 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
 
         # Statekeeping: remove the target from the channel they were previously in.
         self._channels[channel].remove_user(target)
-        try:
+        with contextlib.suppress(KeyError):
             self.users[target].channels.remove(channel)
-        except KeyError:
-            pass
 
         # Don't repeat hooks if we're the kicker, unless we're also the target.
         if self.is_internal_client(source) or self.is_internal_server(source):

@@ -185,10 +185,7 @@ def _get_channel_pair(irc, source, chanpair, perm=None):
     channel = '#' + channel
     channel = irc.to_lower(channel)
 
-    if network:
-        ircobj = world.networkobjects.get(network)
-    else:
-        ircobj = irc
+    ircobj = world.networkobjects.get(network) if network else irc
 
     if not ircobj:
         raise ValueError("Unknown network %s" % network)

@@ -595,7 +595,7 @@ class ServiceBot:
                 if command in self.alias_cmds:
                     _reply(' ')
                     _reply('This command is an alias for \x02%s\x02.' % self.alias_cmds[command])
-                aliases = set(alias for alias, primary in self.alias_cmds.items() if primary == command)
+                aliases = {alias for alias, primary in self.alias_cmds.items() if primary == command}
                 if aliases:
                     _reply(' ')
                     _reply('Available aliases: \x02%s\x02' % ', '.join(aliases))
