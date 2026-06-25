@@ -108,20 +108,27 @@ signal.signal(signal.SIGTERM, _sigterm_handler)
 signal.signal(signal.SIGINT, _sigterm_handler)
 
 def _teardown_module(modulename: str) -> None:
-    """Strips every command and hook registered by the named module."""
-    cmds = world.services['netlink'].commands
-    for cmdname, cmdfuncs in cmds.copy().items():
-        for cmdfunc in cmdfuncs.copy():
-            if cmdfunc.__module__ == modulename:
-                cmds[cmdname].remove(cmdfunc)
-        if not cmds[cmdname]:
-            del cmds[cmdname]
+    """Strips every command and hook the named module registered, across ALL service
+    bots (not just the main one), so the module can be reloaded without leaving stale
+    bindings or duplicating commands that bots register at module load."""
+    for sbot in world.services.values():
+        for cmdname, cmdfuncs in sbot.commands.copy().items():
+            kept = [f for f in cmdfuncs if f.__module__ != modulename]
+            if kept:
+                sbot.commands[cmdname] = kept
+            else:
+                del sbot.commands[cmdname]
+                sbot.featured_cmds.discard(cmdname)
+        # Drop alias entries left dangling once their command is gone.
+        for alias, primary in list(sbot.alias_cmds.items()):
+            if alias not in sbot.commands or primary not in sbot.commands:
+                del sbot.alias_cmds[alias]
 
     for hookname, hookpairs in world.hooks.copy().items():
-        for hookpair in hookpairs.copy():
-            if hookpair[1].__module__ == modulename:
-                world.hooks[hookname].remove(hookpair)
-        if not world.hooks[hookname]:
+        kept = [hp for hp in hookpairs if hp[1].__module__ != modulename]
+        if kept:
+            world.hooks[hookname] = kept
+        else:
             del world.hooks[hookname]
 
 def unload_plugin(name: str, irc=None) -> bool:
@@ -153,6 +160,27 @@ def load_plugin(name: str, irc=None):
         pl.main(irc=irc)
     return pl
 
+def reload_plugin(name: str, irc=None):
+    """Reloads a plugin's CODE in place without tearing down what it owns. Unlike a
+    full unload, this does NOT call die() -- so any service bot, relay client or other
+    live connection the plugin manages stays connected across the reload. The module
+    body is re-executed (picking up code edits); module-level register_service() calls
+    reuse the existing live bot, and main(irc=...) lets reload-aware plugins re-sync
+    against the running networks."""
+    modulename = utils.PLUGIN_PREFIX + name
+    module = sys.modules.get(modulename)
+    _teardown_module(modulename)
+    if module is None:
+        # Not imported yet (newly added to the config) -- load it fresh.
+        world.plugins[name] = pl = utils._load_plugin(name)
+    else:
+        importlib.reload(module)
+        world.plugins[name] = pl = module
+    if hasattr(pl, 'main'):
+        log.debug('Calling main() of plugin %r (reload).', name)
+        pl.main(irc=irc)
+    return pl
+
 def reload_coremod(name: str, irc=None):
     """Reloads a coremod in place with importlib.reload so that modules which import
     it keep their references working (unlike plugins, which are fully reimported)."""
@@ -165,10 +193,12 @@ def reload_coremod(name: str, irc=None):
     return module
 
 def _reload_plugins(new_plugins, errors) -> None:
-    """Reconciles loaded plugins against the config's plugin list: unloads any that
-    were removed, then (re)loads every configured one so code edits and newly-added
-    plugins both take effect. Never touches network sockets."""
-    # Unload plugins that were dropped from the config.
+    """Reconciles loaded plugins against the config's plugin list. Plugins dropped from
+    the config are fully unloaded (die() runs, their service bots quit -- correct, they
+    should leave). Plugins still configured are reloaded IN PLACE without disconnecting
+    anything they own; newly added ones are loaded fresh. Network sockets and existing
+    service clients are never dropped."""
+    # Fully unload (die + quit services) only the plugins removed from the config.
     for name in list(world.plugins):
         if name not in new_plugins:
             log.info('rehash: unloading plugin %r (removed from config).', name)
@@ -178,17 +208,19 @@ def _reload_plugins(new_plugins, errors) -> None:
                 log.exception('rehash: failed to unload plugin %r', name)
                 errors.append('plugin %s (unload): %s: %s' % (name, type(e).__name__, e))
 
+    # Signal reload-aware plugins (relay, automode, ...) by handing main() a live
+    # network; they iterate the rest themselves and re-sync without respawning.
+    reload_irc = next((i for i in world.networkobjects.values() if i.connected.is_set()), None)
+
     utils._reset_module_dirs()
-    # (Re)load everything still in the config so edits + additions apply.
+    # Reload still-configured plugins in place; load brand-new ones.
     for name in new_plugins:
         try:
-            if name in world.plugins:
-                unload_plugin(name)
-            log.info('rehash: loading plugin %r.', name)
-            load_plugin(name)
+            log.info('rehash: reloading plugin %r.', name)
+            reload_plugin(name, irc=reload_irc)
         except Exception as e:
-            log.exception('rehash: failed to (re)load plugin %r', name)
-            errors.append('plugin %s (load): %s: %s' % (name, type(e).__name__, e))
+            log.exception('rehash: failed to reload plugin %r', name)
+            errors.append('plugin %s: %s: %s' % (name, type(e).__name__, e))
 
 def _reload_coremods(errors) -> None:
     """Reloads every loaded coremod in place (except the stateful ones in

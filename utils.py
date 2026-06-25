@@ -660,7 +660,12 @@ def register_service(name, *args, **kwargs):
     """Registers a service bot."""
     name = name.lower()
     if name in world.services:
-        raise ValueError("Service name %s is already bound!" % name)
+        # The service already exists -- this happens when a plugin's code is
+        # reloaded (its module-level register_service() runs again). Reuse the
+        # live bot so its clients stay connected instead of quitting and
+        # respawning them; the caller just gets the existing instance back.
+        log.debug('Service %r already registered, reusing the existing bot.', name)
+        return world.services[name]
 
     # Allow disabling service spawning either globally or by service.
     elif name != 'netlink' and not (conf.conf.get(name, {}).get('spawn_service',
