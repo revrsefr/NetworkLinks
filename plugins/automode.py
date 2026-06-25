@@ -89,9 +89,9 @@ def _check_automode_access(irc, uid, channel, command):
             if relay is None:
                 raise utils.NotAuthorizedError("You are not authorized to use Automode when Relay is "
                                                "disabled. You are missing one of the following "
-                                               "permissions: %s or %s.%s" % (baseperm, baseperm, channel))
+                                               "permissions: %s or %s.%s" % (baseperm, baseperm, channel)) from None
             if (irc.name, channel) not in relay.db:
-                raise utils.NotAuthorizedError("The network you are on does not own the relay channel %s." % channel)
+                raise utils.NotAuthorizedError("The network you are on does not own the relay channel %s." % channel) from None
             return True
         raise
 
@@ -181,7 +181,7 @@ def _get_channel_pair(irc, source, chanpair, perm=None):
     try:
         network, channel = chanpair.split('#', 1)
     except ValueError:
-        raise ValueError("Invalid channel pair %r" % chanpair)
+        raise ValueError("Invalid channel pair %r" % chanpair) from None
     channel = '#' + channel
     channel = irc.to_lower(channel)
 

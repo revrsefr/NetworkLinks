@@ -64,7 +64,8 @@ def _map(irc, source, args, show_relay=True):
 
     log.debug('(%s) servermaps.map servers fetched for %s: %s', irc.name, netname, servers)
 
-    reply = lambda text: irc.reply(text, private=True)
+    def reply(text):
+        return irc.reply(text, private=True)
 
     def showall(ircobj, sid, hops=0, is_relay_server=False):
         log.debug('servermaps: got showall() for SID %s on network %s', sid, ircobj.name)

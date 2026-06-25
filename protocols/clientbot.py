@@ -274,7 +274,8 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         self.sidgen = PUIDGenerator('ClientbotInternalSID')
 
         self.has_eob = False
-        f = lambda text: self.send(text, queue=False)
+        def f(text):
+            return self.send(text, queue=False)
 
         # Enumerate our own server
         self.sid = self.sidgen.next_sid()

@@ -16,7 +16,8 @@ def handle_whois(irc, source: str, command: str, args: dict):
     target = args['target']
     user = irc.users.get(target)
 
-    f = lambda num, source, text: irc.numeric(irc.sid, num, source, text)
+    def f(num, source, text):
+        return irc.numeric(irc.sid, num, source, text)
 
     # Get the server that the target is on.
     server = irc.get_server(target)

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 import time
+from typing import ClassVar
 
 from netlink import conf
 from netlink.classes import IRCNetwork, ProtocolError
@@ -42,7 +43,7 @@ class UIDGenerator:
 
 class IRCCommonProtocol(IRCNetwork):
 
-    COMMON_PREFIXMODES = [('h', 'halfop'), ('a', 'admin'), ('q', 'owner'), ('y', 'owner')]
+    COMMON_PREFIXMODES: ClassVar[list] = [('h', 'halfop'), ('a', 'admin'), ('q', 'owner'), ('y', 'owner')]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -285,7 +286,7 @@ class IRCCommonProtocol(IRCNetwork):
         self.send(':%s %s' % (self._expandPUID(source), msg), **kwargs)
 
 class IRCS2SProtocol(IRCCommonProtocol):
-    COMMAND_TOKENS: dict = {}
+    COMMAND_TOKENS: ClassVar[dict] = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

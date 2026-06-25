@@ -11,6 +11,7 @@ import codecs
 import re
 import socket
 import time
+from typing import ClassVar
 
 from netlink import conf, utils
 from netlink.classes import *
@@ -28,7 +29,7 @@ class UnrealProtocol(TS6BaseProtocol):
     # https://github.com/unrealircd/unrealircd/blob/4cad9cb/src/modules/m_server.c#L1260 may
     # also help. (but why BUFSIZE-*80*?) -jlu5
     S2S_BUFSIZE = 427
-    _KNOWN_CMODES = {'ban': 'b',
+    _KNOWN_CMODES: ClassVar[dict] = {'ban': 'b',
               'banexception': 'e',
               'blockcolor': 'c',
               'censor': 'G',
@@ -59,7 +60,7 @@ class UnrealProtocol(TS6BaseProtocol):
               'stripcolor': 'S',
               'topiclock': 't',
               'voice': 'v'}
-    _KNOWN_UMODES = {'bot': 'B',
+    _KNOWN_UMODES: ClassVar[dict] = {'bot': 'B',
               'censor': 'G',
               'cloak': 'x',
               'deaf': 'd',
@@ -150,7 +151,7 @@ class UnrealProtocol(TS6BaseProtocol):
                 try:  # That failed, try IPv6 next.
                     binary_ip = socket.inet_pton(socket.AF_INET6, ip)
                 except OSError:
-                    raise ValueError("Invalid IPv4 or IPv6 address %r." % ip)
+                    raise ValueError("Invalid IPv4 or IPv6 address %r." % ip) from None
 
             # Encode in Base64.
             encoded_ip = codecs.encode(binary_ip, "base64")
@@ -597,7 +598,7 @@ class UnrealProtocol(TS6BaseProtocol):
             except ValueError:
                 raise ProtocolError("Invalid protocol version received; is VL being sent? "
                                     "(this module requires UnrealIRCd 6, protocol %s+)"
-                                    % self.min_proto_ver)
+                                    % self.min_proto_ver) from None
 
             if protover < self.min_proto_ver:
                 raise ProtocolError("Protocol version too old! This module requires UnrealIRCd 6 "

@@ -195,7 +195,7 @@ def _duration(value):
     try:
         return utils.parse_duration(value)
     except ValueError as e:
-        raise argparse.ArgumentTypeError(str(e))
+        raise argparse.ArgumentTypeError(str(e)) from e
 
 masskill_parser = utils.IRCParser()
 masskill_parser.add_argument('banmask')

@@ -1558,7 +1558,7 @@ def handle_part(irc, numeric: str, command: str, args: dict):
         return
 
     for channel in channels:
-        def _handle_part_loop(irc, remoteirc, user):
+        def _handle_part_loop(irc, remoteirc, user, channel=channel):
             remotechan = get_remote_channel(irc, remoteirc, channel)
             if remotechan is None:
                 return
@@ -2189,7 +2189,7 @@ def handle_kill(irc, numeric: str, command: str, args: dict):
                     if check_claim(irc, localchan, numeric) and numeric in irc.users:
                         target_nick = origirc.get_friendly_name(realuser[1])
 
-                        def _relay_kill_to_kick(origirc, remoteirc, rtarget):
+                        def _relay_kill_to_kick(origirc, remoteirc, rtarget, homechan=homechan, target_nick=target_nick):
                             # Forward as a kick to each present relay client
                             remotechan = get_remote_channel(origirc, remoteirc, homechan)
                             if not remotechan:

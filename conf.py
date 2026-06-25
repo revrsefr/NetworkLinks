@@ -8,7 +8,7 @@ It provides simple checks for validating and loading YAML-format configurations 
 try:
     import yaml
 except ImportError:
-    raise ImportError("NetLink requires PyYAML to function; please install it and try again.")
+    raise ImportError("NetLink requires PyYAML to function; please install it and try again.") from None
 
 import logging
 import os.path

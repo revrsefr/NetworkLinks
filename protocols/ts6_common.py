@@ -37,7 +37,7 @@ class TS6SIDGenerator:
         try:
             self.query = query = list(irc.serverdata["sidrange"])
         except KeyError:
-            raise RuntimeError('(%s) "sidrange" is missing from your server configuration block!' % irc.name)
+            raise RuntimeError('(%s) "sidrange" is missing from your server configuration block!' % irc.name) from None
 
         self.iters = self.query.copy()
         self.output = self.query.copy()

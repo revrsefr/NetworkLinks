@@ -793,22 +793,24 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         # Lock for updateTS to make sure only one thread can change the channel TS at one time.
         self._ts_lock = threading.Lock()
 
+    @staticmethod
     @functools.lru_cache(maxsize=8192)
+    def _to_lower_cached(casemapping: str, text: str) -> str:
+        # Keyed on casemapping (not self), so the cache can't pin Irc instances in
+        # memory and it invalidates correctly when the casemapping changes.
+        if (not text) or (not isinstance(text, str)):
+            return text
+        if casemapping == 'rfc1459':
+            text = text.replace('{', '[').replace('}', ']').replace('|', '\\').replace('~', '^')
+        # Encode as bytes and lowercase so only ASCII changes -- Unicode in channel
+        # names etc. *is* case sensitive. (Empirically faster than str.translate().)
+        return text.encode().lower().decode()
+
     def to_lower(self, text: str) -> str:
         """
         Returns the lowercase representation of text. This respects IRC casemappings defined by the protocol module.
         """
-        if (not text) or (not isinstance(text, str)):
-            return text
-        if self.casemapping == 'rfc1459':
-            text = text.replace('{', '[')
-            text = text.replace('}', ']')
-            text = text.replace('|', '\\')
-            text = text.replace('~', '^')
-        # Encode the text as bytes first, and then lowercase it so that only ASCII characters are
-        # changed. Unicode in channel names, etc. *is* case sensitive!
-        # Interesting, a quick emperical test found that this method is actually faster than str.translate()?!
-        return text.encode().lower().decode()
+        return self._to_lower_cached(self.casemapping, text)
 
     _NICK_REGEX = r'^[A-Za-z\|\\_\[\]\{\}\^\`][A-Z0-9a-z\-\|\\_\[\]\{\}\^\`]*$'
     @classmethod
@@ -1847,7 +1849,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
             hashfunc = getattr(hashlib, hashtype)
         except AttributeError:
             raise conf.ConfigurationError('Unsupported or invalid TLS/SSL certificate fingerprint type %r',
-                                          hashtype)
+                                          hashtype) from None
         else:
             expected_fp = self.serverdata.get('ssl_fingerprint')
             if expected_fp and peercert is None:

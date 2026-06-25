@@ -53,7 +53,8 @@ def _do_showuser(irc, source, u):
         irc.error('Unknown user %r.' % u)
         return
 
-    f = lambda s: irc.reply('  ' + s, private=True)
+    def f(s):
+        return irc.reply('  ' + s, private=True)
 
     userobj = irc.users[u]
     irc.reply('Showing information on user \x02%s\x02 (%s@%s): %s' % (userobj.nick, userobj.ident,
@@ -210,7 +211,8 @@ def showchan(irc, source: str, args: list):
         irc.error('Unknown channel %r.' % channel)
         return
 
-    f = lambda s: irc.reply(s, private=True)
+    def f(s):
+        return irc.reply(s, private=True)
 
     c = irc.channels[channel]
     # Only show verbose info if caller is oper or is in the target channel.

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import ClassVar
 
 from netlink import conf
 from netlink.classes import *
@@ -21,7 +22,7 @@ __all__ = ['InspIRCdProtocol']
 class InspIRCdProtocol(TS6BaseProtocol):
 
     S2S_BUFSIZE = 0  # InspIRCd allows infinitely long S2S messages, so set bufsize to infinite
-    SUPPORTED_IRCDS = ['insp4']
+    SUPPORTED_IRCDS: ClassVar[list] = ['insp4']
     DEFAULT_IRCD = 'insp4'
 
     MAX_PROTO_VER = 1206  # anything above this warns (not officially supported)
@@ -871,12 +872,12 @@ class InspIRCdProtocol(TS6BaseProtocol):
                 try:
                     source = args[2]
                 except IndexError:
-                    raise ProtocolError('Malformed SERVER introduction from uplink (missing SID)')
+                    raise ProtocolError('Malformed SERVER introduction from uplink (missing SID)') from None
             else:
                 try:
                     source = args[3]
                 except IndexError:
-                    raise ProtocolError('Malformed SERVER introduction from uplink (missing SID)')
+                    raise ProtocolError('Malformed SERVER introduction from uplink (missing SID)') from None
 
             if args[1] != self.serverdata['recvpass']:
                  # Check if recvpass is correct
