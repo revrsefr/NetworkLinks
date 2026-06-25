@@ -4,6 +4,9 @@ service_support.py - Implements handlers for the NetLink ServiceBot API.
 
 from __future__ import annotations
 
+import collections
+import time
+
 from netlink import conf, utils, world
 from netlink.log import log
 
@@ -176,13 +179,33 @@ def handle_kick(irc, source: str, command: str, args: dict):
             sbot.join(irc, channel)
 utils.add_hook(handle_kick, 'KICK')
 
+# Timestamps of recently-processed commands, for global flood protection (#383).
+_recent_command_times: collections.deque = collections.deque()
+
+def _command_flood_check(irc, source) -> bool:
+    """Global (NOT per-user) command rate limit. Returns True if the command should be
+    dropped. Disabled unless netlink::command_flood_count is set (>0)."""
+    limit = conf.conf['netlink'].get('command_flood_count', 0)
+    if not limit:
+        return False
+    window = conf.conf['netlink'].get('command_flood_time', 10)
+    now = time.time()
+    while _recent_command_times and _recent_command_times[0] < now - window:
+        _recent_command_times.popleft()
+    if len(_recent_command_times) >= limit:
+        log.warning("(%s) Dropping command from %s: global command flood limit reached "
+                    "(%s per %ss).", irc.name, irc.get_hostmask(source), limit, window)
+        return True
+    _recent_command_times.append(now)
+    return False
+
 def handle_commands(irc, source: str, command: str, args: dict):
     """Handle commands sent to the NetLink service bots (PRIVMSG)."""
     target = args['target']
     text = args['text']
 
     sbot = irc.get_service_bot(target)
-    if sbot:
+    if sbot and not _command_flood_check(irc, source):
         sbot.call_cmd(irc, source, text)
 
 utils.add_hook(handle_commands, 'PRIVMSG')
