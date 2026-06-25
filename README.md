@@ -35,12 +35,14 @@ can't build a relay entirely out of Clientbot links.
 ## Installation (from source)
 
 ```sh
-git clone <your-fork> netlink && cd netlink
+git clone https://github.com/revrsefr/NetworkLinks netlink && cd netlink
 python3 -m venv run
-run/bin/pip install -e . passlib
+run/bin/pip install -e '.[password-hashing]'
 ```
 
 This installs the `netlink` launcher and the `netlink-mkpasswd` password helper into `run/bin/`.
+Optional extras: `password-hashing` (passlib — hashed account passwords), `relay-unicode`
+(unidecode — nicer relay nick transliteration), and `cron-support` (psutil).
 
 ## Configuration
 
@@ -55,6 +57,10 @@ run/bin/netlink -s run/netlink.yml       # stop
 run/bin/netlink -R run/netlink.yml       # rehash
 ```
 
+A rehash reloads the configuration **and** all plugins and coremods in place, only
+(dis)connecting servers that were added to or removed from the config — existing server
+links are never dropped. If you run NetLink under systemd, `systemctl reload` does the same.
+
 Hash account passwords with:
 
 ```sh
@@ -65,6 +71,19 @@ run/bin/netlink-mkpasswd
 
 See the [`docs/`](docs/) directory for relay setup, services configuration, permissions, exttargets,
 and the plugin/protocol developer reference.
+
+## Development
+
+There is no hosted CI; quality is enforced by a local gate. From a checkout:
+
+```sh
+make dev            # create .venv and install dev tooling + the package (editable)
+make check          # ruff + mypy + pytest -- keep this green
+make install-hooks  # run the gate automatically before every commit
+```
+
+Individual steps are available as `make lint`, `make test`, `make typecheck`, and
+`make coverage`. The ruff and mypy configuration lives in `pyproject.toml`.
 
 ## Credits & license
 
