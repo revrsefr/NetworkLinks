@@ -4,4 +4,4 @@ from . import service_support, permissions, control, handlers, corecommands, ext
 
 # Imported for their registration side effects; re-exported so the package's public
 # surface is explicit (and to mark the imports above as intentional, not unused).
-__all__ = ['service_support', 'permissions', 'control', 'handlers', 'corecommands', 'exttargets']
+__all__ = ['control', 'corecommands', 'exttargets', 'handlers', 'permissions', 'service_support']
