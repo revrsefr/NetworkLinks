@@ -30,9 +30,6 @@ def handle_whois(irc, source: str, command: str, args: dict):
         source_is_oper = ('o', None) in irc.users[source].modes
         source_is_bot = (irc.umodes.get('bot'), None) in irc.users[source].modes
 
-        # Get the full network name.
-        netname = irc.serverdata.get('netname', irc.name)
-
         # https://www.alien.net.au/irc/irc2numerics.html
         # 311: sends nick!user@host information
         f(311, source, "%s %s %s * :%s" % (nick, user.ident, user.host, user.realname))

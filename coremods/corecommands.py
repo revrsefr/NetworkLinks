@@ -79,9 +79,7 @@ def reload(irc, source: str, args: list):
     """<plugin name>.
 
     Loads a plugin from the plugin folder."""
-    try:
-        name = args[0]
-    except IndexError:
+    if not args:
         irc.reply("Error: Not enough arguments. Needs 1: plugin name.")
         return
 

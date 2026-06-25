@@ -82,7 +82,7 @@ def add_cmd(func=None, name=None, **kwargs):
     world.services['netlink'].add_cmd(func, name=name, **kwargs)
     return func
 
-def add_hook(func=None, command: str = None, priority: int = 100):
+def add_hook(func=None, command: str | None = None, priority: int = 100):
     """
     Binds a hook function to the given command name.
 
@@ -463,7 +463,7 @@ class ServiceBot:
         """
         Removes a persistent channel from the service bot on the given network and namespace.
         """
-        chanlist = self.dynamic_channels[namespace][irc.name].remove(channel)
+        self.dynamic_channels[namespace][irc.name].remove(channel)
 
         if try_part and irc.connected.is_set() and irc.has_cap('can-manage-bot-channels'):
             self.part(irc, [channel], reason=part_reason)
@@ -551,7 +551,6 @@ class ServiceBot:
                        % (len(funcs), command, ', '.join([func.__module__ for func in funcs])))
             for func in funcs:
                 doc = func.__doc__
-                mod = func.__module__
                 if doc:
                     lines = doc.splitlines()
                     # Bold the first line, which usually just tells you what
@@ -931,7 +930,7 @@ def merge_iterables(A, B):
     - set:  items are combined as A | B
     - dict: items are combined as {**A, **B}
     """
-    if type(A) != type(B):
+    if type(A) is not type(B):
         raise ValueError("inputs must be the same type")
 
     if isinstance(A, list):

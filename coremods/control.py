@@ -252,7 +252,6 @@ def rehash() -> list:
     (empty when everything reloaded cleanly)."""
     log.info('Reloading NetLink configuration...')
     errors: list = []
-    old_conf = conf.conf.copy()
     fname = conf.fname
     new_conf = conf.load_conf(fname, errors_fatal=False, logger=log)
     conf.conf = new_conf

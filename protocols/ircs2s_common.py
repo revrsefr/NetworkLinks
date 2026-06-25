@@ -237,7 +237,7 @@ class IRCCommonProtocol(IRCNetwork):
             log.debug('(%s) handle_005: casemapping set to %s', self.name, self.casemapping)
 
         if 'PREFIX' in newcaps:
-            self.prefixmodes = prefixmodes = self.parse_isupport_prefixes(newcaps['PREFIX'])
+            self.prefixmodes = self.parse_isupport_prefixes(newcaps['PREFIX'])
             log.debug('(%s) handle_005: prefix modes set to %s', self.name, self.prefixmodes)
 
             # Autodetect common prefix mode names.
@@ -583,14 +583,6 @@ class IRCS2SProtocol(IRCCommonProtocol):
         # "Killed (killername (reason))".
 
         if '!' in args[1].split(" ", 1)[0]:
-            try:
-                # Get the nick or server name of the caller.
-                killer = self.get_friendly_name(source)
-            except KeyError:
-                # Killer was... neither? We must have aliens or something. Fallback
-                # to the given "UID".
-                killer = source
-
             # Get the reason, which is enclosed in brackets.
             killmsg = ' '.join(args[1].split(" ")[1:])[1:-1]
             if not killmsg:

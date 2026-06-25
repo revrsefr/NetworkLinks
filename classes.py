@@ -1246,8 +1246,6 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
             possible_modes = self.umodes
 
         oldmodes_mapping = dict(oldmodes)
-        oldmodes_lower = {(modepair[0], self.to_lower(modepair[1]) if modepair[1] else modepair[1])
-                          for modepair in oldmodes}
 
         newmodes = []
         self._log_debug_modes('(%s) reverse_modes: old/current mode list for %s is: %s', self.name,

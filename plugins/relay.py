@@ -496,12 +496,6 @@ def spawn_relay_user(irc, remoteirc, user, times_tagged=0, reuse_sid=None):
     # Truncate idents at 10 characters, because TS6 won't like them otherwise!
     ident = ident[:10]
 
-    # HACK: hybrid will reject idents that start with a symbol
-    if remoteirc.protoname == 'hybrid':
-        goodchars = tuple(string.ascii_letters + string.digits + '~')
-        if not ident.startswith(goodchars):
-            ident = 'r' + ident
-
     # Normalize hostnames
     host = normalize_host(remoteirc, userobj.host)
     realname = userobj.realname
@@ -688,7 +682,6 @@ def initialize_channel(irc, channel):
 
     log.debug('(%s) relay.initialize_channel being called on %s', irc.name, channel)
     log.debug('(%s) relay.initialize_channel: relay pair found to be %s', irc.name, relay)
-    queued_users = []
     if relay:
         all_links = db[relay]['links'].copy()
         all_links.update((relay,))
@@ -1632,7 +1625,6 @@ def handle_messages(irc, numeric: str, command: str, args: dict):
         # For consistency, only read messages from clientbot networks if relay_clientbot is loaded
         return
 
-    relay = get_relay(irc, target)
     remoteusers = relayusers[(irc.name, numeric)]
 
     avail_prefixes = {v: k for k, v in irc.prefixmodes.items()}
@@ -2125,12 +2117,10 @@ utils.add_hook(handle_mode, 'MODE')
 def handle_topic(irc, numeric: str, command: str, args: dict):
     channel = args['channel']
     oldtopic = args.get('oldtopic')
-    topic = args['text']
 
     if check_claim(irc, channel, numeric):
         def _handle_topic_loop(irc, remoteirc, numeric, command, args):
             channel = args['channel']
-            oldtopic = args.get('oldtopic')
             topic = args['text']
 
             remotechan = get_remote_channel(irc, remoteirc, channel)

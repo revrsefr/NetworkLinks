@@ -791,7 +791,6 @@ class InspIRCdProtocol(TS6BaseProtocol):
         # <- :3AX FJOIN #monitor 1485462109d + :,3AXAAAAAK
         their_ts = int(''.join(char for char in args[1] if char.isdigit()))
 
-        our_ts = self._channels[channel].ts
         self.updateTS(servernumeric, channel, their_ts, changedmodes)
 
         return {'channel': channel, 'users': namelist, 'modes': parsedmodes, 'ts': their_ts,
