@@ -34,11 +34,13 @@ def remove_default_permissions(perms: dict) -> None:
         default_permissions[target] -= set(permlist)
 removeDefaultPermissions = remove_default_permissions
 
-def check_permissions(irc, uid: str, perms: list, also_show: list = []) -> bool:
+def check_permissions(irc, uid: str, perms: list, also_show: list | None = None) -> bool:
     """
     Checks permissions of the caller. If the caller has any of the permissions listed in perms,
     this function returns True. Otherwise, NotAuthorizedError is raised.
     """
+    if also_show is None:
+        also_show = []
     # For old (< 1.1 login blocks):
     # If the user is logged in, they automatically have all permissions.
     olduser = conf.conf['login'].get('user')

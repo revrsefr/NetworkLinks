@@ -120,7 +120,7 @@ class ClientbotBaseProtocol(NetLinkNetworkCoreWithUtils):
         # Wrap around message(), which does all the text formatting for us.
         self.message(source, target, text, notice=True)
 
-    def sjoin(self, server, channel, users, ts=None, modes=set()):
+    def sjoin(self, server, channel, users, ts=None, modes=None):
         """STUB: bursts joins from a server."""
         # This stub only updates the state internally with the users given. modes and TS are currently ignored.
         puids = {u[-1] for u in users}
@@ -132,13 +132,15 @@ class ClientbotBaseProtocol(NetLinkNetworkCoreWithUtils):
         self.call_hooks([server, 'CLIENTBOT_SJOIN', {'channel': channel, 'nicks': nicks}])
 
     # Note: clientbot clients are initialized with umode +i by default
-    def spawn_client(self, nick, ident='unknown', host='unknown.host', realhost=None, modes={('i', None)},
+    def spawn_client(self, nick, ident='unknown', host='unknown.host', realhost=None, modes=None,
             server=None, ip='0.0.0.0', realname='', ts=None, opertype=None,
             manipulatable=False):
         """
         STUB: Pretends to spawn a new client with a subset of the given options.
         """
 
+        if modes is None:
+            modes = {('i', None)}
         server = server or self.sid
         uid = self.uidgen.next_uid(prefix=nick)
 
@@ -495,7 +497,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         else:
             super().part(source, channel, reason=reason)
 
-    def sjoin(self, server, channel, users, ts=None, modes=set()):
+    def sjoin(self, server, channel, users, ts=None, modes=None):
         """STUB: bursts joins from a server."""
         # This stub only updates the state internally with the users
         # given. modes and TS are currently ignored.

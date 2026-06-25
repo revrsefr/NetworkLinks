@@ -106,7 +106,7 @@ class UnrealProtocol(TS6BaseProtocol):
         self.topic_burst = self.topic
 
     ### OUTGOING COMMAND FUNCTIONS
-    def spawn_client(self, nick, ident='null', host='null', realhost=None, modes=set(),
+    def spawn_client(self, nick, ident='null', host='null', realhost=None, modes=None,
             server=None, ip='0.0.0.0', realname=None, ts=None, opertype='IRC Operator',
             manipulatable=False):
         """
@@ -115,6 +115,8 @@ class UnrealProtocol(TS6BaseProtocol):
         Note: No nick collision / valid nickname checks are done here; it is
         up to plugins to make sure they don't introduce anything invalid.
         """
+        if modes is None:
+            modes = set()
         server = server or self.sid
         if not self.is_internal_server(server):
             raise ValueError('Server %r is not a NetLink server!' % server)
@@ -177,7 +179,7 @@ class UnrealProtocol(TS6BaseProtocol):
             prefix = ''
         self.sjoin(self.sid, channel, [(prefix, client)])
 
-    def sjoin(self, server, channel, users, ts=None, modes=set()):
+    def sjoin(self, server, channel, users, ts=None, modes=None):
         """Sends an SJOIN for a group of users to a channel.
 
         The sender should always be a server (SID). TS is optional, and defaults
