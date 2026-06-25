@@ -3,30 +3,85 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: NetLink\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-25 20:22+0000\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: fr\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+#: coremods/corecommands.py:41 coremods/corecommands.py:67
+#: coremods/corecommands.py:84
+msgid "Error: Not enough arguments. Needs 1: plugin name."
+msgstr "Erreur : pas assez d'arguments. Requis : 1 (nom du plugin)."
+
+#: coremods/corecommands.py:44
+#, python-format
+msgid "Error: %r is already loaded."
+msgstr "Erreur : %r est déjà chargé."
+
+#: coremods/corecommands.py:55
+#, python-format
+msgid "Loaded plugin %r."
+msgstr "Plugin %r chargé."
+
+#: coremods/corecommands.py:73
+#, python-format
+msgid "Unloaded plugin %r."
+msgstr "Plugin %r déchargé."
+
+#: coremods/corecommands.py:75
+#, python-format
+msgid "Unknown plugin %r."
+msgstr "Plugin %r inconnu."
+
+#: coremods/corecommands.py:120
+#, python-format
+msgid "Reloaded coremod %r."
+msgstr "Coremod %r rechargé."
+
+#: coremods/corecommands.py:138
+#, python-format
+msgid "Rehash complete with %d error(s): %s"
+msgstr "Rechargement terminé avec %d erreur(s) : %s"
+
+#: coremods/corecommands.py:140
+msgid "Done. Reloaded config, plugins and coremods; links left intact."
+msgstr ""
+"Terminé. Configuration, plugins et coremods rechargés ; les liens sont "
+"intacts."
+
+#: coremods/login.py:87
+msgid ""
+"Cannot log in to an account with a hashed password because passlib is not "
+"installed."
+msgstr ""
+"Impossible de se connecter à un compte avec un mot de passe haché car "
+"passlib n'est pas installé."
+
+#: coremods/login.py:95
 msgid "Cannot use 'identify' via a command proxy."
 msgstr "Impossible d'utiliser « identify » via un relais de commandes."
 
+#: coremods/login.py:107
 msgid "Account is not authorized to login on this network."
 msgstr "Ce compte n'est pas autorisé à se connecter sur ce réseau."
 
+#: coremods/login.py:111
 msgid "You must be opered."
 msgstr "Vous devez être opérateur IRC."
 
+#: coremods/login.py:115
 msgid "Hostname mismatch."
 msgstr "Le nom d'hôte ne correspond pas."
 
+#: coremods/login.py:118
+#, python-format
 msgid "Successfully logged in as %s."
 msgstr "Connecté avec succès en tant que %s."
 
-msgid "Cannot log in to an account with a hashed password because passlib is not installed."
-msgstr "Impossible de se connecter à un compte avec un mot de passe haché car passlib n'est pas installé."
-
+#: coremods/login.py:128
 msgid ""
 "Error: This command must be sent in private. (Would you really type a "
 "password inside a channel?)"
@@ -34,26 +89,90 @@ msgstr ""
 "Erreur : cette commande doit être envoyée en privé. (Taperiez-vous vraiment "
 "un mot de passe dans un salon ?)"
 
+#: coremods/login.py:134
 msgid "Error: Not enough arguments."
 msgstr "Erreur : pas assez d'arguments."
 
+#: coremods/login.py:143
 msgid "Bad username or password."
 msgstr "Nom d'utilisateur ou mot de passe incorrect."
 
-msgid "Rehash complete with %d error(s): %s"
-msgstr "Rechargement terminé avec %d erreur(s) : %s"
+#: coremods/permissions.py:72
+#, python-format
+msgid "You are missing one of the following permissions: %s"
+msgstr "Il vous manque l'une des permissions suivantes : %s"
 
-msgid "Done. Reloaded config, plugins and coremods; links left intact."
-msgstr "Terminé. Configuration, plugins et coremods rechargés ; les liens sont intacts."
+#: plugins/antispam.py:439
+msgid "No text filters set."
+msgstr "Aucun filtre de texte défini."
 
-msgid "Ignored masks: %s"
-msgstr "Masques ignorés : %s"
+#: plugins/antispam.py:441
+#, python-format
+msgid "Text filters: %s"
+msgstr "Filtres de texte : %s"
 
-msgid "Not enough arguments. Needs: ignore %s <mask>"
-msgstr "Pas assez d'arguments. Requis : ignore %s <masque>"
+#: plugins/antispam.py:446
+#, python-format
+msgid "Not enough arguments. Needs: %s <glob>"
+msgstr "Pas assez d'arguments. Requis : %s <glob>"
 
+#: plugins/antispam.py:453 plugins/antispam.py:458 plugins/ignore.py:66
+#: plugins/ignore.py:72
 msgid "Done."
 msgstr "Terminé."
 
+#: plugins/antispam.py:460 plugins/ignore.py:74
+#, python-format
 msgid "Unknown subcommand %r. Use add, del, or list."
 msgstr "Sous-commande inconnue %r. Utilisez add, del ou list."
+
+#: plugins/ignore.py:53
+#, python-format
+msgid "Ignored masks: %s"
+msgstr "Masques ignorés : %s"
+
+#: plugins/ignore.py:58
+#, python-format
+msgid "Not enough arguments. Needs: ignore %s <mask>"
+msgstr "Pas assez d'arguments. Requis : ignore %s <masque>"
+
+#: utils.py:333 utils.py:542
+#, python-format
+msgid "Error: Unknown command %r."
+msgstr "Erreur : commande inconnue %r."
+
+#: utils.py:342 utils.py:346
+#, python-format
+msgid "Error: %s"
+msgstr "Erreur : %s"
+
+#: utils.py:349
+#, python-format
+msgid "Uncaught exception in command %r: %s: %s"
+msgstr "Exception non gérée dans la commande %r : %s : %s"
+
+#: utils.py:650
+#, python-format
+msgid "Available commands include: %s"
+msgstr "Commandes disponibles : %s"
+
+#: utils.py:651
+msgid "To see help on a specific command, type help <command>."
+msgstr "Pour obtenir de l'aide sur une commande, tapez help <commande>."
+
+#: utils.py:653
+msgid "This service doesn't provide any public commands."
+msgstr "Ce service ne fournit aucune commande publique."
+
+#: utils.py:655
+#, python-format
+msgid "This service doesn't provide any public commands from the plugin %s."
+msgstr "Ce service ne fournit aucune commande publique du plugin %s."
+
+#: utils.py:661
+msgid "Featured commands include:"
+msgstr "Commandes principales :"
+
+#: utils.py:668
+msgid "End of command listing."
+msgstr "Fin de la liste des commandes."

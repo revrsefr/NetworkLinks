@@ -17,30 +17,26 @@ from netlink.log import log
 DOMAIN = 'netlink'
 LOCALE_DIR = os.path.join(os.path.dirname(__file__), 'locales')
 
-# Loaded translation catalogues, keyed by language code.
-_catalogues: dict = {}
 _active: _gettext.NullTranslations = _gettext.NullTranslations()
 
 
-def _load(lang: str) -> _gettext.NullTranslations:
-    if lang not in _catalogues:
-        try:
-            _catalogues[lang] = _gettext.translation(DOMAIN, LOCALE_DIR, languages=[lang])
-        except OSError:
-            log.warning("i18n: no translation catalogue for language %r; using untranslated strings.", lang)
-            _catalogues[lang] = _gettext.NullTranslations()
-    return _catalogues[lang]
-
-
 def setup() -> None:
-    """(Re)selects the active translation from netlink::language. Run at startup and on rehash."""
+    """(Re)selects the active translation from netlink::language. Run at startup and on
+    rehash. The catalogue is re-read from disk each call so a recompiled .mo (e.g. after
+    `make i18n-compile`) takes effect on the next rehash."""
     global _active
     lang = (conf.conf['netlink'].get('language') or 'en').lower()
     if lang in ('en', 'c', 'posix'):
         _active = _gettext.NullTranslations()
-    else:
-        _active = _load(lang)
+        return
+    mofile = os.path.join(LOCALE_DIR, lang, 'LC_MESSAGES', DOMAIN + '.mo')
+    try:
+        with open(mofile, 'rb') as f:
+            _active = _gettext.GNUTranslations(f)
         log.debug("i18n: active language set to %r", lang)
+    except OSError:
+        log.warning("i18n: no translation catalogue for language %r; using untranslated strings.", lang)
+        _active = _gettext.NullTranslations()
 
 
 def _(message: str) -> str:

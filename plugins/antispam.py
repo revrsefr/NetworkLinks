@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from netlink import conf, structures, utils
 from netlink.coremods import permissions
+from netlink.i18n import _
 from netlink.log import log
 
 # Text filter globs added at runtime via the 'spamfilter' command, persisted to
@@ -435,25 +436,25 @@ def spamfilter(irc, source: str, args: list):
 
     if sub in ('list', 'ls'):
         if not globs:
-            irc.reply("No text filters set.")
+            irc.reply(_("No text filters set."))
         else:
-            irc.reply("Text filters: %s" % ', '.join(sorted(globs)))
+            irc.reply(_("Text filters: %s") % ', '.join(sorted(globs)))
         return
 
     glob = ' '.join(args[1:]).strip()
     if not glob:
-        irc.error("Not enough arguments. Needs: %s <glob>" % sub)
+        irc.error(_("Not enough arguments. Needs: %s <glob>") % sub)
         return
 
     if sub == 'add':
         if glob not in globs:
             globs.append(glob)
             datastore.save()
-        irc.reply("Done.")
+        irc.reply(_("Done."))
     elif sub in ('del', 'rm', 'remove'):
         if glob in globs:
             globs.remove(glob)
             datastore.save()
-        irc.reply("Done.")
+        irc.reply(_("Done."))
     else:
-        irc.error("Unknown subcommand %r. Use add, del, or list." % sub)
+        irc.error(_("Unknown subcommand %r. Use add, del, or list.") % sub)

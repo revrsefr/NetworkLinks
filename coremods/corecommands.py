@@ -38,10 +38,10 @@ def load(irc, source: str, args: list):
     try:
         name = args[0]
     except IndexError:
-        irc.reply("Error: Not enough arguments. Needs 1: plugin name.")
+        irc.reply(_("Error: Not enough arguments. Needs 1: plugin name."))
         return
     if name in world.plugins:
-        irc.reply("Error: %r is already loaded." % name)
+        irc.reply(_("Error: %r is already loaded.") % name)
         return
     log.info('(%s) Loading plugin %r for %s', irc.name, name, irc.get_hostmask(source))
     try:
@@ -52,7 +52,7 @@ def load(irc, source: str, args: list):
         else:
             log.exception('Failed to load plugin %r: ImportError.', name)
         raise
-    irc.reply("Loaded plugin %r." % name)
+    irc.reply(_("Loaded plugin %r.") % name)
 
 @utils.add_cmd
 def unload(irc, source: str, args: list):
@@ -64,15 +64,15 @@ def unload(irc, source: str, args: list):
     try:
         name = args[0]
     except IndexError:
-        irc.reply("Error: Not enough arguments. Needs 1: plugin name.")
+        irc.reply(_("Error: Not enough arguments. Needs 1: plugin name."))
         return None
 
     if name in world.plugins:
         log.info('(%s) Unloading plugin %r for %s', irc.name, name, irc.get_hostmask(source))
         control.unload_plugin(name, irc=irc)
-        irc.reply("Unloaded plugin %r." % name)
+        irc.reply(_("Unloaded plugin %r.") % name)
         return True  # We succeeded, make it clear (this status is used by reload() below)
-    irc.reply("Unknown plugin %r." % name)
+    irc.reply(_("Unknown plugin %r.") % name)
     return None
 
 @utils.add_cmd
@@ -81,7 +81,7 @@ def reload(irc, source: str, args: list):
 
     Loads a plugin from the plugin folder."""
     if not args:
-        irc.reply("Error: Not enough arguments. Needs 1: plugin name.")
+        irc.reply(_("Error: Not enough arguments. Needs 1: plugin name."))
         return
 
     # Note: these functions do permission checks, so there are none needed here.
@@ -117,7 +117,7 @@ def reloadcore(irc, source: str, args: list):
         log.exception('(%s) Failed to reload coremod %r', irc.name, name)
         irc.error("Failed to reload coremod %r: %s: %s" % (name, type(e).__name__, e))
         return
-    irc.reply("Reloaded coremod %r." % name)
+    irc.reply(_("Reloaded coremod %r.") % name)
 
 @utils.add_cmd
 def rehash(irc, source: str, args: list):

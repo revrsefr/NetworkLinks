@@ -20,6 +20,7 @@ import string
 from netlink import plugins, protocols
 
 from . import conf, structures, world
+from .i18n import _
 from .log import log
 
 __all__ = [
@@ -329,7 +330,7 @@ class ServiceBot:
 
             if cmd and show_unknown_cmds and not cmd.startswith('\x01'):
                 # Ignore empty commands and invalid command errors from CTCPs.
-                self.reply(irc, 'Error: Unknown command %r.' % cmd)
+                self.reply(irc, _('Error: Unknown command %r.') % cmd)
             log.info('(%s/%s) Received unknown command %r from %s', irc.name, self.name, cmd, irc.get_hostmask(source))
             return
 
@@ -338,14 +339,14 @@ class ServiceBot:
             try:
                 func(irc, source, cmd_args)
             except NotAuthorizedError as e:
-                self.reply(irc, 'Error: %s' % e)
+                self.reply(irc, _('Error: %s') % e)
                 log.warning('(%s) Denying access to command %r for %s; msg: %s', irc.name, cmd,
                             irc.get_hostmask(source), e)
             except InvalidArgumentsError as e:
-                self.reply(irc, 'Error: %s' % e)
+                self.reply(irc, _('Error: %s') % e)
             except Exception as e:
                 log.exception('Unhandled exception caught in command %r', cmd)
-                self.reply(irc, 'Uncaught exception in command %r: %s: %s' % (cmd, type(e).__name__, str(e)))
+                self.reply(irc, _('Uncaught exception in command %r: %s: %s') % (cmd, type(e).__name__, str(e)))
 
     def add_cmd(self, func, name=None, featured=False, aliases=None):
         """Binds an IRC command function to the given command name."""
@@ -538,7 +539,7 @@ class ServiceBot:
             _reply(next_line)
 
         if command not in self.commands:
-            _reply('Error: Unknown command %r.' % command)
+            _reply(_('Error: Unknown command %r.') % command)
             return
 
         funcs = self.commands[command]
@@ -646,25 +647,25 @@ class ServiceBot:
             cmds = new_cmds
 
         if cmds:
-            self.reply(irc, 'Available commands include: %s' % ', '.join(cmds))
-            self.reply(irc, 'To see help on a specific command, type \x02help <command>\x02.')
+            self.reply(irc, _('Available commands include: %s') % ', '.join(cmds))
+            self.reply(irc, _('To see help on a specific command, type \x02help <command>\x02.'))
         elif not plugin_filter:
-            self.reply(irc, 'This service doesn\'t provide any public commands.')
+            self.reply(irc, _('This service doesn\'t provide any public commands.'))
         else:
-            self.reply(irc, 'This service doesn\'t provide any public commands from the plugin %s.' % plugin_filter)
+            self.reply(irc, _('This service doesn\'t provide any public commands from the plugin %s.') % plugin_filter)
 
         # If there are featured commands, list them by showing the help for each.
         # These definitions are sent in private to prevent flooding in channels.
         if self.featured_cmds and not plugin_filter:
             self.reply(irc, " ", private=True)
-            self.reply(irc, 'Featured commands include:', private=True)
+            self.reply(irc, _('Featured commands include:'), private=True)
             for cmd in sorted(self.featured_cmds):
                 if cmd in cmds:
                     # Only show featured commands that are both defined and loaded.
                     # TODO: perhaps plugin unload should remove unused featured command
                     # definitions automatically?
                     self._show_command_help(irc, cmd, private=True, shortform=True)
-            self.reply(irc, 'End of command listing.', private=True)
+            self.reply(irc, _('End of command listing.'), private=True)
 
 def register_service(name, *args, **kwargs):
     """Registers a service bot."""

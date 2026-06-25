@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: NetLink\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-25 17:38+0000\n"
+"POT-Creation-Date: 2026-06-25 20:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,45 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: coremods/corecommands.py:41 coremods/corecommands.py:67
+#: coremods/corecommands.py:84
+msgid "Error: Not enough arguments. Needs 1: plugin name."
+msgstr ""
+
+#: coremods/corecommands.py:44
+#, python-format
+msgid "Error: %r is already loaded."
+msgstr ""
+
+#: coremods/corecommands.py:55
+#, python-format
+msgid "Loaded plugin %r."
+msgstr ""
+
+#: coremods/corecommands.py:73
+#, python-format
+msgid "Unloaded plugin %r."
+msgstr ""
+
+#: coremods/corecommands.py:75
+#, python-format
+msgid "Unknown plugin %r."
+msgstr ""
+
+#: coremods/corecommands.py:120
+#, python-format
+msgid "Reloaded coremod %r."
+msgstr ""
+
+#: coremods/corecommands.py:138
+#, python-format
+msgid "Rehash complete with %d error(s): %s"
+msgstr ""
+
+#: coremods/corecommands.py:140
+msgid "Done. Reloaded config, plugins and coremods; links left intact."
+msgstr ""
 
 #: coremods/login.py:87
 msgid ""
@@ -58,13 +97,33 @@ msgstr ""
 msgid "Bad username or password."
 msgstr ""
 
-#: coremods/corecommands.py:138
+#: coremods/permissions.py:72
 #, python-format
-msgid "Rehash complete with %d error(s): %s"
+msgid "You are missing one of the following permissions: %s"
 msgstr ""
 
-#: coremods/corecommands.py:140
-msgid "Done. Reloaded config, plugins and coremods; links left intact."
+#: plugins/antispam.py:439
+msgid "No text filters set."
+msgstr ""
+
+#: plugins/antispam.py:441
+#, python-format
+msgid "Text filters: %s"
+msgstr ""
+
+#: plugins/antispam.py:446
+#, python-format
+msgid "Not enough arguments. Needs: %s <glob>"
+msgstr ""
+
+#: plugins/antispam.py:453 plugins/antispam.py:458 plugins/ignore.py:66
+#: plugins/ignore.py:72
+msgid "Done."
+msgstr ""
+
+#: plugins/antispam.py:460 plugins/ignore.py:74
+#, python-format
+msgid "Unknown subcommand %r. Use add, del, or list."
 msgstr ""
 
 #: plugins/ignore.py:53
@@ -77,11 +136,43 @@ msgstr ""
 msgid "Not enough arguments. Needs: ignore %s <mask>"
 msgstr ""
 
-#: plugins/ignore.py:66 plugins/ignore.py:72
-msgid "Done."
+#: utils.py:333 utils.py:542
+#, python-format
+msgid "Error: Unknown command %r."
 msgstr ""
 
-#: plugins/ignore.py:74
+#: utils.py:342 utils.py:346
 #, python-format
-msgid "Unknown subcommand %r. Use add, del, or list."
+msgid "Error: %s"
+msgstr ""
+
+#: utils.py:349
+#, python-format
+msgid "Uncaught exception in command %r: %s: %s"
+msgstr ""
+
+#: utils.py:650
+#, python-format
+msgid "Available commands include: %s"
+msgstr ""
+
+#: utils.py:651
+msgid "To see help on a specific command, type help <command>."
+msgstr ""
+
+#: utils.py:653
+msgid "This service doesn't provide any public commands."
+msgstr ""
+
+#: utils.py:655
+#, python-format
+msgid "This service doesn't provide any public commands from the plugin %s."
+msgstr ""
+
+#: utils.py:661
+msgid "Featured commands include:"
+msgstr ""
+
+#: utils.py:668
+msgid "End of command listing."
 msgstr ""

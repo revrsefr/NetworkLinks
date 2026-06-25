@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 from netlink import conf, utils
+from netlink.i18n import _
 from netlink.log import log
 
 __all__ = [
@@ -68,6 +69,6 @@ def check_permissions(irc, uid: str, perms: list, also_show: list | None = None)
                 log.debug('permissions: checking if %s glob matches anything in %s', perm, permlist)
                 if any(irc.match_host(perm, p) for p in perms):
                     return True
-    raise utils.NotAuthorizedError("You are missing one of the following permissions: %s" %
+    raise utils.NotAuthorizedError(_("You are missing one of the following permissions: %s") %
                                    (', '.join(perms+also_show)))
 checkPermissions = check_permissions
