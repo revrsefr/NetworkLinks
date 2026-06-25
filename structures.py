@@ -262,9 +262,12 @@ class DataStore:
         if not starting:
             self.save()
 
-        # schedule saving in a loop.
+        # schedule saving in a loop. The timer is a daemon thread: it is only a
+        # periodic autosave (die() performs the final save on shutdown), so it must
+        # never keep the interpreter alive on exit.
         self.exportdb_timer = threading.Timer(self.save_frequency, self.save_callback)
         self.exportdb_timer.name = f'DataStore {self.name} save_callback loop'
+        self.exportdb_timer.daemon = True
         self.exportdb_timer.start()
 
     def save(self) -> None:
