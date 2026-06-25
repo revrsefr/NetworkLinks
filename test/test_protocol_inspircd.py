@@ -73,5 +73,65 @@ class InspIRCdProtocolTest(ptf.BaseProtocolTest):
         self.p.handle_metadata('00A', 'METADATA',
                                ['nosuchuid', 'ssl_cert', 'vTrE deadbeef'])
 
+    def test_handle_ftopic(self):
+        sid = self._make_server()
+        hook = self.p.handle_ftopic(sid, 'FTOPIC',
+                                    ['#chan', '1556828864', '1556844505', 'setter!u@h', 'the topic'])
+        self.assertEqual(hook['channel'], '#chan')
+        self.assertEqual(hook['text'], 'the topic')
+        self.assertEqual(self.p._channels['#chan'].topic, 'the topic')
+        self.assertTrue(self.p._channels['#chan'].topicset)
+
+    def test_handle_opertype_sets_oper(self):
+        sid = self._make_server()
+        self._make_user('op', 'opuid', sid=sid)
+        hook = self.p.handle_opertype('opuid', 'OPERTYPE', ['Network_Owner'])
+        self.assertIn(('+o', None), hook['modes'])
+        self.assertIn(('o', None), self.p.users['opuid'].modes)
+
+    def test_handle_fident(self):
+        sid = self._make_server()
+        self._make_user('u', 'fuid', sid=sid, ident='old')
+        hook = self.p.handle_fident('fuid', 'FIDENT', ['newident'])
+        self.assertEqual(self.p.users['fuid'].ident, 'newident')
+        self.assertEqual(hook['newident'], 'newident')
+
+    def test_handle_fhost(self):
+        sid = self._make_server()
+        self._make_user('u', 'huid', sid=sid, host='old.host')
+        hook = self.p.handle_fhost('huid', 'FHOST', ['new.host'])
+        self.assertEqual(self.p.users['huid'].host, 'new.host')
+        self.assertEqual(hook['newhost'], 'new.host')
+
+    def test_handle_fname(self):
+        sid = self._make_server()
+        self._make_user('u', 'nuid', sid=sid)
+        hook = self.p.handle_fname('nuid', 'FNAME', ['New Real Name'])
+        self.assertEqual(self.p.users['nuid'].realname, 'New Real Name')
+        self.assertEqual(hook['newgecos'], 'New Real Name')
+
+    def test_handle_away_set_and_unset(self):
+        sid = self._make_server()
+        self._make_user('u', 'auid', sid=sid)
+        hook = self.p.handle_away('auid', 'AWAY', ['1439371390', 'gone fishing'])
+        self.assertEqual(self.p.users['auid'].away, 'gone fishing')
+        self.assertEqual(hook['text'], 'gone fishing')
+        hook2 = self.p.handle_away('auid', 'AWAY', [])
+        self.assertEqual(self.p.users['auid'].away, '')
+        self.assertEqual(hook2['text'], '')
+
+    def test_handle_endburst_sets_eob(self):
+        sid = self._make_server()
+        self.p.handle_endburst(sid, 'ENDBURST', [])
+        self.assertTrue(self.p.servers[sid].has_eob)
+
+    def test_handle_server_other_introduction(self):
+        self._make_server()  # sets uplink
+        hook = self.p.handle_server(self.p.uplink, 'SERVER',
+                                    ['leaf.test', '0SV', ':Some server'])
+        self.assertEqual(hook['name'], 'leaf.test')
+        self.assertEqual(hook['sid'], '0SV')
+        self.assertIn('0SV', self.p.servers)
+
 if __name__ == '__main__':
     unittest.main()
