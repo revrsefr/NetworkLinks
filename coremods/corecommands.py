@@ -5,6 +5,7 @@ corecommands.py - Implements core NetLink commands.
 from __future__ import annotations
 
 import gc
+import importlib
 import sys
 
 from netlink import utils, world
@@ -13,6 +14,24 @@ from netlink.log import log
 from . import control, permissions
 
 __all__ = []
+
+
+def _remove_module_commands_hooks(modulename):
+    """Removes all commands and hooks registered by the given module name."""
+    cmds = world.services['netlink'].commands
+    for cmdname, cmdfuncs in cmds.copy().items():
+        for cmdfunc in cmdfuncs.copy():
+            if cmdfunc.__module__ == modulename:
+                cmds[cmdname].remove(cmdfunc)
+        if not cmds[cmdname]:
+            del cmds[cmdname]
+
+    for hookname, hookpairs in world.hooks.copy().items():
+        for hookpair in hookpairs.copy():
+            if hookpair[1].__module__ == modulename:
+                world.hooks[hookname].remove(hookpair)
+        if not world.hooks[hookname]:
+            del world.hooks[hookname]
 
 # Essential, core commands go here so that the "commands" plugin with less-important,
 # but still generic functions can be reloaded.
@@ -143,6 +162,45 @@ def reload(irc, source: str, args: list):
     # Note: these functions do permission checks, so there are none needed here.
     if unload(irc, source, args):
         load(irc, source, args)
+
+# Coremods that hold accumulated state populated by other modules, so reloading
+# them in place would wipe it (permissions: the default_permissions registry).
+_UNRELOADABLE_COREMODS = {'permissions'}
+
+@utils.add_cmd
+def reloadcore(irc, source: str, args: list):
+    """<coremod name>.
+
+    Reloads a core module (one of the modules in coremods/) in place. Unlike
+    plugins, coremods are reloaded with importlib.reload so that modules which
+    import them keep their references working."""
+    permissions.check_permissions(irc, source, ['core.reloadcore'])
+    try:
+        name = args[0]
+    except IndexError:
+        irc.error("Not enough arguments. Needs 1: coremod name.")
+        return
+
+    modulename = 'netlink.coremods.' + name
+    if modulename not in sys.modules:
+        irc.error("Unknown or unloaded coremod %r." % name)
+        return
+    if name in _UNRELOADABLE_COREMODS:
+        irc.error("Coremod %r can't be reloaded at runtime (it holds shared state)." % name)
+        return
+
+    module = sys.modules[modulename]
+    log.info('(%s) Reloading coremod %r for %s', irc.name, name, irc.get_hostmask(source))
+    _remove_module_commands_hooks(modulename)
+    try:
+        importlib.reload(module)
+    except Exception as e:
+        log.exception('(%s) Failed to reload coremod %r', irc.name, name)
+        irc.error("Failed to reload coremod %r: %s: %s" % (name, type(e).__name__, e))
+        return
+    if hasattr(module, 'main'):
+        module.main(irc=irc)
+    irc.reply("Reloaded coremod %r." % name)
 
 @utils.add_cmd
 def rehash(irc, source: str, args: list):
