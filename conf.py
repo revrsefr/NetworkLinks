@@ -18,8 +18,14 @@ from typing import Any
 
 from . import world
 
-__all__ = ['ConfigurationError', 'conf', 'confname', 'validate', 'load_conf',
-           'get_database_name']
+__all__ = [
+    'ConfigurationError',
+    'conf',
+    'confname',
+    'get_database_name',
+    'load_conf',
+    'validate',
+]
 
 
 class ConfigurationError(RuntimeError):
@@ -123,7 +129,7 @@ def load_conf(filename, errors_fatal=True, logger=None):
     # For the internal config name, strip off any .yml extensions and absolute paths
     confname = os.path.splitext(os.path.basename(filename))[0]
     try:
-        with open(filename, 'r') as f:
+        with open(filename) as f:
             conf = yaml.safe_load(f)
             conf = _validate_conf(conf, logger=logger)
     except Exception as e:

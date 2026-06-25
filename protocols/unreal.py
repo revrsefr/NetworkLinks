@@ -156,12 +156,8 @@ class UnrealProtocol(TS6BaseProtocol):
             encoded_ip = encoded_ip.strip().decode()
 
         # <- :001 UID jlu5 0 1441306929 jlu5 localhost 0018S7901 0 +iowx * midnight-1C620195 fwAAAQ== :realname
-        self._send_with_prefix(server, "UID {nick} {hopcount} {ts} {ident} {realhost} {uid} 0 {modes} "
-                               "{host} * {ip} :{realname}".format(ts=ts, host=host,
-                               nick=nick, ident=ident, uid=uid,
-                               modes=raw_modes, realname=realname,
-                               realhost=realhost, ip=encoded_ip,
-                               hopcount=self.servers[server].hopcount))
+        self._send_with_prefix(server, f"UID {nick} {self.servers[server].hopcount} {ts} {ident} {realhost} {uid} 0 {raw_modes} "
+                               f"{host} * {encoded_ip} :{realname}")
 
         return u
 
@@ -242,7 +238,7 @@ class UnrealProtocol(TS6BaseProtocol):
 
         # Store the part of the SJOIN that we may reuse due to line wrapping (i.e. the sjoin
         # "prefix")
-        sjoin_prefix = ":{sid} SJOIN {ts} {channel}".format(sid=server, ts=ts, channel=channel)
+        sjoin_prefix = f":{server} SJOIN {ts} {channel}"
 
         # Modes are optional; add them if they exist
         if modes:

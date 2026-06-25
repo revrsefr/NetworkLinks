@@ -18,11 +18,19 @@ from copy import copy, deepcopy
 from . import conf
 from .log import log
 
-__all__ = ['KeyedDefaultdict', 'CopyWrapper', 'CaseInsensitiveFixedSet',
-          'CaseInsensitiveDict', 'IRCCaseInsensitiveDict',
-          'CaseInsensitiveSet', 'IRCCaseInsensitiveSet',
-          'CamelCaseToSnakeCase', 'DataStore', 'JSONDataStore',
-          'PickleDataStore']
+__all__ = [
+    'CamelCaseToSnakeCase',
+    'CaseInsensitiveDict',
+    'CaseInsensitiveFixedSet',
+    'CaseInsensitiveSet',
+    'CopyWrapper',
+    'DataStore',
+    'IRCCaseInsensitiveDict',
+    'IRCCaseInsensitiveSet',
+    'JSONDataStore',
+    'KeyedDefaultdict',
+    'PickleDataStore',
+]
 
 
 _BLACKLISTED_COPY_TYPES: list = []
@@ -39,7 +47,7 @@ class KeyedDefaultdict(collections.defaultdict):
             value = self[key] = self.default_factory(key)
             return value
 
-class CopyWrapper():
+class CopyWrapper:
     """
     Base container class implementing copy methods.
     """
@@ -178,7 +186,7 @@ class IRCCaseInsensitiveSet(CaseInsensitiveSet):
     def __copy__(self):
         return self.__class__(self._irc, data=self._data.copy())
 
-class CamelCaseToSnakeCase():
+class CamelCaseToSnakeCase:
     """
     Class which automatically converts missing attributes from camel case to snake case.
     """
@@ -255,7 +263,7 @@ class DataStore:
 
         # schedule saving in a loop.
         self.exportdb_timer = threading.Timer(self.save_frequency, self.save_callback)
-        self.exportdb_timer.name = 'DataStore {} save_callback loop'.format(self.name)
+        self.exportdb_timer.name = f'DataStore {self.name} save_callback loop'
         self.exportdb_timer.start()
 
     def save(self) -> None:
@@ -279,10 +287,10 @@ class JSONDataStore(DataStore):
         """Loads the database given via JSON."""
         with self.store_lock:
             try:
-                with open(self.filename, "r") as f:
+                with open(self.filename) as f:
                     self.store.clear()
                     self.store.update(json.load(f))
-            except (ValueError, IOError, OSError):
+            except (ValueError, OSError):
                 log.info("(DataStore:%s) failed to load database %s; creating a new one in "
                          "memory", self.name, self.filename)
 
@@ -303,7 +311,7 @@ class PickleDataStore(DataStore):
                 with open(self.filename, "rb") as f:
                     self.store.clear()
                     self.store.update(pickle.load(f))
-            except (ValueError, IOError, OSError):
+            except (ValueError, OSError):
                 log.info("(DataStore:%s) failed to load database %s; creating a new one in "
                          "memory", self.name, self.filename)
 

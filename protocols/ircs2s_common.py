@@ -11,9 +11,9 @@ from netlink import conf
 from netlink.classes import IRCNetwork, ProtocolError
 from netlink.log import log
 
-__all__ = ['UIDGenerator', 'IRCCommonProtocol', 'IRCS2SProtocol']
+__all__ = ['IRCCommonProtocol', 'IRCS2SProtocol', 'UIDGenerator']
 
-class UIDGenerator():
+class UIDGenerator:
     """
     Generate UIDs for IRC S2S.
     """

@@ -7,9 +7,20 @@ import time
 from collections import defaultdict, deque
 from typing import Any
 
-__all__ = ['testing', 'hooks', 'networkobjects', 'plugins', 'services',
-           'exttarget_handlers', 'started', 'start_ts', 'shutting_down',
-           'source', 'fallback_hostname', 'daemon']
+__all__ = [
+           'daemon',
+           'exttarget_handlers',
+           'fallback_hostname',
+           'hooks',
+           'networkobjects',
+           'plugins',
+           'services',
+           'shutting_down',
+           'source',
+           'start_ts',
+           'started',
+           'testing',
+]
 
 # This indicates whether we're running in tests mode. What it actually does
 # though is control whether IRC connections should be threaded or not.

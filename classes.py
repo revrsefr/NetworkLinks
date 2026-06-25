@@ -27,9 +27,18 @@ from . import __version__, conf, selectdriver, structures, utils, world
 from .log import log, NetLinkChannelLogger
 from .utils import ProtocolError  # Compatibility with NetLink 1.x
 
-__all__ = ['ChannelState', 'User', 'UserMapping', 'NetLinkNetworkCore',
-           'NetLinkNetworkCoreWithUtils', 'IRCNetwork', 'Server', 'Channel',
-           'PUIDGenerator', 'ProtocolError']
+__all__ = [
+    'Channel',
+    'ChannelState',
+    'IRCNetwork',
+    'NetLinkNetworkCore',
+    'NetLinkNetworkCoreWithUtils',
+    'PUIDGenerator',
+    'ProtocolError',
+    'Server',
+    'User',
+    'UserMapping',
+]
 
 QUEUE_FULL = queue.Full
 
@@ -50,7 +59,7 @@ class ChannelState(structures.IRCCaseInsensitiveDict):
 
         return self._data[key]
 
-class TSObject():
+class TSObject:
     """Base class for classes containing a type-normalized timestamp."""
     def __init__(self, *args, **kwargs):
         self._ts = int(time.time())
@@ -1339,7 +1348,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         if args:
             # Add the args if there are any.
             modelist += ' '
-            modelist += ' '.join((str(arg) for arg in args))
+            modelist += ' '.join(str(arg) for arg in args)
         return modelist
 
     @classmethod
@@ -2227,7 +2236,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
 
 Irc = IRCNetwork
 
-class Server():
+class Server:
     """NetLink IRC server class.
 
     irc: the protocol/network object this Server instance is attached to.
@@ -2370,7 +2379,7 @@ class Channel(TSObject, structures.CamelCaseToSnakeCase, structures.CopyWrapper)
         return sorted(result, key=self.sort_prefixes)
 IrcChannel = Channel
 
-class PUIDGenerator():
+class PUIDGenerator:
     """
     Pseudo UID Generator module, using a prefix and a simple counter.
     """

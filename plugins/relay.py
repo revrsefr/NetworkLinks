@@ -87,9 +87,9 @@ class RelayDataStore(structures.JSONDataStore):
     def load(self):
         with self.store_lock:
             try:
-                with open(self.filename, 'r') as f:
+                with open(self.filename) as f:
                     data = json.load(f)
-            except (ValueError, IOError, OSError, UnicodeDecodeError):
+            except (ValueError, OSError, UnicodeDecodeError):
                 data = None
 
             if data is not None:
@@ -101,8 +101,7 @@ class RelayDataStore(structures.JSONDataStore):
             try:
                 with open(self.filename, 'rb') as f:
                     legacy = pickle.load(f)
-            except (pickle.UnpicklingError, ValueError, EOFError, IOError, OSError,
-                    AttributeError, ImportError, IndexError):
+            except (pickle.UnpicklingError, ValueError, EOFError, OSError, AttributeError, ImportError, IndexError):
                 legacy = None
 
             if isinstance(legacy, dict):

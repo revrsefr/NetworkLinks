@@ -117,17 +117,11 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self.servers[server].users.add(uid)
 
         if self.proto_ver >= 1206:
-            payload = ("UID {uid} {ts} {nick} {realhost} {host} {realident} {ident} {ip}"
-                       " {ts} {modes} + :{realname}").format(ts=ts, host=host,
-                       nick=nick, ident=ident, uid=uid, realident=ident,
-                       modes=raw_modes, ip=ip, realname=realname,
-                       realhost=realhost)
+            payload = (f"UID {uid} {ts} {nick} {realhost} {host} {ident} {ident} {ip}"
+                       f" {ts} {raw_modes} + :{realname}")
         else:
-            payload = ("UID {uid} {ts} {nick} {realhost} {host} {ident} {ip}"
-                       " {ts} {modes} + :{realname}").format(ts=ts, host=host,
-                       nick=nick, ident=ident, uid=uid,
-                       modes=raw_modes, ip=ip, realname=realname,
-                       realhost=realhost)
+            payload = (f"UID {uid} {ts} {nick} {realhost} {host} {ident} {ip}"
+                       f" {ts} {raw_modes} + :{realname}")
         self._send_with_prefix(server, payload)
         if ('o', None) in modes or ('+o', None) in modes:
             self._oper_up(uid, opertype)
@@ -149,9 +143,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         # Strip out list-modes, they shouldn't be ever sent in FJOIN.
         modes = [m for m in self._channels[channel].modes if m[0] not in self.cmodes['*A']]
-        self._send_with_prefix(server, "FJOIN {channel} {ts} {modes} :,{uid}".format(
-                ts=self._channels[channel].ts, uid=client, channel=channel,
-                modes=self.join_modes(modes)))
+        self._send_with_prefix(server, f"FJOIN {channel} {self._channels[channel].ts} {self.join_modes(modes)} :,{client}")
         self._channels[channel].users.add(client)
         self.users[client].channels.add(channel)
 
@@ -208,16 +200,13 @@ class InspIRCdProtocol(TS6BaseProtocol):
                 log.debug("(%s) sjoin: KeyError trying to add %r to %r's channel list?", self.name, channel, user)
 
         namelist = ' '.join(namelist)
-        self._send_with_prefix(server, "FJOIN {channel} {ts} {modes} :{users}".format(
-                ts=ts, users=namelist, channel=channel,
-                modes=self.join_modes(modes)))
+        self._send_with_prefix(server, f"FJOIN {channel} {ts} {self.join_modes(modes)} :{namelist}")
         self._channels[channel].users.update(uids)
 
         if banmodes:
             # Burst ban modes if there are any.
             # <- :1ML FMODE #test 1461201525 +bb *!*@bad.user *!*@rly.bad.user
-            self._send_with_prefix(server, "FMODE {channel} {ts} {modes} ".format(
-                ts=ts, channel=channel, modes=self.join_modes(banmodes)))
+            self._send_with_prefix(server, f"FMODE {channel} {ts} {self.join_modes(banmodes)} ")
 
         self.updateTS(server, channel, ts, changedmodes)
 

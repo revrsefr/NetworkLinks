@@ -11,7 +11,7 @@ import threading
 from netlink import world
 from netlink.log import log
 
-__all__ = ['register', 'unregister', 'start']
+__all__ = ['register', 'start', 'unregister']
 
 
 SELECT_TIMEOUT = 0.5

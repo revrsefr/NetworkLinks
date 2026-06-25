@@ -16,8 +16,15 @@ from netlink.log import _get_console_log_level, _make_file_logger, _stop_file_lo
 
 from . import login
 
-__all__ = ['remove_network', 'shutdown', 'rehash', 'unload_plugin', 'load_plugin',
-           'reload_coremod', 'UNRELOADABLE_COREMODS']
+__all__ = [
+    'UNRELOADABLE_COREMODS',
+    'load_plugin',
+    'rehash',
+    'reload_coremod',
+    'remove_network',
+    'shutdown',
+    'unload_plugin',
+]
 
 # Coremods that can't be reloaded in place during a rehash:
 #  - permissions holds the default_permissions registry populated by other modules

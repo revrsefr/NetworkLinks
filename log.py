@@ -114,7 +114,7 @@ class NetLinkChannelLogger(logging.Handler):
     Log handler to log to channels in NetLink.
     """
     def __init__(self, irc, channel, level=None):
-        super(NetLinkChannelLogger, self).__init__()
+        super().__init__()
         self.irc = irc
         self.channel = channel
 

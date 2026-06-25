@@ -9,7 +9,7 @@ import hmac
 from netlink import conf, utils
 from netlink.log import log
 
-__all__ = ['pwd_context', 'check_login', 'verify_hash']
+__all__ = ['check_login', 'pwd_context', 'verify_hash']
 
 # Tracks accounts already warned about insecure plaintext passwords, so the
 # warning is logged once instead of on every login attempt.

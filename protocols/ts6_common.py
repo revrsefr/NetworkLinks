@@ -15,7 +15,7 @@ from netlink.protocols.ircs2s_common import *
 __all__ = ['TS6BaseProtocol']
 
 
-class TS6SIDGenerator():
+class TS6SIDGenerator:
     """
     TS6 SID Generator. <query> is a 3 character string with any combination of
     uppercase letters, digits, and #'s. it must contain at least one #,

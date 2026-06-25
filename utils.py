@@ -22,13 +22,29 @@ from netlink import plugins, protocols
 from . import conf, structures, world
 from .log import log
 
-__all__ = ['PLUGIN_PREFIX', 'PROTOCOL_PREFIX', 'NORMALIZEWHITESPACE_RE',
-           'NotAuthorizedError', 'InvalidArgumentsError', 'ProtocolError',
-           'add_cmd', 'add_hook', 'expand_path', 'split_hostmask',
-           'ServiceBot', 'register_service', 'unregister_service',
-           'wrap_arguments', 'IRCParser', 'strip_irc_formatting',
-           'remove_range', 'get_hostname_type', 'parse_duration', 'match_text',
-           'merge_iterables']
+__all__ = [
+    'NORMALIZEWHITESPACE_RE',
+    'PLUGIN_PREFIX',
+    'PROTOCOL_PREFIX',
+    'IRCParser',
+    'InvalidArgumentsError',
+    'NotAuthorizedError',
+    'ProtocolError',
+    'ServiceBot',
+    'add_cmd',
+    'add_hook',
+    'expand_path',
+    'get_hostname_type',
+    'match_text',
+    'merge_iterables',
+    'parse_duration',
+    'register_service',
+    'remove_range',
+    'split_hostmask',
+    'strip_irc_formatting',
+    'unregister_service',
+    'wrap_arguments',
+]
 
 
 PLUGIN_PREFIX = plugins.__name__ + '.'
@@ -39,7 +55,6 @@ class NotAuthorizedError(Exception):
     """
     Exception raised by the NetLink permissions system when a user fails access requirements.
     """
-    pass
 
 class InvalidArgumentsError(TypeError):
     """
@@ -134,7 +149,7 @@ def split_hostmask(mask: str) -> list:
     return [nick, ident, host]
 splitHostmask = split_hostmask
 
-class ServiceBot():
+class ServiceBot:
     """
     NetLink IRC Service class.
     """

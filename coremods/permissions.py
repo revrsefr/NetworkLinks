@@ -9,8 +9,12 @@ from collections import defaultdict
 from netlink import conf, utils
 from netlink.log import log
 
-__all__ = ['default_permissions', 'add_default_permissions',
-           'remove_default_permissions', 'check_permissions']
+__all__ = [
+    'add_default_permissions',
+    'check_permissions',
+    'default_permissions',
+    'remove_default_permissions',
+]
 
 # Global variables: these store mappings of hostmasks/exttargets to lists of permissions each target has.
 default_permissions: defaultdict[str, set] = defaultdict(set)
