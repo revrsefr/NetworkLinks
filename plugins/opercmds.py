@@ -120,7 +120,7 @@ def massban(irc, source, args, use_regex=False):
     if args.channel not in irc.channels:
         irc.error("Unknown channel %r." % args.channel)
         return
-    elif 'relay' in world.plugins and (not world.plugins['relay'].check_claim(irc, args.channel, source)) and (not args.force):
+    if 'relay' in world.plugins and (not world.plugins['relay'].check_claim(irc, args.channel, source)) and (not args.force):
         irc.error("You do not have access to set bans in %s. Ask someone to op you or use the --force option." % args.channel)
         return
 
@@ -132,7 +132,7 @@ def massban(irc, source, args, use_regex=False):
         if irc.is_oper(uid) and not args.include_opers:
             irc.reply('Skipping banning \x02%s\x02 because they are opered.' % irc.users[uid].nick)
             continue
-        elif irc.get_service_bot(uid):
+        if irc.get_service_bot(uid):
             irc.reply('Skipping banning \x02%s\x02 because it is a service client.' % irc.users[uid].nick)
             continue
 
@@ -245,7 +245,7 @@ def masskill(irc, source, args, use_regex=False):
         if irc.is_oper(uid) and not args.include_opers:
             irc.reply('Skipping killing \x02%s\x02 because they are opered.' % userobj.nick)
             continue
-        elif irc.get_service_bot(uid):
+        if irc.get_service_bot(uid):
             irc.reply('Skipping killing \x02%s\x02 because it is a service client.' % userobj.nick)
             continue
 
@@ -407,17 +407,16 @@ def _try_find_target(irc, nick):
 
     if int_u and int_u in irc.users:
         return int_u  # Some protocols use numeric UIDs
-    elif nick in irc.users:
+    if nick in irc.users:
         return nick
 
     potential_targets = irc.nick_to_uid(nick, multi=True)
     if not potential_targets:
         # Whatever we were told to kick doesn't exist!
         raise LookupError("No such target %r." % nick)
-    elif len(potential_targets) > 1:
+    if len(potential_targets) > 1:
         raise LookupError("Multiple users with the nick %r found: please select the right UID: %s" % (nick, str(potential_targets)))
-    else:
-        return potential_targets[0]
+    return potential_targets[0]
 
 @utils.add_cmd
 def kick(irc, source: str, args: list):
@@ -494,7 +493,7 @@ def mode(irc, source: str, args: list):
     if target not in irc.channels:
         irc.error("Unknown channel %r." % target)
         return
-    elif not modes:
+    if not modes:
         # No modes were given before parsing (i.e. mode list was blank).
         irc.error("No valid modes were given.")
         return

@@ -544,62 +544,61 @@ class ServiceBot:
             _reply('Error: Unknown command %r.' % command)
             return
 
-        else:
-            funcs = self.commands[command]
-            if len(funcs) > 1:
-                _reply('The following \x02%s\x02 plugins bind to the \x02%s\x02 command: %s'
-                       % (len(funcs), command, ', '.join([func.__module__ for func in funcs])))
-            for func in funcs:
-                doc = func.__doc__
-                if doc:
-                    lines = doc.splitlines()
-                    # Bold the first line, which usually just tells you what
-                    # arguments the command takes.
-                    args_desc = '\x02%s %s\x02' % (command, lines[0])
+        funcs = self.commands[command]
+        if len(funcs) > 1:
+            _reply('The following \x02%s\x02 plugins bind to the \x02%s\x02 command: %s'
+                   % (len(funcs), command, ', '.join([func.__module__ for func in funcs])))
+        for func in funcs:
+            doc = func.__doc__
+            if doc:
+                lines = doc.splitlines()
+                # Bold the first line, which usually just tells you what
+                # arguments the command takes.
+                args_desc = '\x02%s %s\x02' % (command, lines[0])
 
-                    _reply(args_desc.strip())
-                    if not shortform:
-                        # Note: we handle newlines in docstrings a bit differently. Per
-                        # https://github.com/revrsefr/NetworkLinks/issues/307, only double newlines (and
-                        # combinations of more) have the effect of showing a new line on IRC.
-                        # Single newlines are stripped so that word wrap can be applied in source
-                        # code without affecting the output on IRC.
-                        # (On the same topic, real line wrapping on IRC is done in irc.msg() as of
-                        #  2.0-beta1)
-                        next_line = ''
-                        for linenum, line in enumerate(lines[1:], 1):
-                            stripped_line = line.strip()
-                            log.debug("_show_command_help: Current line (%s): %r", linenum, stripped_line)
-                            log.debug("_show_command_help: Last line (%s-1=%s): %r", linenum, linenum-1, lines[linenum-1].strip())
-
-                            if stripped_line:
-                                # If this line has content, join it with the previous one.
-                                next_line += line.rstrip()
-                                next_line += ' '
-                            elif linenum > 0 and not lines[linenum-1].strip():
-                                # The line before us was empty, so treat this one as a legitimate
-                                # newline/break.
-                                log.debug("_show_command_help: Adding an extra break...")
-                                _reply(' ')
-                            else:
-                                # Otherwise, output it to IRC.
-                                _reply_format(next_line)
-                                next_line = ''  # Reset the next line buffer
-                        else:
-                            # Show the last line.
-                            _reply_format(next_line)
-                else:
-                    _reply("Error: Command %r doesn't offer any help." % command)
-
-                # Regardless of whether help text is available, mention aliases.
+                _reply(args_desc.strip())
                 if not shortform:
-                    if command in self.alias_cmds:
-                        _reply(' ')
-                        _reply('This command is an alias for \x02%s\x02.' % self.alias_cmds[command])
-                    aliases = set(alias for alias, primary in self.alias_cmds.items() if primary == command)
-                    if aliases:
-                        _reply(' ')
-                        _reply('Available aliases: \x02%s\x02' % ', '.join(aliases))
+                    # Note: we handle newlines in docstrings a bit differently. Per
+                    # https://github.com/revrsefr/NetworkLinks/issues/307, only double newlines (and
+                    # combinations of more) have the effect of showing a new line on IRC.
+                    # Single newlines are stripped so that word wrap can be applied in source
+                    # code without affecting the output on IRC.
+                    # (On the same topic, real line wrapping on IRC is done in irc.msg() as of
+                    #  2.0-beta1)
+                    next_line = ''
+                    for linenum, line in enumerate(lines[1:], 1):
+                        stripped_line = line.strip()
+                        log.debug("_show_command_help: Current line (%s): %r", linenum, stripped_line)
+                        log.debug("_show_command_help: Last line (%s-1=%s): %r", linenum, linenum-1, lines[linenum-1].strip())
+
+                        if stripped_line:
+                            # If this line has content, join it with the previous one.
+                            next_line += line.rstrip()
+                            next_line += ' '
+                        elif linenum > 0 and not lines[linenum-1].strip():
+                            # The line before us was empty, so treat this one as a legitimate
+                            # newline/break.
+                            log.debug("_show_command_help: Adding an extra break...")
+                            _reply(' ')
+                        else:
+                            # Otherwise, output it to IRC.
+                            _reply_format(next_line)
+                            next_line = ''  # Reset the next line buffer
+                    else:
+                        # Show the last line.
+                        _reply_format(next_line)
+            else:
+                _reply("Error: Command %r doesn't offer any help." % command)
+
+            # Regardless of whether help text is available, mention aliases.
+            if not shortform:
+                if command in self.alias_cmds:
+                    _reply(' ')
+                    _reply('This command is an alias for \x02%s\x02.' % self.alias_cmds[command])
+                aliases = set(alias for alias, primary in self.alias_cmds.items() if primary == command)
+                if aliases:
+                    _reply(' ')
+                    _reply('Available aliases: \x02%s\x02' % ', '.join(aliases))
 
     def help(self, irc, source, args):
         """<command>
@@ -682,7 +681,7 @@ def register_service(name, *args, **kwargs):
         return world.services[name]
 
     # Allow disabling service spawning either globally or by service.
-    elif name != 'netlink' and not (conf.conf.get(name, {}).get('spawn_service',
+    if name != 'netlink' and not (conf.conf.get(name, {}).get('spawn_service',
             conf.conf['netlink'].get('spawn_services', True))):
         return world.services['netlink']
 
@@ -799,7 +798,7 @@ def remove_range(rangestr, mylist):
             if end <= start:
                 raise ValueError("Range start (%d) is <= end (%d) in range string %r" %
                                  (start, end, rangestr))
-            elif 0 in (end, start):
+            if 0 in (end, start):
                 raise ValueError("Got range index 0 in range string %r, this function is one-indexed" %
                                  rangestr)
 
@@ -836,10 +835,9 @@ def get_hostname_type(address: str) -> int:
     else:
         if isinstance(ip, ipaddress.IPv4Address):
             return 1
-        elif isinstance(ip, ipaddress.IPv6Address):
+        if isinstance(ip, ipaddress.IPv6Address):
             return 2
-        else:
-            raise ValueError("Got unknown value %r from ipaddress.ip_address()" % address)
+        raise ValueError("Got unknown value %r from ipaddress.ip_address()" % address)
 
 _duration_re = re.compile(r"^((?P<week>\d+)w)?((?P<day>\d+)d)?((?P<hour>\d+)h)?((?P<minute>\d+)m)?((?P<second>\d+)s)?$")
 def parse_duration(text) -> int:
@@ -935,7 +933,7 @@ def merge_iterables(A, B):
 
     if isinstance(A, list):
         return A + B
-    elif isinstance(A, set):
+    if isinstance(A, set):
         return A | B
-    elif isinstance(A, dict):
+    if isinstance(A, dict):
         return {**A, **B}

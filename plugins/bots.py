@@ -266,11 +266,10 @@ def msg(irc, source: str, args: list):
         if not potential_targets:  # Unknown target user, if target isn't a valid channel name
             irc.error('Unknown user %r.' % target)
             return
-        elif len(potential_targets) > 1:
+        if len(potential_targets) > 1:
             irc.error('Multiple users with the nick %r found: please select the right UID: %s' % (target, str(potential_targets)))
             return
-        else:
-            real_target = potential_targets[0]
+        real_target = potential_targets[0]
     else:
         real_target = target
 

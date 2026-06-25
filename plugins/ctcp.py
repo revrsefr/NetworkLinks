@@ -46,11 +46,10 @@ def handle_ctcp(irc, source: str, command: str, args: dict):
                     notice=True, source=target)
 
         return False  # Block this message from reaching the general command handler
-    else:
-        log.info('(%s) Received unknown CTCP %s from %s to %s',
-                 irc.name, ctcp_command, irc.get_hostmask(source),
-                 irc.get_friendly_name(target))
-        return False
+    log.info('(%s) Received unknown CTCP %s from %s to %s',
+             irc.name, ctcp_command, irc.get_hostmask(source),
+             irc.get_friendly_name(target))
+    return False
 
 utils.add_hook(handle_ctcp, 'PRIVMSG', priority=200)
 

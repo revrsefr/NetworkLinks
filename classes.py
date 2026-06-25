@@ -631,7 +631,7 @@ class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
         """Blocks for the autoconnect time and returns True if autoconnect is enabled."""
         if world.shutting_down.is_set():
             log.debug('(%s) _run_autoconnect: aborting autoconnect attempt since we are shutting down.', self.name)
-            return
+            return None
 
         autoconnect = self.serverdata.get('autoconnect')
 
@@ -662,12 +662,11 @@ class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
 
             if self not in world.networkobjects.values():
                 log.debug('(%s) _run_autoconnect: Stopping stale connect loop', self.name)
-                return
+                return None
             return True
 
-        else:
-            log.debug('(%s) _run_autoconnect: Stopping connect loop (autoconnect value %r is < 1).', self.name, autoconnect)
-            return
+        log.debug('(%s) _run_autoconnect: Stopping connect loop (autoconnect value %r is < 1).', self.name, autoconnect)
+        return None
 
     def _pre_disconnect(self):
         """
@@ -732,13 +731,12 @@ class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
 
         if multi:
             return uids
-        else:
-            if len(uids) > 1:
-                log.warning('(%s) Multiple UIDs found for nick %r: %r; using the last one!', self.name, nick, uids)
-            try:
-                return uids[-1]
-            except IndexError:
-                return None
+        if len(uids) > 1:
+            log.warning('(%s) Multiple UIDs found for nick %r: %r; using the last one!', self.name, nick, uids)
+        try:
+            return uids[-1]
+        except IndexError:
+            return None
 
     def is_internal_client(self, uid: str) -> bool:
         """
@@ -907,7 +905,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
 
         if split_server not in self.servers:
             log.warning("(%s) Tried to split a server (%s) that didn't exist!", self.name, split_server)
-            return
+            return None
 
         # Prevent RuntimeError: dictionary changed size during iteration
         old_servers = self.servers.copy()
@@ -1282,18 +1280,18 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
                 self._log_debug_modes("(%s) reverse_modes: skipping reversing '%s %s' with %s since we're "
                                       "setting a mode that's already set.", self.name, char, arg, mpair)
                 continue
-            elif char[0] == '-' and (mchar, arg) not in oldmodes and mchar in possible_modes['*A']:
+            if char[0] == '-' and (mchar, arg) not in oldmodes and mchar in possible_modes['*A']:
                 # We're unsetting a list or prefix mode that was never set - don't set it in response!
                 # TS6 IRCds lacks server-side verification for this and can cause annoying mode floods.
                 self._log_debug_modes("(%s) reverse_modes: skipping reversing '%s %s' with %s since it "
                                       "wasn't previously set.", self.name, char, arg, mpair)
                 continue
-            elif char[0] == '-' and mchar not in oldmodes_mapping:
+            if char[0] == '-' and mchar not in oldmodes_mapping:
                 # Check the same for regular modes that previously didn't exist
                 self._log_debug_modes("(%s) reverse_modes: skipping reversing '%s %s' with %s since it "
                                       "wasn't previously set.", self.name, char, arg, mpair)
                 continue
-            elif mpair in newmodes:
+            if mpair in newmodes:
                 # Check the same for regular modes that previously didn't exist
                 self._log_debug_modes("(%s) reverse_modes: skipping duplicate reverse mode %s", self.name,  mpair)
                 continue
@@ -1303,8 +1301,7 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         if origstring:
             # If the original query is a string, send it back as a string.
             return self.join_modes(newmodes)
-        else:
-            return newmodes
+        return newmodes
 
     @staticmethod
     def join_modes(modes, sort=False):
@@ -1465,13 +1462,12 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
         """
         if entityid in self.servers:
             return self.servers[entityid].name
-        elif entityid in self.users:
+        if entityid in self.users:
             return self.users[entityid].nick
         # Return channels as-is. Remember to strip any STATUSMSG prefixes like from @#channel
-        elif self.is_channel(entityid.lstrip(''.join(self.prefixmodes.values()))):
+        if self.is_channel(entityid.lstrip(''.join(self.prefixmodes.values()))):
             return entityid
-        else:
-            raise KeyError("Unknown UID/SID %s" % entityid)
+        raise KeyError("Unknown UID/SID %s" % entityid)
 
     def is_privileged_service(self, entityid):
         """
@@ -1555,10 +1551,9 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
                         log.debug('(%s) Got %s from exttarget %s in match_host() glob $%s for target %s',
                                   self.name, result, exttargetname, glob, target)
                         return result
-                    else:
-                        log.debug('(%s) Unknown exttarget %s in match_host() glob $%s', self.name,
-                                  exttargetname, glob)
-                        return False
+                    log.debug('(%s) Unknown exttarget %s in match_host() glob $%s', self.name,
+                              exttargetname, glob)
+                    return False
 
                 hosts = {self.get_hostmask(target)}
 
@@ -1648,10 +1643,9 @@ class NetLinkNetworkCoreWithUtils(NetLinkNetworkCore):
 
         if ban_type in self.cmodes:
             return ('+%s' % self.cmodes[ban_type], banhost)
-        elif ban_type in self.extbans_acting:  # Handle extbans, which are generally "+b prefix:banmask"
+        if ban_type in self.extbans_acting:  # Handle extbans, which are generally "+b prefix:banmask"
             return ('+%s' % self.cmodes['ban'], self.extbans_acting[ban_type]+banhost)
-        else:
-            raise ValueError("ban_type %r is not available on IRCd %r" % (ban_type, self.protoname))
+        raise ValueError("ban_type %r is not available on IRCd %r" % (ban_type, self.protoname))
 
     def updateTS(self, sender, channel, their_ts, modes=None):
         """
@@ -1882,9 +1876,8 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
                     # SSL Fingerprint doesn't match; break.
                     raise ssl.CertificateError('Uplink TLS/SSL certificate fingerprint (%s: %r) does not '
                                                'match the one configured (%s: %r)' % (hashtype, fp, hashtype, expected_fp))
-                else:
-                    log.info('(%s) Uplink TLS/SSL certificate fingerprint '
-                             'verified (%s: %r)', self.name, hashtype, fp)
+                log.info('(%s) Uplink TLS/SSL certificate fingerprint '
+                         'verified (%s: %r)', self.name, hashtype, fp)
             elif hasattr(self._socket, 'context') and self._socket.context.verify_mode == ssl.CERT_NONE:
                 log.info('(%s) Uplink\'s TLS/SSL certificate fingerprint (%s) '
                          'is %r. You can enhance the security of your '
@@ -2054,7 +2047,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
         if self not in world.networkobjects.values():
             log.debug('(%s) _start_reconnect: Stopping reconnect timer as the network was removed', self.name)
             return
-        elif self._reconnect_thread is None or not self._reconnect_thread.is_alive():
+        if self._reconnect_thread is None or not self._reconnect_thread.is_alive():
             self._reconnect_thread = threading.Thread(target=_reconnect, name="Reconnecting network %s" % self.name)
             self._reconnect_thread.start()
         else:
@@ -2068,7 +2061,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
         log.debug("(%s) <- %s", self.name, line)
         if not line:
             log.warning("(%s) Got empty line %r from IRC?", self.name, line)
-            return
+            return None
 
         try:
             hook_args = self.handle_events(line)
@@ -2076,7 +2069,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
             log.exception('(%s) Caught error in handle_events, disconnecting!', self.name)
             log.error('(%s) The offending line was: <- %s', self.name, line)
             self.disconnect()
-            return
+            return None
         # Only call our hooks if there's data to process. Handlers that support
         # hooks will return a dict of parsed arguments, which can be passed on
         # to plugins and the like. For example, the JOIN handler will return
@@ -2183,15 +2176,15 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
                 if data is None:
                     log.debug('(%s) Stopping queue thread due to getting None as item', self.name)
                     break
-                elif self not in world.networkobjects.values():
+                if self not in world.networkobjects.values():
                     log.debug('(%s) Stopping stale queue thread; no longer matches world.networkobjects', self.name)
                     break
-                elif self._aborted.is_set():
+                if self._aborted.is_set():
                     # The _aborted flag may have changed while we were waiting for an item,
                     # so check for it again.
                     log.debug('(%s) Stopping queue thread since the connection is dead', self.name)
                     break
-                elif data:
+                if data:
                     self._send(data)
             else:
                 break

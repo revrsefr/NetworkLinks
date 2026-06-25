@@ -296,12 +296,11 @@ class JSONDataStore(DataStore):
 
     def save(self) -> None:
         """Saves the database given via JSON."""
-        with self.store_lock:
-            with open(self.tmp_filename, 'w') as f:
-                # Pretty print the JSON output for better readability.
-                json.dump(self.store, f, indent=4)
+        with self.store_lock, open(self.tmp_filename, 'w') as f:
+            # Pretty print the JSON output for better readability.
+            json.dump(self.store, f, indent=4)
 
-                os.rename(self.tmp_filename, self.filename)
+            os.rename(self.tmp_filename, self.filename)
 
 class PickleDataStore(DataStore):
     def load(self) -> None:
@@ -317,9 +316,8 @@ class PickleDataStore(DataStore):
 
     def save(self) -> None:
         """Saves the database given via pickle."""
-        with self.store_lock:
-            with open(self.tmp_filename, 'wb') as f:
-                # Force protocol version 4 as that is the lowest Python 3.4 supports.
-                pickle.dump(self.store, f, protocol=4)
+        with self.store_lock, open(self.tmp_filename, 'wb') as f:
+            # Force protocol version 4 as that is the lowest Python 3.4 supports.
+            pickle.dump(self.store, f, protocol=4)
 
-                os.rename(self.tmp_filename, self.filename)
+            os.rename(self.tmp_filename, self.filename)

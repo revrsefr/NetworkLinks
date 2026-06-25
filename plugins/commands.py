@@ -290,8 +290,7 @@ def _check_logout_access(irc, source, target, perms):
     except utils.NotAuthorizedError:
         if irc.users[source].account and (irc.users[source].account == irc.users[target].account):
             return True
-        else:
-            raise
+        raise
     else:
         return True
 
@@ -315,13 +314,12 @@ def logout(irc, source: str, args: list):
         if not otheruid:
             irc.error("Unknown user %s." % othernick)
             return
+        _check_logout_access(irc, source, otheruid, ['commands.logout.force'])
+        if irc.users[otheruid].account:
+            irc.users[otheruid].account = ''
         else:
-            _check_logout_access(irc, source, otheruid, ['commands.logout.force'])
-            if irc.users[otheruid].account:
-                irc.users[otheruid].account = ''
-            else:
-                irc.error("%s is not logged in." % othernick)
-                return
+            irc.error("%s is not logged in." % othernick)
+            return
 
     irc.reply("Done.")
 

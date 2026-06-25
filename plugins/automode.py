@@ -90,7 +90,7 @@ def _check_automode_access(irc, uid, channel, command):
                 raise utils.NotAuthorizedError("You are not authorized to use Automode when Relay is "
                                                "disabled. You are missing one of the following "
                                                "permissions: %s or %s.%s" % (baseperm, baseperm, channel))
-            elif (irc.name, channel) not in relay.db:
+            if (irc.name, channel) not in relay.db:
                 raise utils.NotAuthorizedError("The network you are on does not own the relay channel %s." % channel)
             return True
         raise
@@ -106,7 +106,7 @@ def match(irc, channel, uids=None):
     if not irc.has_cap('has-irc-modes'):
         log.debug('(%s) automode: skipping match() because IRC modes are not supported on this protocol', irc.name)
         return
-    elif dbentry is None:
+    if dbentry is None:
         return
 
     modebot_uid = modebot.uids.get(irc.name)
@@ -318,14 +318,13 @@ def listacc(irc, source: str, args: list):
         error(irc, "No Automode access entries exist for \x02%s\x02." % channel)
         return
 
-    else:
-        # Iterate over all entries and print them. Do this in private to prevent channel
-        # floods.
-        reply(irc, "Showing Automode entries for \x02%s\x02:" % channel, private=True)
-        for entrynum, entry in enumerate(sorted(dbentry.items()), start=1):
-            mask, modes = entry
-            reply(irc, "[%s] \x02%s\x02 has modes +\x02%s\x02" % (entrynum, mask, modes), private=True)
-        reply(irc, "End of Automode entries list.", private=True)
+    # Iterate over all entries and print them. Do this in private to prevent channel
+    # floods.
+    reply(irc, "Showing Automode entries for \x02%s\x02:" % channel, private=True)
+    for entrynum, entry in enumerate(sorted(dbentry.items()), start=1):
+        mask, modes = entry
+        reply(irc, "[%s] \x02%s\x02 has modes +\x02%s\x02" % (entrynum, mask, modes), private=True)
+    reply(irc, "End of Automode entries list.", private=True)
 
 modebot.add_cmd(listacc, featured=True, aliases=('listaccess',))
 

@@ -421,7 +421,7 @@ def spawn_relay_server(irc, remoteirc):
                           irc.name, remoteirc.name)
             # We will just bail here. Disconnect the bad network.
             irc.disconnect()
-            return
+            return None
 
         # Mark the server as a relay server
         irc.servers[sid].remote = remoteirc.name
@@ -430,11 +430,10 @@ def spawn_relay_server(irc, remoteirc):
         relayservers[irc.name][remoteirc.name] = sid
 
         return sid
-    else:
-        log.debug('(%s) skipping spawn_relay_server(%s, %s); the local server (%s) is not ready yet',
-                  irc.name, irc.name, remoteirc.name, irc.name)
-        log.debug('(%s) spawn_relay_server: current thread is %s',
-                  irc.name, threading.current_thread().name)
+    log.debug('(%s) skipping spawn_relay_server(%s, %s); the local server (%s) is not ready yet',
+              irc.name, irc.name, remoteirc.name, irc.name)
+    log.debug('(%s) spawn_relay_server: current thread is %s',
+              irc.name, threading.current_thread().name)
 
 def get_relay_server_sid(irc, remoteirc, spawn_if_missing=True):
     """
@@ -450,7 +449,7 @@ def get_relay_server_sid(irc, remoteirc, spawn_if_missing=True):
         except KeyError:
             if not spawn_if_missing:
                 log.debug('(%s) get_relay_server_sid: %s.relay doesn\'t have a known SID, ignoring.', irc.name, remoteirc.name)
-                return
+                return None
 
             log.debug('(%s) get_relay_server_sid: %s.relay doesn\'t have a known SID, spawning.', irc.name, remoteirc.name)
             sid = spawn_relay_server(irc, remoteirc)
@@ -458,7 +457,7 @@ def get_relay_server_sid(irc, remoteirc, spawn_if_missing=True):
         log.debug('(%s) get_relay_server_sid: got %s for %s.relay', irc.name, sid, remoteirc.name)
         if (sid not in irc.servers) or (sid in irc.servers and irc.servers[sid].remote != remoteirc.name):
             # SID changed in the meantime; abort.
-            return
+            return None
 
         log.debug('(%s) get_relay_server_sid: got %s for %s.relay (round 2)', irc.name, sid, remoteirc.name)
         return sid
@@ -486,7 +485,7 @@ def spawn_relay_user(irc, remoteirc, user, times_tagged=0, reuse_sid=None):
     if userobj is None:
         # The query wasn't actually a valid user, or the network hasn't
         # been connected yet... Oh well!
-        return
+        return None
 
     nick = normalize_nick(remoteirc, irc.name, userobj.nick, times_tagged=times_tagged)
 
@@ -531,7 +530,7 @@ def spawn_relay_user(irc, remoteirc, user, times_tagged=0, reuse_sid=None):
         if not rsid:
             log.debug('(%s) spawn_relay_user: aborting user spawn for %s/%s @ %s (failed to retrieve a '
                       'working SID).', irc.name, user, nick, remoteirc.name)
-            return
+            return None
 
     # This is the legacy (< 2.0-beta1) control for relay IP sharing
     try:
@@ -588,7 +587,7 @@ def get_remote_user(irc, remoteirc, user, spawn_if_missing=True, times_tagged=0,
             if hide:
                 log.debug('(%s) get_remote_user: ignoring user %s since they are marked invisible', irc.name,
                           user)
-                return
+                return None
 
         log.debug('(%s) Grabbing spawnlocks[%s] from thread %r in function %r', irc.name, irc.name,
                   threading.current_thread().name, inspect.currentframe().f_code.co_name)
@@ -642,8 +641,7 @@ def get_orig_user(irc, user, targetirc=None):
                       'remoteuser for %r (looking up %s/%s).', irc.name, targetirc.name,
                       res, remoteuser[1], user, irc.name)
             return res
-        else:
-            return remoteuser
+        return remoteuser
 
 def get_relay(irc, channel):
     """Finds the matching relay entry name for the given network, channel
@@ -664,14 +662,13 @@ def get_remote_channel(irc, remoteirc, channel):
     remotenetname = remoteirc.name
     chanpair = get_relay(irc, channel)
     if chanpair is None:
-        return
+        return None
 
     if chanpair[0] == remotenetname:
         return chanpair[1]
-    else:
-        for link in db[chanpair]['links']:
-            if link[0] == remotenetname:
-                return link[1]
+    for link in db[chanpair]['links']:
+        if link[0] == remotenetname:
+            return link[1]
 
 def initialize_channel(irc, channel):
     """Initializes a relay channel (merge local/remote users, set modes, etc.)."""
@@ -767,7 +764,7 @@ def _claim_should_bounce(irc, channel):
         limit = irc.get_service_option('relay', 'claim_bounce_limit', default=15)
         if limit < 0:  # Disabled
             return True
-        elif limit < 5:  # Anything below this is just asking for desyncs...
+        if limit < 5:  # Anything below this is just asking for desyncs...
             log.warning('(%s) relay: the minimum supported value for relay::claim_bounce_limit is 5.', irc.name)
             limit = 5
 
@@ -1003,7 +1000,7 @@ def relay_joins(irc, channel, users, ts, targetirc=None, **kwargs):
                                     log.warning('(%s) Refusing to set modedelta mode %r on %s because it is a list or prefix mode',
                                                 irc.name, modechar, channel)
                                     continue
-                                elif not remoteirc.has_cap('can-spawn-clients'):
+                                if not remoteirc.has_cap('can-spawn-clients'):
                                     log.debug('(%s) relay.handle_mode: Not enforcing modedelta modes on bot-only network %s',
                                               irc.name, remoteirc.name)
                                     continue
@@ -1155,7 +1152,7 @@ def get_supported_cmodes(irc, remoteirc, channel, modes):
 
         if modesync == 'none':
             return []  # Do nothing
-        elif modesync == 'half':
+        if modesync == 'half':
             whitelist = CLIENTBOT_WHITELISTED_CMODES
 
     supported_modes = []
@@ -1294,12 +1291,11 @@ def get_supported_cmodes(irc, remoteirc, channel, modes):
                                 log.debug('(%s) relay.get_supported_cmodes: mangling static matching extban %s => %s for %s',
                                           irc.name, old_arg, arg, remoteirc.name)
                                 break
-                            else:
-                                # Unsupported, don't forward it.
-                                log.debug("(%s) relay.get_supported_cmodes: setting mode_parse_aborted as (%r, %r) "
-                                          "(name=%r; extban_name=%r) doesn't match any (static) extban on %s",
-                                          irc.name, supported_char, arg, name, extban_name, remoteirc.name)
-                                mode_parse_aborted = True
+                            # Unsupported, don't forward it.
+                            log.debug("(%s) relay.get_supported_cmodes: setting mode_parse_aborted as (%r, %r) "
+                                      "(name=%r; extban_name=%r) doesn't match any (static) extban on %s",
+                                      irc.name, supported_char, arg, name, extban_name, remoteirc.name)
+                            mode_parse_aborted = True
                         elif extban_prefix.endswith(':') and arg.startswith(extban_prefix):
                             # This is a full extban with a prefix and some data. The assumption: all extbans with data
                             # have a prefix ending with : (as a delimiter)
@@ -1310,11 +1306,10 @@ def get_supported_cmodes(irc, remoteirc, channel, modes):
                                 log.debug('(%s) relay.get_supported_cmodes: mangling matching extban arg %s => %s for %s',
                                           irc.name, old_arg, arg, remoteirc.name)
                                 break
-                            else:
-                                log.debug("(%s) relay.get_supported_cmodes: setting mode_parse_aborted as (%r, %r) "
-                                          "(name=%r; extban_name=%r) doesn't match any (dynamic) extban on %s",
-                                          irc.name, supported_char, arg, name, extban_name, remoteirc.name)
-                                mode_parse_aborted = True
+                            log.debug("(%s) relay.get_supported_cmodes: setting mode_parse_aborted as (%r, %r) "
+                                      "(name=%r; extban_name=%r) doesn't match any (dynamic) extban on %s",
+                                      irc.name, supported_char, arg, name, extban_name, remoteirc.name)
+                            mode_parse_aborted = True
                     else:
                         if name in ('ban', 'banexception', 'invex', 'quiet') and not remoteirc.is_hostmask(arg):
                             # Don't add unsupported bans that don't match n!u@h syntax.
@@ -1373,9 +1368,7 @@ def handle_relay_whois(irc, source: str, command: str, args: dict):
         Returns whether we should send the given info line in WHOIS. This validates the
         corresponding configuration option for being either "all" or "opers"."""
         setting = conf.conf.get('relay', {}).get(infoline, '').lower()
-        if setting == 'all':
-            return True
-        elif setting == 'opers' and irc.is_oper(source):
+        if setting == 'all' or (setting == 'opers' and irc.is_oper(source)):
             return True
         return False
 
@@ -1617,11 +1610,11 @@ def handle_messages(irc, numeric: str, command: str, args: dict):
         # Drop attempted PMs between internal clients (this shouldn't happen,
         # but whatever).
         return
-    elif (numeric in irc.servers) and (not notice):
+    if (numeric in irc.servers) and (not notice):
         log.debug('(%s) relay.handle_messages: dropping PM from server %s to %s',
                   irc.name, numeric, target)
         return
-    elif not irc.has_cap('can-spawn-clients') and not world.plugins.get('relay_clientbot'):
+    if not irc.has_cap('can-spawn-clients') and not world.plugins.get('relay_clientbot'):
         # For consistency, only read messages from clientbot networks if relay_clientbot is loaded
         return
 
@@ -2082,7 +2075,7 @@ def handle_mode(irc, numeric: str, command: str, args: dict):
                     log.debug('(%s) relay.handle_mode: Not enforcing invalid modedelta mode %s on %s (list or prefix mode)',
                               irc.name, str(modepair), target)
                     continue
-                elif not irc.has_cap('can-spawn-clients'):
+                if not irc.has_cap('can-spawn-clients'):
                     log.debug('(%s) relay.handle_mode: Not enforcing modedelta modes on bot-only network',
                               irc.name)
                     continue
@@ -2741,11 +2734,10 @@ def delink(irc, source: str, args: list):
                           "this relay entirely (it was created on the current "
                           "network).")
                 return
-            else:
-                for link in db[entry]['links'].copy():
-                    if link[0] == remotenet:
-                        remove_channel(world.networkobjects.get(remotenet), link[1])
-                        db[entry]['links'].remove(link)
+            for link in db[entry]['links'].copy():
+                if link[0] == remotenet:
+                    remove_channel(world.networkobjects.get(remotenet), link[1])
+                    db[entry]['links'].remove(link)
         elif remotenet:
             irc.error('You can only use this delink syntax from the network that owns this channel.')
             return
@@ -2890,7 +2882,7 @@ def linkacl(irc, source: str, args: list):
             s = 'Blocked networks for \x02%s\x02: \x02%s\x02' % (channel, ', '.join(entry.get('blocked_nets', set())) or '(empty)')
         irc.reply(s)
         return
-    elif cmd == 'whitelist':
+    if cmd == 'whitelist':
         s = 'Whitelist mode is currently \x02%s\x02 on \x02%s\x02.' % ('enabled' if whitelist else 'disabled', channel)
         if len(args) >= 3:
             setting = args[2].lower()
@@ -2898,13 +2890,12 @@ def linkacl(irc, source: str, args: list):
                 entry['use_whitelist'] = True
                 irc.reply('Done. Whitelist mode \x02enabled\x02 on \x02%s\x02.' % channel)
                 return
-            elif setting in ('n', 'np', 'false', '0', 'off'):
+            if setting in ('n', 'np', 'false', '0', 'off'):
                 entry['use_whitelist'] = False
                 irc.reply('Done. Whitelist mode \x02disabled\x02 on \x02%s\x02.' % channel)
                 return
-            else:
-                irc.reply('Unknown option %r. %s' % (setting, s))
-                return
+            irc.reply('Unknown option %r. %s' % (setting, s))
+            return
         irc.reply(s)
         return
 
@@ -3111,7 +3102,7 @@ def modedelta(irc, source: str, args: list):
                     log.warning('(%s) Refusing to set modedelta mode %r on %s because it is a list or prefix mode',
                                 irc.name, mchar, remotechan)
                     continue
-                elif not remoteirc.has_cap('can-spawn-clients'):
+                if not remoteirc.has_cap('can-spawn-clients'):
                     log.debug('(%s) relay.handle_mode: Not enforcing modedelta modes on bot-only network %s',
                               irc.name, remoteirc.name)
                     continue

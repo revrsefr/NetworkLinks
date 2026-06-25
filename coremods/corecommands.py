@@ -64,15 +64,14 @@ def unload(irc, source: str, args: list):
         name = args[0]
     except IndexError:
         irc.reply("Error: Not enough arguments. Needs 1: plugin name.")
-        return
+        return None
 
     if name in world.plugins:
         log.info('(%s) Unloading plugin %r for %s', irc.name, name, irc.get_hostmask(source))
         control.unload_plugin(name, irc=irc)
         irc.reply("Unloaded plugin %r." % name)
         return True  # We succeeded, make it clear (this status is used by reload() below)
-    else:
-        irc.reply("Unknown plugin %r." % name)
+    irc.reply("Unknown plugin %r." % name)
 
 @utils.add_cmd
 def reload(irc, source: str, args: list):

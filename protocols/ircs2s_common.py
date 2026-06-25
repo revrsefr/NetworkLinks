@@ -84,7 +84,7 @@ class IRCCommonProtocol(IRCNetwork):
                 joined_arg = ' '.join(args[idx:])[1:]  # Cut off the leading : as well
                 real_args.append(joined_arg)
                 break
-            elif arg.strip(' '):  # Skip empty args that aren't part of the multi-word arg
+            if arg.strip(' '):  # Skip empty args that aren't part of the multi-word arg
                 real_args.append(arg)
 
         return real_args
@@ -160,15 +160,15 @@ class IRCCommonProtocol(IRCNetwork):
         can forward client-only tags (those starting with +) across networks.
         """
         if not args:
-            return
+            return None
         target = args[0]
 
         if source not in self.users and source not in self.servers:
             log.debug('(%s) handle_tagmsg: dropping TAGMSG from unknown source %s', self.name, source)
-            return
+            return None
 
         if not self.is_channel(target) and target not in self.users:
-            return
+            return None
 
         # The message tags themselves are attached to the returned hook payload
         # by handle_events(); here we only validate and forward the target.
@@ -183,7 +183,7 @@ class IRCCommonProtocol(IRCNetwork):
         # <- ABAAA A :blah
         # <- ABAAA A
         if source not in self.users:
-            return
+            return None
 
         try:
             self.users[source].away = text = args[0]
@@ -345,7 +345,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
 
         if self.is_internal_client(sender) or self.is_internal_server(sender):
             log.warning("(%s) Received command %s being routed the wrong way!", self.name, command)
-            return
+            return None
 
         if command == 'ENCAP':
             # Special case for TS6 encapsulated commands (ENCAP), in forms like this:
@@ -575,7 +575,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
         if killed in self.users:
             userdata = self._remove_client(killed)
         else:
-            return
+            return None
 
         # TS6-style kills look something like this:
         # <- :jlu5 KILL 38QAAAAAA :hidden-1C620195!jlu5 (test)
@@ -700,7 +700,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
                 log.warning('(%s) Got user@server message with invalid server '
                             'name %r (full target: %r)', self.name, server_check,
                             args[0])
-                return
+                return None
 
         target = self._get_UID(raw_target)
 
@@ -732,7 +732,7 @@ class IRCS2SProtocol(IRCCommonProtocol):
             if not_found:
                 self.numeric(self.sid, 401, source, '%s :No such nick' %
                              args[0])
-                return
+                return None
 
         # Coerse =#channel from Charybdis op moderated +z to @#channel.
         if target.startswith('='):

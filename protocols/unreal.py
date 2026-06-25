@@ -663,15 +663,14 @@ class UnrealProtocol(TS6BaseProtocol):
                 self.users[numeric].channels.discard(ch)
             return {'channels': oldchans, 'text': 'Left all channels.', 'parse_as': 'PART'}
 
-        else:
-            for channel in args[0].split(','):
-                c = self._channels[channel]
-                self.users[numeric].channels.add(channel)
-                self._channels[channel].users.add(numeric)
-                # Call hooks manually, because one JOIN command in UnrealIRCd can
-                # have multiple channels...
-                self.call_hooks([numeric, command, {'channel': channel, 'users': [numeric], 'modes':
-                                                       c.modes, 'ts': c.ts}])
+        for channel in args[0].split(','):
+            c = self._channels[channel]
+            self.users[numeric].channels.add(channel)
+            self._channels[channel].users.add(numeric)
+            # Call hooks manually, because one JOIN command in UnrealIRCd can
+            # have multiple channels...
+            self.call_hooks([numeric, command, {'channel': channel, 'users': [numeric], 'modes':
+                                                   c.modes, 'ts': c.ts}])
 
     def handle_sjoin(self, numeric: str, command: str, args: list):
         """Handles the UnrealIRCd SJOIN command."""
@@ -794,7 +793,7 @@ class UnrealProtocol(TS6BaseProtocol):
                     # timestamps). Drop the mode change to prevent mode floods.
                     log.debug("(%s) Received mode bounce %s in channel %s! Our TS: %s",
                               self.name, modes, channel, self._channels[channel].ts)
-                    return
+                    return None
 
                 self.apply_modes(channel, parsedmodes)
 
@@ -804,10 +803,9 @@ class UnrealProtocol(TS6BaseProtocol):
                 if their_ts > 0:
                     self.updateTS(numeric, channel, their_ts)
             return {'target': channel, 'modes': parsedmodes, 'channeldata': oldobj}
-        else:
-            # User mode change
-            target = self._get_UID(args[0])
-            return self._handle_umode(target, self.parse_modes(target, args[1:]))
+        # User mode change
+        target = self._get_UID(args[0])
+        return self._handle_umode(target, self.parse_modes(target, args[1:]))
 
     def _check_cloak_change(self, uid, parsedmodes):
         """
@@ -900,7 +898,7 @@ class UnrealProtocol(TS6BaseProtocol):
                 if not self.users[target].services_account:
                     account = self.get_friendly_name(target)
                 else:
-                    return
+                    return None
             else:
                 if account.isdigit():
                     # If the +d argument is a number, ignore it and set the account name to the nick.
@@ -911,7 +909,7 @@ class UnrealProtocol(TS6BaseProtocol):
 
             if not self.users[target].services_account:
                 # User already has no account; ignore.
-                return
+                return None
 
             account = ''
         elif ('+d', None) in parsedmodes:
@@ -920,7 +918,7 @@ class UnrealProtocol(TS6BaseProtocol):
             if account == '0':  # +d 0 means logout
                 account = ''
         else:
-            return
+            return None
 
         self.call_hooks([target, 'CLIENT_SERVICES_LOGIN', {'text': account}])
         # The internal mode +d used for services stamps clashes with the DEAF mode, so don't parse it as
@@ -930,7 +928,7 @@ class UnrealProtocol(TS6BaseProtocol):
     def _handle_umode(self, target, parsedmodes):
         """Internal helper function to parse umode changes."""
         if not parsedmodes:
-            return
+            return None
 
         self.apply_modes(target, parsedmodes)
 
@@ -994,7 +992,7 @@ class UnrealProtocol(TS6BaseProtocol):
             log.warning("(%s) Bouncing attempt from %s to change ident of NetLink client %s",
                         self.name, self.get_friendly_name(source), self.get_friendly_name(target))
             self.update_client(target, 'IDENT', self.users[target].ident)
-            return
+            return None
 
         self.users[target].ident = newident = args[1]
         return {'target': target, 'newident': newident}
@@ -1008,7 +1006,7 @@ class UnrealProtocol(TS6BaseProtocol):
             log.warning("(%s) Bouncing attempt from %s to change host of NetLink client %s",
                         self.name, self.get_friendly_name(source), self.get_friendly_name(target))
             self.update_client(target, 'HOST', self.users[target].host)
-            return
+            return None
 
         self.users[target].host = newhost = args[1]
 
@@ -1027,7 +1025,7 @@ class UnrealProtocol(TS6BaseProtocol):
             log.warning("(%s) Bouncing attempt from %s to change gecos of NetLink client %s",
                         self.name, self.get_friendly_name(source), self.get_friendly_name(target))
             self.update_client(target, 'REALNAME', self.users[target].realname)
-            return
+            return None
 
         self.users[target].realname = newgecos = args[1]
         return {'target': target, 'newgecos': newgecos}

@@ -565,7 +565,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
                 raise ProtocolError("Remote protocol version is too old! "
                                     "At least %s is needed. (got %s)" %
                                     (self.proto_ver, protocol_version))
-            elif protocol_version > self.MAX_PROTO_VER:
+            if protocol_version > self.MAX_PROTO_VER:
                 log.warning("(%s) NetLink support for InspIRCd > 4.x is experimental, "
                             "and should not be relied upon for anything important.",
                             self.name)
@@ -888,7 +888,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
             self.servers[source] = Server(self, None, servername, desc=sdesc)
             self.uplink = source
             log.debug('(%s) inspircd: found uplink %s', self.name, self.uplink)
-            return
+            return None
 
         # Other server introductions.
         # insp20:
@@ -1063,9 +1063,8 @@ class InspIRCdProtocol(TS6BaseProtocol):
             reason = 'Requested by %s' % self.get_hostmask(numeric)
             self._send_with_prefix(uplink, 'SQUIT %s :%s' % (target, reason))
             return self.handle_squit(numeric, 'SQUIT', [target, reason])
-        else:
-            log.debug("(%s) Got RSQUIT for '%s', which is either invalid or not "
-                      "a server of ours!", self.name, args[0])
+        log.debug("(%s) Got RSQUIT for '%s', which is either invalid or not "
+                  "a server of ours!", self.name, args[0])
 
     def handle_metadata(self, numeric: str, command: str, args: list):
         """
@@ -1125,11 +1124,10 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
         if not self.is_internal_client(target):
             log.warning("(%s) Got SAKICK for client that not one of ours: %s", self.name, target)
-            return
-        else:
-            # Like RSQUIT, SAKICK requires that the receiving server acknowledge that a kick has
-            # happened. This comes from the server hosting the target client.
-            server = self.get_server(target)
+            return None
+        # Like RSQUIT, SAKICK requires that the receiving server acknowledge that a kick has
+        # happened. This comes from the server hosting the target client.
+        server = self.get_server(target)
 
         self.kick(server, channel, target, reason)
         return {'channel': channel, 'target': target, 'text': reason}

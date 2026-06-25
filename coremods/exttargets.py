@@ -55,14 +55,13 @@ def account(irc, host: str, uid: str) -> bool:
     if len(groups) == 1:
         # First scenario. Return True if user is logged in.
         return bool(slogin)
-    elif len(groups) == 2:
+    if len(groups) == 2:
         # Second scenario. Return True if the user's account matches the one given.
         return slogin == irc.to_lower(groups[1]) and homenet == irc.name
-    else:
-        # Third or fourth scenario. If there are more than 3 groups, the rest are ignored.
-        # In other words: Return True if the user is logged in, the query matches either '*' or the
-        # user's login, and the user is connected on the network requested.
-        return slogin and (irc.to_lower(groups[1]) in ('*', slogin)) and (homenet == groups[2])
+    # Third or fourth scenario. If there are more than 3 groups, the rest are ignored.
+    # In other words: Return True if the user is logged in, the query matches either '*' or the
+    # user's login, and the user is connected on the network requested.
+    return slogin and (irc.to_lower(groups[1]) in ('*', slogin)) and (homenet == groups[2])
 
 @bind
 def ircop(irc, host: str, uid: str) -> bool:
@@ -80,9 +79,8 @@ def ircop(irc, host: str, uid: str) -> bool:
     if len(groups) == 1:
         # 1st scenario.
         return irc.is_oper(uid)
-    else:
-        # 2nd scenario. Match the opertype glob to the opertype.
-        return irc.match_text(groups[1], irc.users[uid].opertype)
+    # 2nd scenario. Match the opertype glob to the opertype.
+    return irc.match_text(groups[1], irc.users[uid].opertype)
 
 @bind
 def server(irc, host: str, uid: str) -> bool:
@@ -130,7 +128,7 @@ def channel(irc, host: str, uid: str) -> bool:
     if len(groups) == 2:
         # Just #channel was given as query
         return uid in irc.channels[channel].users
-    elif len(groups) >= 3:
+    if len(groups) >= 3:
         # For things like #channel:op, check if the query is in the user's prefix modes.
         return (uid in irc.channels[channel].users) and (groups[2].lower() in irc.channels[channel].get_prefix_modes(uid))
     return False
@@ -151,7 +149,7 @@ def netlinkacc(irc, host: str, uid: str) -> bool:
     if len(groups) == 1:
         # First scenario. Return True if user is logged in.
         return bool(login)
-    elif len(groups) == 2:
+    if len(groups) == 2:
         # Second scenario. Return True if the user's login matches the one given.
         return login == groups[1]
     return False

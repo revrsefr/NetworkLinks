@@ -445,11 +445,10 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
                         # Ignore prefix modes for virtual internal clients.
                         log.debug('(%s) mode: skipping virtual client prefixmode change %s', self.name, modepair)
                         continue
-                    else:
-                        # For other clients, change the mode argument to nick instead of PUID.
-                        nick = self.get_friendly_name(modepair[1])
-                        log.debug('(%s) mode: coersing mode %s argument to %s', self.name, modepair, nick)
-                        modepair = (modepair[0], nick)
+                    # For other clients, change the mode argument to nick instead of PUID.
+                    nick = self.get_friendly_name(modepair[1])
+                    log.debug('(%s) mode: coersing mode %s argument to %s', self.name, modepair, nick)
+                    modepair = (modepair[0], nick)
                 extmodes.append(modepair)
 
             log.debug('(%s) mode: filtered modes for %s: %s', self.name, channel, extmodes)
@@ -520,7 +519,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         """
         if account is None:  # Ignore when account=None
             return
-        elif account in ('*', '0'):  # No account
+        if account in ('*', '0'):  # No account
             account = ''
 
         if account != self.users[uid].services_account:
@@ -595,7 +594,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         """
         if 'sasl' not in self.ircv3_caps:
             log.info("(%s) Skipping SASL auth since the IRCd doesn't support it.", self.name)
-            return
+            return None
 
         sasl_mech = self.serverdata.get('sasl_mechanism')
         if sasl_mech:
@@ -616,7 +615,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
                     log.warning("(%s) Not attempting EXTERNAL authentication; SASL external requires "
                                 "SSL, but it isn't enabled.", self.name)
                     return False
-                elif not (ssl_cert and ssl_key):
+                if not (ssl_cert and ssl_key):
                     log.warning("(%s) Not attempting EXTERNAL authentication; ssl_certfile and/or "
                                 "ssl_keyfile aren't correctly set.", self.name)
                     return False
@@ -1051,7 +1050,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         # Don't repeat hooks if we're the kicker, unless we're also the target.
         if self.is_internal_client(source) or self.is_internal_server(source):
             if self.pseudoclient and target != self.pseudoclient.uid:
-                return
+                return None
         return {'channel': channel, 'target': target, 'text': reason}
 
     def handle_mode(self, source, command, args):
@@ -1070,7 +1069,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
 
         if self.is_internal_client(target):
             log.debug('(%s) Suppressing MODE change hook for internal client %s', self.name, target)
-            return
+            return None
         if changedmodes:
             # Prevent infinite loops: don't send MODE hooks if the sender is US.
             # Note: this is not the only check in Clientbot to prevent mode loops: if our nick
@@ -1127,8 +1126,8 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
             # sent by ZNC, when the login nick and the actual IRC nick of the bouncer differ.
             self.pseudoclient.nick = newnick
             log.debug('(%s) Pre-auth FNC: Changing our nick to %s', self.name, args[0])
-            return
-        elif source == self.pseudoclient.uid:
+            return None
+        if source == self.pseudoclient.uid:
             self._nick_fails = 0  # Our last nick change succeeded.
 
         oldnick = self.users[source].nick
@@ -1161,8 +1160,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
                 log.debug('(%s) clientbot.handle_part: not forwarding part hook for %s since we requested it', self.name, channel)
                 self._channels[channel]._clientbot_part_requested = False
                 continue
-            else:
-                notify_channels.append(channel)
+            notify_channels.append(channel)
 
         if notify_channels:
             log.debug('(%s) clientbot.handle_part: returning part hook for %s (original: %s)', self.name, notify_channels, channels)
@@ -1182,7 +1180,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
 
         if self.is_internal_client(source) or self.is_internal_server(source):
             log.warning('(%s) Received %s to %s being routed the wrong way!', self.name, command, target)
-            return
+            return None
 
         real_target = target.lstrip(''.join(self.prefixmodes.values()))
         if not self.is_channel(real_target):
@@ -1198,7 +1196,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         We translate the target nick to a PUID where necessary so relay can forward it.
         """
         if not args:
-            return
+            return None
         target = args[0]
         # For non-channel targets resolve the nick to a PUID so relay can route it.
         real_target = target.lstrip(''.join(self.prefixmodes.values()))
@@ -1213,9 +1211,9 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         if self.pseudoclient and source == self.pseudoclient.uid:
             # Someone faked a quit from us? We should abort.
             raise ProtocolError("Received QUIT from uplink (%s)" % args[0])
-        elif source not in self.users:
+        if source not in self.users:
             log.debug('(%s) Ignoring QUIT on non-existent user %s', self.name, source)
-            return
+            return None
 
         userdata = self.users[source]
         self.quit(source, args[0])
@@ -1266,7 +1264,7 @@ class ClientbotWrapperProtocol(ClientbotBaseProtocol, IRCCommonProtocol):
         # <- :irc3.lose-the-game.nat 368 james #test :End of Channel Ban List
         channel = args[1]
         if channel not in self.channels:
-            return
+            return None
 
         modes = [('+%s' % banmode, m[1]) for m in self.channels[channel].modes if m[0] == banmode]
 

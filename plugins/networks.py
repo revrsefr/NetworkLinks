@@ -116,11 +116,11 @@ def remote(irc, source: str, args: list):
         irc.error('Unknown service %r.' % args.service)
         REMOTE_IN_USE.clear()
         return
-    elif not remoteirc.connected.is_set():
+    if not remoteirc.connected.is_set():
         irc.error('Network %r is not connected.' % netname)
         REMOTE_IN_USE.clear()
         return
-    elif not world.services[args.service].uids.get(netname):
+    if not world.services[args.service].uids.get(netname):
         irc.error('The requested service %r is not available on %r.' % (args.service, netname))
         REMOTE_IN_USE.clear()
         return
@@ -147,8 +147,7 @@ def remote(irc, source: str, args: list):
                   text, placeholder_self.name)
 
         # Override the source option to make sure the source is valid on the local network.
-        if 'source' in kwargs:
-            del kwargs['source']
+        kwargs.pop('source', None)
         irc.reply(text, source=irc.pseudoclient.uid, **kwargs)
 
     old_reply = remoteirc._reply

@@ -102,7 +102,7 @@ def _punish(irc, target, channel, punishment, reason):
     if target not in irc.users:
         log.warning("(%s) antispam: got target %r that isn't a user?", irc.name, target)
         return False
-    elif irc.is_oper(target):
+    if irc.is_oper(target):
         log.debug("(%s) antispam: refusing to punish oper %s/%s", irc.name, target, irc.get_friendly_name(target))
         return False
 
@@ -121,10 +121,10 @@ def _punish(irc, target, channel, punishment, reason):
         if exempt_level == 'voice' and c.is_voice_plus(target):
             log.debug("(%s) antispam: refusing to punish voiced and above %s/%s", irc.name, target, target_nick)
             return False
-        elif exempt_level == 'halfop' and c.is_halfop_plus(target):
+        if exempt_level == 'halfop' and c.is_halfop_plus(target):
             log.debug("(%s) antispam: refusing to punish halfop and above %s/%s", irc.name, target, target_nick)
             return False
-        elif exempt_level == 'op' and c.is_op_plus(target):
+        if exempt_level == 'op' and c.is_op_plus(target):
             log.debug("(%s) antispam: refusing to punish op and above %s/%s", irc.name, target, target_nick)
             return False
 
@@ -163,8 +163,8 @@ def _punish(irc, target, channel, punishment, reason):
                       'accepted settings include: %s OR any combination of '
                       'these joined together with a "+".',
                       irc.name, punishment, ', '.join(PUNISH_OPTIONS))
-            return
-        elif action == 'block':
+            return None
+        if action == 'block':
             # We only need to increment this for this function to return True
             successful_punishments += 1
         elif action == 'kill':
@@ -229,7 +229,7 @@ def handle_masshighlight(irc, source: str, command: str, args: dict):
                                           MASSHIGHLIGHT_DEFAULTS)
 
     if not mhl_settings.get('enabled', False):
-        return
+        return None
 
     my_uid = sbot.uids.get(irc.name)
 
@@ -240,25 +240,25 @@ def handle_masshighlight(irc, source: str, command: str, args: dict):
     if (not irc.connected.is_set()) or (not my_uid):
         # Break if the network isn't ready.
         log.debug("(%s) antispam.masshighlight: skipping processing; network isn't ready", irc.name)
-        return
-    elif not irc.is_channel(channel):
+        return None
+    if not irc.is_channel(channel):
         # Not a channel - mass highlight blocking only makes sense within channels
         log.debug("(%s) antispam.masshighlight: skipping processing; %r is not a channel", irc.name, channel)
-        return
-    elif irc.is_internal_client(source):
+        return None
+    if irc.is_internal_client(source):
         # Ignore messages from our own clients.
         log.debug("(%s) antispam.masshighlight: skipping processing message from internal client %s", irc.name, source)
-        return
-    elif source not in irc.users:
+        return None
+    if source not in irc.users:
         log.debug("(%s) antispam.masshighlight: ignoring message from non-user %s", irc.name, source)
-        return
-    elif channel not in irc.channels or my_uid not in irc.channels[channel].users:
+        return None
+    if channel not in irc.channels or my_uid not in irc.channels[channel].users:
         # We're not monitoring this channel.
         log.debug("(%s) antispam.masshighlight: skipping processing message from channel %r we're not in", irc.name, channel)
-        return
-    elif len(text) < mhl_settings.get('min_length', MASSHIGHLIGHT_DEFAULTS['min_length']):
+        return None
+    if len(text) < mhl_settings.get('min_length', MASSHIGHLIGHT_DEFAULTS['min_length']):
         log.debug("(%s) antispam.masshighlight: skipping processing message %r; it's too short", irc.name, text)
-        return
+        return None
 
     if irc.get_service_option('antispam', 'strip_formatting', True):
         text = utils.strip_irc_formatting(text)
@@ -310,7 +310,7 @@ def handle_textfilter(irc, source: str, command: str, args: dict):
                                           TEXTFILTER_DEFAULTS)
 
     if not txf_settings.get('enabled', False):
-        return
+        return None
 
     my_uid = sbot.uids.get(irc.name)
 
@@ -321,21 +321,21 @@ def handle_textfilter(irc, source: str, command: str, args: dict):
     if (not irc.connected.is_set()) or (not my_uid):
         # Break if the network isn't ready.
         log.debug("(%s) antispam.textfilters: skipping processing; network isn't ready", irc.name)
-        return
-    elif irc.is_internal_client(source):
+        return None
+    if irc.is_internal_client(source):
         # Ignore messages from our own clients.
         log.debug("(%s) antispam.textfilters: skipping processing message from internal client %s", irc.name, source)
-        return
-    elif source not in irc.users:
+        return None
+    if source not in irc.users:
         log.debug("(%s) antispam.textfilters: ignoring message from non-user %s", irc.name, source)
-        return
+        return None
 
     if irc.is_channel(target):
         channel_or_none = target
         if target not in irc.channels or my_uid not in irc.channels[target].users:
             # We're not monitoring this channel.
             log.debug("(%s) antispam.textfilters: skipping processing message from channel %r we're not in", irc.name, target)
-            return
+            return None
     else:
         channel_or_none = None
         watch_pms = txf_settings.get('watch_pms', TEXTFILTER_DEFAULTS['watch_pms'])
@@ -343,13 +343,13 @@ def handle_textfilter(irc, source: str, command: str, args: dict):
         if watch_pms == 'services':
             if not irc.get_service_bot(target):
                 log.debug("(%s) antispam.textfilters: skipping processing; %r is not a service bot (watch_pms='services')", irc.name, target)
-                return
+                return None
         elif watch_pms == 'all':
             log.debug("(%s) antispam.textfilters: checking all PMs (watch_pms='all')", irc.name)
         else:
             # Not a channel.
             log.debug("(%s) antispam.textfilters: skipping processing; %r is not a channel and watch_pms is disabled", irc.name, target)
-            return
+            return None
 
     # Merge together global, per-network, and runtime (added via IRC) textfilter lists.
     txf_globs = set(conf.conf.get('antispam', {}).get('textfilter_globs', [])) | \
@@ -394,9 +394,9 @@ def handle_partquit(irc, source: str, command: str, args: dict):
 
     if not text:
         return  # No text to match against
-    elif command == 'QUIT' and not pq_settings.get('watch_quits', True):
+    if command == 'QUIT' and not pq_settings.get('watch_quits', True):
         return  # Not enabled
-    elif command == 'PART' and not pq_settings.get('watch_parts', True):
+    if command == 'PART' and not pq_settings.get('watch_parts', True):
         return
 
     # Merge together global and local partquit filter lists.

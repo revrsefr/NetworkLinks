@@ -256,13 +256,13 @@ def rpm(irc, source: str, args: list):
     if irc.has_cap('can-spawn-clients'):
         irc.error('This command is only supported on Clientbot networks. Try /msg %s <text>' % target)
         return
-    elif relay is None:
+    if relay is None:
         irc.error('NetLink Relay is not loaded.')
         return
-    elif not text:
+    if not text:
         irc.error('No text given.')
         return
-    elif not (conf.conf.get('relay') or {}).get('allow_clientbot_pms', True):
+    if not (conf.conf.get('relay') or {}).get('allow_clientbot_pms', True):
         irc.error('Private messages with users connected via Clientbot have been '
                   'administratively disabled.')
         return
@@ -275,13 +275,12 @@ def rpm(irc, source: str, args: list):
     if not uids:
         irc.error('Unknown user %s.' % target)
         return
-    elif len(uids) > 1:
+    if len(uids) > 1:
         targets = ['\x02%s\x02: %s @ %s' % (uid, irc.get_hostmask(uid), irc.users[uid].remote[0]) for uid in uids]
         irc.error('Please select the target you want to PM: %s' % (', '.join(targets)))
         return
-    else:
-        assert not irc.is_internal_client(source), "rpm is not allowed from NetLink bots"
+    assert not irc.is_internal_client(source), "rpm is not allowed from NetLink bots"
 
-        # Send the message through relay by faking a hook for its handler.
-        relay.handle_messages(irc, source, 'RELAY_CLIENTBOT_PRIVMSG', {'target': uids[0], 'text': text})
-        irc.reply('Message sent.')
+    # Send the message through relay by faking a hook for its handler.
+    relay.handle_messages(irc, source, 'RELAY_CLIENTBOT_PRIVMSG', {'target': uids[0], 'text': text})
+    irc.reply('Message sent.')

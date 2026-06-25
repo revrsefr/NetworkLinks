@@ -17,7 +17,7 @@ def _changehost(irc, target):
 
     if target not in irc.users:
         return
-    elif irc.is_internal_client(target):
+    if irc.is_internal_client(target):
         log.debug('(%s) Skipping changehost on internal client %s', irc.name, target)
         return
 
