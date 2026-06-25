@@ -691,7 +691,7 @@ class NetLinkNetworkCore(structures.CamelCaseToSnakeCase):
         self.call_hooks([None, 'NETLINK_DISCONNECT', {'was_successful': self.was_successful}])
 
         # Clear the to_lower cache.
-        self.to_lower.cache_clear()
+        self._to_lower_cached.cache_clear()
 
     def _remove_client(self, numeric):
         """
