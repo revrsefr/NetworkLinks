@@ -130,6 +130,10 @@ def _main() -> None:
         with open(pidfile, 'w') as f:
             f.write(str(os.getpid()))
 
+    # Select the configured language before loading anything that emits text.
+    from netlink import i18n
+    i18n.setup()
+
     # Load configured plugins
     to_load = conf.conf['plugins']
     utils._reset_module_dirs()

@@ -7,6 +7,7 @@ from __future__ import annotations
 import sys
 
 from netlink import utils, world
+from netlink.i18n import _
 from netlink.log import log
 
 from . import control, permissions
@@ -134,9 +135,9 @@ def rehash(irc, source: str, args: list):
 
     irc.announce_administration("%s rehashed the NetLink configuration." % irc.get_hostmask(source))
     if errors:
-        irc.reply("Rehash complete with %d error(s): %s" % (len(errors), '; '.join(errors)))
+        irc.reply(_("Rehash complete with %d error(s): %s") % (len(errors), '; '.join(errors)))
     else:
-        irc.reply("Done. Reloaded config, plugins and coremods; links left intact.")
+        irc.reply(_("Done. Reloaded config, plugins and coremods; links left intact."))
 
 @utils.add_cmd
 def clearqueue(irc, source: str, args: list):

@@ -15,7 +15,7 @@ RUFF    := $(VENV)/bin/ruff
 PYTEST  := $(VENV)/bin/pytest
 MYPY    := $(VENV)/bin/mypy
 
-.PHONY: dev lint test coverage typecheck check install-hooks clean
+.PHONY: dev lint test coverage typecheck check install-hooks clean i18n-extract i18n-compile
 
 dev:  ## Create the dev venv and install tooling + the package
 	python3 -m venv $(VENV)
@@ -46,6 +46,15 @@ install-hooks:  ## Install the git pre-commit hook
 	@cp tools/pre-commit .git/hooks/pre-commit
 	@chmod +x .git/hooks/pre-commit
 	@echo "✓ installed .git/hooks/pre-commit (bypass a commit with --no-verify)"
+
+i18n-extract:  ## Re-scan the source for translatable strings -> locales/netlink.pot
+	xgettext --language=Python --keyword=_ --from-code=UTF-8 --package-name=NetLink \
+	  --output=locales/netlink.pot $$(git ls-files '*.py' | grep -v '^test/')
+
+i18n-compile:  ## Compile every .po catalogue to its .mo
+	@for po in locales/*/LC_MESSAGES/*.po; do \
+	  echo "compiling $$po"; msgfmt "$$po" -o "$${po%.po}.mo"; \
+	done
 
 clean:  ## Remove caches and build artifacts
 	rm -rf .mypy_cache .pytest_cache .coverage netlink.egg-info build dist

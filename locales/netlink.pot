@@ -1,0 +1,87 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the NetLink package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: NetLink\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-25 17:38+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: coremods/login.py:87
+msgid ""
+"Cannot log in to an account with a hashed password because passlib is not "
+"installed."
+msgstr ""
+
+#: coremods/login.py:95
+msgid "Cannot use 'identify' via a command proxy."
+msgstr ""
+
+#: coremods/login.py:107
+msgid "Account is not authorized to login on this network."
+msgstr ""
+
+#: coremods/login.py:111
+msgid "You must be opered."
+msgstr ""
+
+#: coremods/login.py:115
+msgid "Hostname mismatch."
+msgstr ""
+
+#: coremods/login.py:118
+#, python-format
+msgid "Successfully logged in as %s."
+msgstr ""
+
+#: coremods/login.py:128
+msgid ""
+"Error: This command must be sent in private. (Would you really type a "
+"password inside a channel?)"
+msgstr ""
+
+#: coremods/login.py:134
+msgid "Error: Not enough arguments."
+msgstr ""
+
+#: coremods/login.py:143
+msgid "Bad username or password."
+msgstr ""
+
+#: coremods/corecommands.py:138
+#, python-format
+msgid "Rehash complete with %d error(s): %s"
+msgstr ""
+
+#: coremods/corecommands.py:140
+msgid "Done. Reloaded config, plugins and coremods; links left intact."
+msgstr ""
+
+#: plugins/ignore.py:53
+#, python-format
+msgid "Ignored masks: %s"
+msgstr ""
+
+#: plugins/ignore.py:58
+#, python-format
+msgid "Not enough arguments. Needs: ignore %s <mask>"
+msgstr ""
+
+#: plugins/ignore.py:66 plugins/ignore.py:72
+msgid "Done."
+msgstr ""
+
+#: plugins/ignore.py:74
+#, python-format
+msgid "Unknown subcommand %r. Use add, del, or list."
+msgstr ""

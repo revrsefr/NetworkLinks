@@ -11,7 +11,7 @@ import signal
 import sys
 import threading
 
-from netlink import conf, utils, world  # Do not import classes, it'll import loop
+from netlink import conf, i18n, utils, world  # Do not import classes, it'll import loop
 from netlink.log import _get_console_log_level, _make_file_logger, _stop_file_loggers, log
 
 from . import login
@@ -272,6 +272,7 @@ def rehash() -> list:
     log.debug('rehash: updating console log level')
     world.console_handler.setLevel(_get_console_log_level())
     login._make_cryptcontext()  # refresh password hashing settings
+    i18n.setup()  # re-select the configured language
 
     # Reload plugin + coremod code and apply plugin-list changes. These only touch
     # the command/hook registries and sys.modules, never the network connections.

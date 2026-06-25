@@ -7,6 +7,7 @@ from __future__ import annotations
 import hmac
 
 from netlink import conf, utils
+from netlink.i18n import _
 from netlink.log import log
 
 __all__ = ['check_login', 'pwd_context', 'verify_hash']
@@ -82,8 +83,8 @@ def verify_hash(password: str, passhash: str) -> bool:
     """Checks whether the password given matches the hash."""
     if password:
         if not pwd_context:
-            raise utils.NotAuthorizedError("Cannot log in to an account with a hashed password "
-                                           "because passlib is not installed.")
+            raise utils.NotAuthorizedError(
+                _("Cannot log in to an account with a hashed password because passlib is not installed."))
 
         return pwd_context.verify(password, passhash)
     return False  # No password given!
@@ -91,7 +92,7 @@ def verify_hash(password: str, passhash: str) -> bool:
 def _irc_try_login(irc, source: str, username: str):
     """Internal function to process logins via IRC."""
     if irc.is_internal_client(source):
-        irc.error("Cannot use 'identify' via a command proxy.")
+        irc.error(_("Cannot use 'identify' via a command proxy."))
         return None
 
     logindata = _get_account(username)
@@ -103,18 +104,18 @@ def _irc_try_login(irc, source: str, username: str):
     if network_filter and irc.name not in network_filter:
         log.warning("(%s) Failed login to %r from %s (wrong network: networks filter says %r but we got %r)",
                     irc.name, username, irc.get_hostmask(source), ', '.join(network_filter), irc.name)
-        raise utils.NotAuthorizedError("Account is not authorized to login on this network.")
+        raise utils.NotAuthorizedError(_("Account is not authorized to login on this network."))
 
     if require_oper and not irc.is_oper(source):
         log.warning("(%s) Failed login to %r from %s (needs oper)", irc.name, username, irc.get_hostmask(source))
-        raise utils.NotAuthorizedError("You must be opered.")
+        raise utils.NotAuthorizedError(_("You must be opered."))
 
     if hosts_filter and not any(irc.match_host(host, source) for host in hosts_filter):
         log.warning("(%s) Failed login to %r from %s (hostname mismatch)", irc.name, username, irc.get_hostmask(source))
-        raise utils.NotAuthorizedError("Hostname mismatch.")
+        raise utils.NotAuthorizedError(_("Hostname mismatch."))
 
     irc.users[source].account = username
-    irc.reply('Successfully logged in as %s.' % username)
+    irc.reply(_('Successfully logged in as %s.') % username)
     log.info("(%s) Successful login to %r by %s",
              irc.name, username, irc.get_hostmask(source))
     return True
@@ -124,13 +125,13 @@ def identify(irc, source: str, args: list) -> None:
 
     Logs in to NetLink using the configured administrator account."""
     if irc.is_channel(irc.called_in):
-        irc.reply('Error: This command must be sent in private. '
-                  '(Would you really type a password inside a channel?)')
+        irc.reply(_('Error: This command must be sent in private. '
+                    '(Would you really type a password inside a channel?)'))
         return
     try:
         username, password = args[0], args[1]
     except IndexError:
-        irc.reply('Error: Not enough arguments.')
+        irc.reply(_('Error: Not enough arguments.'))
         return
 
     if check_login(username, password):
@@ -139,6 +140,6 @@ def identify(irc, source: str, args: list) -> None:
 
     # Username not found or password incorrect.
     log.warning("(%s) Failed login to %r from %s", irc.name, username, irc.get_hostmask(source))
-    raise utils.NotAuthorizedError('Bad username or password.')
+    raise utils.NotAuthorizedError(_('Bad username or password.'))
 
 utils.add_cmd(identify, aliases=('login', 'id'))

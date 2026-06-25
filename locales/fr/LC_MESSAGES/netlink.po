@@ -1,0 +1,59 @@
+# French translations for NetLink.
+# This file is distributed under the same license as NetLink (MPL-2.0).
+msgid ""
+msgstr ""
+"Project-Id-Version: NetLink\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Cannot use 'identify' via a command proxy."
+msgstr "Impossible d'utiliser « identify » via un relais de commandes."
+
+msgid "Account is not authorized to login on this network."
+msgstr "Ce compte n'est pas autorisé à se connecter sur ce réseau."
+
+msgid "You must be opered."
+msgstr "Vous devez être opérateur IRC."
+
+msgid "Hostname mismatch."
+msgstr "Le nom d'hôte ne correspond pas."
+
+msgid "Successfully logged in as %s."
+msgstr "Connecté avec succès en tant que %s."
+
+msgid "Cannot log in to an account with a hashed password because passlib is not installed."
+msgstr "Impossible de se connecter à un compte avec un mot de passe haché car passlib n'est pas installé."
+
+msgid ""
+"Error: This command must be sent in private. (Would you really type a "
+"password inside a channel?)"
+msgstr ""
+"Erreur : cette commande doit être envoyée en privé. (Taperiez-vous vraiment "
+"un mot de passe dans un salon ?)"
+
+msgid "Error: Not enough arguments."
+msgstr "Erreur : pas assez d'arguments."
+
+msgid "Bad username or password."
+msgstr "Nom d'utilisateur ou mot de passe incorrect."
+
+msgid "Rehash complete with %d error(s): %s"
+msgstr "Rechargement terminé avec %d erreur(s) : %s"
+
+msgid "Done. Reloaded config, plugins and coremods; links left intact."
+msgstr "Terminé. Configuration, plugins et coremods rechargés ; les liens sont intacts."
+
+msgid "Ignored masks: %s"
+msgstr "Masques ignorés : %s"
+
+msgid "Not enough arguments. Needs: ignore %s <mask>"
+msgstr "Pas assez d'arguments. Requis : ignore %s <masque>"
+
+msgid "Done."
+msgstr "Terminé."
+
+msgid "Unknown subcommand %r. Use add, del, or list."
+msgstr "Sous-commande inconnue %r. Utilisez add, del ou list."

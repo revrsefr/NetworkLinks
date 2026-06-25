@@ -62,7 +62,8 @@ package-dir = {netlink = "."}
 script-files = ["netlink-mkpasswd"]
 
 [tool.setuptools.package-data]
-"*" = ["example-conf.yml", "VERSION", "README.md"]
+"*" = ["example-conf.yml", "VERSION", "README.md",
+       "locales/*/LC_MESSAGES/*.mo", "locales/*/LC_MESSAGES/*.po", "locales/*.pot"]
 
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}

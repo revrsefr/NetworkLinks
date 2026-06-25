@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from netlink import conf, structures, utils
 from netlink.coremods import permissions
+from netlink.i18n import _
 from netlink.log import log
 
 # Ignore masks added at runtime via the 'ignore' command, persisted to disk and
@@ -49,12 +50,12 @@ def ignore(irc, source: str, args: list):
     sub = args[0].lower() if args else 'list'
 
     if sub in ('list', 'ls'):
-        irc.reply("Ignored masks: %s" % (', '.join(sorted(_masks())) or "(none)"))
+        irc.reply(_("Ignored masks: %s") % (', '.join(sorted(_masks())) or "(none)"))
         return
 
     mask = ' '.join(args[1:]).strip()
     if not mask:
-        irc.error("Not enough arguments. Needs: ignore %s <mask>" % sub)
+        irc.error(_("Not enough arguments. Needs: ignore %s <mask>") % sub)
         return
 
     if sub == 'add':
@@ -62,12 +63,12 @@ def ignore(irc, source: str, args: list):
             masks.append(mask)
             datastore.save()
             log.info("(%s) %s added %r to the ignore list", irc.name, irc.get_hostmask(source), mask)
-        irc.reply("Done.")
+        irc.reply(_("Done."))
     elif sub in ('del', 'rm', 'remove'):
         if mask in masks:
             masks.remove(mask)
             datastore.save()
             log.info("(%s) %s removed %r from the ignore list", irc.name, irc.get_hostmask(source), mask)
-        irc.reply("Done.")
+        irc.reply(_("Done."))
     else:
-        irc.error("Unknown subcommand %r. Use add, del, or list." % sub)
+        irc.error(_("Unknown subcommand %r. Use add, del, or list.") % sub)

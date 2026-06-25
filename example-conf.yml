@@ -15,6 +15,11 @@ netlink:
     # Server description (shown in /links, /whois, etc.)
     serverdesc: NetLink Server
 
+    # Language for user-facing messages. "en" (default) uses the original English
+    # strings; other values load a translation catalogue from locales/<lang>/, e.g.
+    # "fr". Run "make i18n-compile" after editing translations.
+    #language: en
+
     # Sets the fantasy command prefix for the main NetLink bot. To configure fantasy prefixes for
     # other service bots, add or modify the "prefix:" option in the configuration section of each
     # plugin. (see the "games:" block for an example)
