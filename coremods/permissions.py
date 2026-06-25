@@ -25,14 +25,12 @@ def add_default_permissions(perms: dict) -> None:
     global default_permissions
     for target, permlist in perms.items():
         default_permissions[target] |= set(permlist)
-addDefaultPermissions = add_default_permissions
 
 def remove_default_permissions(perms: dict) -> None:
     """Remove default permissions from the index."""
     global default_permissions
     for target, permlist in perms.items():
         default_permissions[target] -= set(permlist)
-removeDefaultPermissions = remove_default_permissions
 
 def check_permissions(irc, uid: str, perms: list, also_show: list | None = None) -> bool:
     """

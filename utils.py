@@ -122,21 +122,18 @@ def _reset_module_dirs():
     log.debug('_reset_module_dirs: new netlink.plugins.__path__: %s', plugins.__path__)
     protocols.__path__ = [protocols.__path__[0]] + [expandpath(path) for path in conf.conf['netlink'].get('protocol_dirs', [])]
     log.debug('_reset_module_dirs: new netlink.protocols.__path__: %s', protocols.__path__)
-resetModuleDirs = _reset_module_dirs
 
 def _load_plugin(name):
     """
     Imports and returns the requested plugin.
     """
     return importlib.import_module(PLUGIN_PREFIX + name)
-loadPlugin = _load_plugin
 
 def _get_protocol_module(name):
     """
     Imports and returns the protocol module requested.
     """
     return importlib.import_module(PROTOCOL_PREFIX + name)
-getProtocolModule = _get_protocol_module
 
 def split_hostmask(mask: str) -> list:
     """
@@ -147,7 +144,6 @@ def split_hostmask(mask: str) -> list:
     if not all({nick, ident, host}):
         raise ValueError("Invalid user@host %r" % mask)
     return [nick, ident, host]
-splitHostmask = split_hostmask
 
 class ServiceBot:
     """
@@ -688,7 +684,6 @@ def register_service(name, *args, **kwargs):
     world.services[name] = sbot = ServiceBot(name, *args, **kwargs)
     sbot.spawn()
     return sbot
-registerService = register_service
 
 def unregister_service(name):
     """Unregisters an existing service bot."""
@@ -709,7 +704,6 @@ def unregister_service(name):
         ircobj.quit(uid, "Service unloaded.")
 
     del world.services[name]
-unregisterService = unregister_service
 
 def wrap_arguments(prefix, args, length, separator=' ', max_args_per_line=0):
     """

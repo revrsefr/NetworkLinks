@@ -139,10 +139,13 @@ def identify(irc, source: str, args: list) -> None:
         _irc_try_login(irc, source, username)
         return
 
-    # Process legacy logins (login:user).
-    if username.lower() == conf.conf['login'].get('user', '').lower() and password == conf.conf['login'].get('password'):
-        realuser = conf.conf['login']['user']
-        _irc_try_login(irc, source, realuser, skip_checks=True)
+    # Process legacy logins (login:user). Use a constant-time comparison so the
+    # configured password can't be recovered through timing.
+    legacy_user = conf.conf['login'].get('user', '')
+    legacy_pass = conf.conf['login'].get('password')
+    if legacy_pass and username.lower() == legacy_user.lower() \
+            and hmac.compare_digest(str(password), str(legacy_pass)):
+        _irc_try_login(irc, source, legacy_user, skip_checks=True)
         return
 
     # Username not found or password incorrect.
