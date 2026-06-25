@@ -6,7 +6,6 @@ which is read at runtime by the launcher.
 """
 
 import subprocess
-import sys
 
 
 from setuptools import setup

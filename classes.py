@@ -1825,7 +1825,7 @@ class IRCNetwork(NetLinkNetworkCoreWithUtils):
         # Cert and key files are optional, load them if specified.
         if certfile and keyfile:
             try:
-                cafile != None and context.load_verify_locations(cafile)
+                cafile is not None and context.load_verify_locations(cafile)
                 context.load_cert_chain(certfile, keyfile)
             except OSError:
                  log.exception('(%s) Caught OSError trying to initialize the SSL connection; '

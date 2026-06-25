@@ -23,7 +23,8 @@ def _main() -> None:
     conf.load_conf(args.config)
 
     from netlink.log import log
-    from netlink import classes, utils, coremods, selectdriver
+    # classes and coremods are imported for their registration side effects.
+    from netlink import classes, coremods, selectdriver, utils  # noqa: F401
 
     # Write and check for an existing PID file unless specifically told not to.
     if not args.no_pid:
