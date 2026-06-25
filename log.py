@@ -28,7 +28,7 @@ def _get_console_log_level() -> str | int:
     Returns the configured console log level.
     """
     logconf = conf.conf['logging']
-    return logconf.get('console', logconf.get('stdout')) or 'INFO'
+    return logconf.get('console') or 'INFO'
 
 # Set up logging to STDERR
 world.console_handler = logging.StreamHandler()

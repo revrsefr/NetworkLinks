@@ -95,29 +95,16 @@ def _validate_conf(conf, logger=None):
     for section in ('netlink', 'servers', 'login', 'logging'):
         validate(conf.get(section), "Missing %r section in config." % section)
 
-    # Make sure at least one form of authentication is valid.
-    # Also we'll warn them that login:user/login:password is deprecated
-    if conf['login'].get('password') or conf['login'].get('user'):
-        _log(logging.WARNING, "The 'login:user' and 'login:password' options are deprecated since NetLink 1.1. "
-             "Please switch to the new 'login:accounts' format as outlined in the example config.", logger=logger)
-
-    old_login_valid = isinstance(conf['login'].get('password'), str) and isinstance(conf['login'].get('user'), str)
+    # Authentication is via login:accounts. (The legacy login:user/password and the
+    # log:stdout option, deprecated since the 1.x series, were removed in NetLink 3.x.)
     newlogins = conf['login'].get('accounts', {})
-
-    validate(old_login_valid or newlogins, "No accounts were set, aborting!")
+    validate(newlogins, "No accounts were set under login:accounts, aborting!")
     for account, block in newlogins.items():
         validate(isinstance(account, str), "Bad username format %s" % account)
         validate(isinstance(block.get('password'), str), "Bad password %s for account %s" % (block.get('password'), account))
 
-    validate(conf['login'].get('password') != "changeme", "You have not set the login details correctly!")
-
-    if newlogins and not old_login_valid:
-        validate(conf.get('permissions'), "New-style accounts enabled but no permissions block was found. You will not be able to administrate your NetLink instance!")
-
-    if conf['logging'].get('stdout'):
-         _log(logging.WARNING, 'The log:stdout option is deprecated since NetLink 1.2 in favour of '
-                               '(a more correctly named) log:console. Please update your '
-                               'configuration accordingly!', logger=logger)
+    validate(conf.get('permissions'), "login:accounts is set but no permissions block was found. "
+             "You will not be able to administrate your NetLink instance!")
 
     return conf
 

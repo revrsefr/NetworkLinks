@@ -95,14 +95,12 @@ netlink:
     #pid_dir: ""
 
 login:
-    # NOTE: for users migrating from NetLink < 1.1, the old login:user/login:password settings
-    # have been deprecated. We strongly recommend migrating to the new "accounts:" block below, as
-    # it supports multiple accounts, hashed passwords, and allows more flexibility (accounts no
-    # longer imply admin access).
+    # Authentication uses the "accounts:" block below (supports multiple accounts,
+    # hashed passwords, and per-account restrictions). The legacy login:user /
+    # login:password settings were removed in NetLink 3.x.
 
-    # IMPORTANT: If you're switching from login:user/login:password, you MUST ADD YOURSELF to a
-    # "permissions:" block like the one below, or you will lose IRC administration access to your
-    # NetLink daemon!
+    # IMPORTANT: each account must be granted access through a "permissions:" block
+    # like the one further down, or you will have no IRC administration access!
     accounts:
         # Creates an account with username "user1". You can define other usernames at the
         # same level here (key name is user name).
@@ -625,8 +623,6 @@ logging:
     # This sets the level for console logging, which is always enabled. Valid
     # settings include DEBUG, INFO, WARNING, ERROR, and CRITICAL: see
     # https://docs.python.org/3/library/logging.html#logging-levels for details.
-    # Prior to NetLink 1.2, this option was erroneously named 'log:stdout', even though the actual
-    # logging output goes to stderr. That option name (log:stdout) is now *deprecated*.
     console: INFO
 
     channels:

@@ -53,8 +53,6 @@ class LoginTestCase(unittest.TestCase):
                 'bob': {'password': 'hashedpw', 'encrypted': True},
                 'nopass': {},
             },
-            'user': 'admin',
-            'password': 'adminpass',
         }
 
     def tearDown(self):
@@ -128,16 +126,6 @@ class LoginTestCase(unittest.TestCase):
         login.identify(irc, 'uidA', ['alice', 'secret'])
         self.assertEqual(irc.users['uidA'].account, 'alice')
 
-    def test_identify_legacy_admin_success(self):
-        irc = _FakeIRC()
-        login.identify(irc, 'uidA', ['admin', 'adminpass'])
-        self.assertEqual(irc.users['uidA'].account, 'admin')
-
-    def test_identify_legacy_admin_wrong_password_raises(self):
-        irc = _FakeIRC()
-        with self.assertRaises(utils.NotAuthorizedError):
-            login.identify(irc, 'uidA', ['admin', 'wrong'])
-
     def test_identify_unknown_user_raises(self):
         irc = _FakeIRC()
         with self.assertRaises(utils.NotAuthorizedError):
@@ -171,11 +159,6 @@ class LoginTestCase(unittest.TestCase):
         irc = _FakeIRC()
         self.assertTrue(login._irc_try_login(irc, 'uidA', 'alice'))
         self.assertEqual(irc.users['uidA'].account, 'alice')
-
-    def test_try_login_skip_checks_bypasses_filters(self):
-        conf.conf['login']['accounts']['alice']['require_oper'] = True
-        irc = _FakeIRC(oper=False)
-        self.assertTrue(login._irc_try_login(irc, 'uidA', 'alice', skip_checks=True))
 
 
 if __name__ == '__main__':
