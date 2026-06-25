@@ -125,6 +125,25 @@ class InspIRCdProtocolTest(ptf.BaseProtocolTest):
         self.p.handle_endburst(sid, 'ENDBURST', [])
         self.assertTrue(self.p.servers[sid].has_eob)
 
+    def test_handle_addline(self):
+        hook = self.p.handle_addline('70M', 'ADDLINE',
+                                     ['G', '*@1.2.3.4', 'oper.name', '1433704565', '3600', 'spam reason'])
+        self.assertEqual(hook['type'], 'G')
+        self.assertEqual(hook['user'], '*')
+        self.assertEqual(hook['host'], '1.2.3.4')
+        self.assertEqual(hook['duration'], 3600)
+        self.assertEqual(hook['reason'], 'spam reason')
+
+    def test_handle_addline_malformed_is_safe(self):
+        # A short/garbage line must not raise (which would drop the S2S link).
+        self.assertIsNone(self.p.handle_addline('70M', 'ADDLINE', ['G']))
+
+    def test_handle_delline(self):
+        hook = self.p.handle_delline('70M', 'DELLINE', ['G', 'baduser@1.2.3.4'])
+        self.assertEqual(hook['mask'], 'baduser@1.2.3.4')
+        self.assertEqual(hook['user'], 'baduser')
+        self.assertEqual(hook['host'], '1.2.3.4')
+
     def test_handle_server_other_introduction(self):
         self._make_server()  # sets uplink
         hook = self.p.handle_server(self.p.uplink, 'SERVER',

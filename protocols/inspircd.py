@@ -42,7 +42,8 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self.hook_map = {'FJOIN': 'JOIN', 'RSQUIT': 'SQUIT', 'FMODE': 'MODE',
                          'FTOPIC': 'TOPIC', 'OPERTYPE': 'MODE', 'FHOST': 'CHGHOST',
                          'FIDENT': 'CHGIDENT', 'FNAME': 'CHGNAME', 'SVSTOPIC': 'TOPIC',
-                         'SAKICK': 'KICK', 'IJOIN': 'JOIN'}
+                         'SAKICK': 'KICK', 'IJOIN': 'JOIN',
+                         'ADDLINE': 'SERVER_BAN', 'DELLINE': 'SERVER_UNBAN'}
 
         ircd_target = self.serverdata.get('target_version', self.DEFAULT_IRCD).lower()
         if ircd_target == 'insp4':
@@ -458,6 +459,35 @@ class InspIRCdProtocol(TS6BaseProtocol):
     def del_server_ban(self, source, user='*', host='*'):
         """Removes a server ban (G-line)."""
         self._send_with_prefix(source, 'DELLINE G %s@%s' % (user, host))
+
+    @staticmethod
+    def _split_ban_mask(mask):
+        """Splits an ident@host ban mask into (user, host)."""
+        user, sep, host = mask.partition('@')
+        if not sep:
+            return '*', mask
+        return user, host
+
+    def handle_addline(self, source: str, command: str, args: list):
+        """Handles incoming ADDLINE (a server ban / X-line being set)."""
+        # <- :70M ADDLINE G *@10.9.8.7 midnight.local 1433704565 0 :gib reason pls kthx
+        if len(args) < 3:  # Be defensive: never let a short line drop the S2S link.
+            return None
+        linetype, mask, setter = args[0], args[1], args[2]
+        duration = int(args[4]) if len(args) > 4 and args[4].isdigit() else 0
+        reason = args[-1]
+        user, host = self._split_ban_mask(mask)
+        return {'type': linetype, 'user': user, 'host': host, 'mask': mask,
+                'duration': duration, 'reason': reason, 'setter': setter}
+
+    def handle_delline(self, source: str, command: str, args: list):
+        """Handles incoming DELLINE (a server ban being removed)."""
+        # <- :70M DELLINE G *@10.9.8.7
+        if len(args) < 2:
+            return None
+        linetype, mask = args[0], args[1]
+        user, host = self._split_ban_mask(mask)
+        return {'type': linetype, 'user': user, 'host': host, 'mask': mask}
 
     ### Core / command handlers
 
