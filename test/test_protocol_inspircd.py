@@ -31,18 +31,6 @@ class InspIRCdProtocolTest(ptf.BaseProtocolTest):
         self.assertIn('70MAAAAAB', self.p.servers[sid].users)
         self.assertEqual(hook['nick'], 'jlu5')
 
-    def test_handle_uid_insp3_has_no_realident(self):
-        # insp3 (proto 1205) UID: ident is args[5], no separate realident.
-        sid = self._make_server()
-        self.p.remote_proto_ver = 1205
-        self.p.handle_uid(sid, 'UID',
-            ['70MAAAAAC', '1429934638', 'bob', '0::1', 'host.x',
-             'bob', '1.2.3.4', '1429934638', '+iw', 'Bob'])
-        u = self.p.users['70MAAAAAC']
-        self.assertEqual(u.ident, 'bob')
-        self.assertEqual(u.realident, 'bob')     # mirrors ident on insp3
-        self.assertEqual(u.host, 'host.x')
-
     def test_handle_fjoin_adds_user_with_prefix(self):
         # insp3 FJOIN: members are "prefixes,UID:membid"
         sid = self._make_server('3IN')

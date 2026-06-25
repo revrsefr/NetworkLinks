@@ -119,12 +119,8 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self.apply_modes(uid, modes)
         self.servers[server].users.add(uid)
 
-        if self.proto_ver >= 1206:
-            payload = (f"UID {uid} {ts} {nick} {realhost} {host} {ident} {ident} {ip}"
-                       f" {ts} {raw_modes} + :{realname}")
-        else:
-            payload = (f"UID {uid} {ts} {nick} {realhost} {host} {ident} {ip}"
-                       f" {ts} {raw_modes} + :{realname}")
+        payload = (f"UID {uid} {ts} {nick} {realhost} {host} {ident} {ident} {ip}"
+                   f" {ts} {raw_modes} + :{realname}")
         self._send_with_prefix(server, payload)
         if ('o', None) in modes or ('+o', None) in modes:
             self._oper_up(uid, opertype)
@@ -236,10 +232,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
                   self.name, target)
         userobj.opertype = otype
 
-        # InspIRCd 2.x uses _ in OPERTYPE to denote spaces, while InspIRCd 3.x does not.
-        # This is one of the few things not fixed by 2.0/3.0 link compat, so here's a workaround
-        otype = otype.replace(" ", "_") if self.remote_proto_ver < 1205 else ':' + otype
-
+        otype = ':' + otype
         self._send_with_prefix(target, 'OPERTYPE %s' % otype)
 
     def mode(self, numeric, target, modes, ts=None):
@@ -288,11 +281,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         if not self.is_internal_client(source):
             raise LookupError('No such NetLink client exists.')
 
-        if self.proto_ver >= 1205:
-            self._send_with_prefix(source, 'FTOPIC %s %s %s :%s' % (target, self._channels[target].ts, int(time.time()), text))
-        else:
-            return super().topic(source, target, text)
-        return None
+        self._send_with_prefix(source, 'FTOPIC %s %s %s :%s' % (target, self._channels[target].ts, int(time.time()), text))
 
     def topic_burst(self, source, target, text):
         """Sends a topic change from a NetLink server. This is usually used on burst."""
@@ -302,10 +291,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         topic_ts = int(time.time())
         servername = self.servers[source].name
 
-        if self.proto_ver >= 1205:
-            self._send_with_prefix(source, 'FTOPIC %s %s %s %s :%s' % (target, self._channels[target].ts, topic_ts, servername, text))
-        else:
-            self._send_with_prefix(source, 'FTOPIC %s %s %s :%s' % (target, topic_ts, servername, text))
+        self._send_with_prefix(source, 'FTOPIC %s %s %s %s :%s' % (target, self._channels[target].ts, topic_ts, servername, text))
 
         self._channels[target].topic = text
         self._channels[target].topicset = True
@@ -329,16 +315,10 @@ class InspIRCdProtocol(TS6BaseProtocol):
             if field == 'IDENT':
                 self.users[target].ident = text
                 self.users[target].realident = text
-                if getattr(self, 'remote_proto_ver', self.proto_ver) >= 1206:
-                    self._send_with_prefix(target, 'FIDENT %s *' % text)
-                else:
-                    self._send_with_prefix(target, 'FIDENT %s' % text)
+                self._send_with_prefix(target, 'FIDENT %s *' % text)
             elif field == 'HOST':
                 self.users[target].host = text
-                if getattr(self, 'remote_proto_ver', self.proto_ver) >= 1206:
-                    self._send_with_prefix(target, 'FHOST %s *' % text)
-                else:
-                    self._send_with_prefix(target, 'FHOST %s' % text)
+                self._send_with_prefix(target, 'FHOST %s *' % text)
             elif field in ('REALNAME', 'GECOS'):
                 self.users[target].realname = text
                 self._send_with_prefix(target, 'FNAME :%s' % text)
@@ -383,29 +363,18 @@ class InspIRCdProtocol(TS6BaseProtocol):
 
     def numeric(self, source, numeric, target, text):
         """Sends raw numerics from a server to a remote client."""
-        # InspIRCd 2.0 syntax (undocumented):
-        # Essentially what this does is push the raw numeric text after the first ":" towards the
-        # given user.
-        # <- :70M PUSH 0ALAAAAAA ::midnight.vpn 422 NetLink-devel :Message of the day file is missing.
-
-        # InspIRCd 3 uses a new NUM command in this format:
+        # InspIRCd uses a NUM command in this format:
         # -> NUM <numeric source sid> <target uuid> <numeric ID> <params>
-        if self.proto_ver >= 1205:
-            self._send('NUM %s %s %s %s' % (source, target, numeric, text))
-        else:
-            self._send_with_prefix(self.sid, 'PUSH %s ::%s %s %s %s' % (target, source, numeric, target, text))
+        self._send('NUM %s %s %s %s' % (source, target, numeric, text))
 
     def invite(self, source, target, channel):
         """Sends an INVITE from a NetLink client."""
         if not self.is_internal_client(source):
             raise LookupError('No such NetLink client exists.')
 
-        if self.proto_ver >= 1205:  # insp3
-            # Note: insp3 supports optionally sending an invite expiration (after the TS argument),
-            # but we don't use / expose that feature yet.
-            self._send_with_prefix(source, 'INVITE %s %s %d' % (target, channel, self._channels[channel].ts))
-        else:  # insp2
-            self._send_with_prefix(source, 'INVITE %s %s' % (target, channel))
+        # Note: InspIRCd supports optionally sending an invite expiration (after the TS
+        # argument), but we don't use / expose that feature yet.
+        self._send_with_prefix(source, 'INVITE %s %s %d' % (target, channel, self._channels[channel].ts))
 
     def away(self, source, text):
         """Sends an AWAY message from a NetLink client. <text> can be an empty string
@@ -452,12 +421,8 @@ class InspIRCdProtocol(TS6BaseProtocol):
             raise ValueError('Invalid server name %r' % name)
 
         self.servers[sid] = Server(self, uplink, name, internal=True, desc=desc)
-        if self.proto_ver >= 1205:
-            # <- :3IN SERVER services.abc.local 0SV :Some server
-            self._send_with_prefix(uplink, 'SERVER %s %s :%s' % (name, sid, desc))
-        else:
-            # <- :00A SERVER test.server * 1 00C :test
-            self._send_with_prefix(uplink, 'SERVER %s * %s %s :%s' % (name, self.servers[sid].hopcount, sid, desc))
+        # <- :3IN SERVER services.abc.local 0SV :Some server
+        self._send_with_prefix(uplink, 'SERVER %s %s :%s' % (name, sid, desc))
 
         # Endburst delay clutter
 
@@ -511,10 +476,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         f('CAPAB END')
 
         host = self.serverdata["hostname"]
-        if self.proto_ver >= 1205:
-            server_line = 'SERVER {host} {Pass} {sid} :{sdesc}'
-        else:
-            server_line = 'SERVER {host} {Pass} 0 {sid} :{sdesc}'
+        server_line = 'SERVER {host} {Pass} {sid} :{sdesc}'
         f(server_line.format(host=host,
             Pass=self.serverdata["sendpass"], sid=self.sid,
             sdesc=self.serverdata.get('serverdesc') or conf.conf['netlink']['serverdesc']))
@@ -522,13 +484,10 @@ class InspIRCdProtocol(TS6BaseProtocol):
         self._send_with_prefix(self.sid, 'BURST %s' % ts)
 
         # InspIRCd sends VERSION data on link, instead of when requested by a client.
-        if self.proto_ver >= 1205:
-            verstr = self.version()
-            for version_type in {'version', 'rawversion'}:
-                self._send_with_prefix(self.sid, 'SINFO %s :%s' % (version_type, verstr.split(' ', 1)[0]))
-            self._send_with_prefix(self.sid, 'SINFO fullversion :%s' % verstr)
-        else:
-            self._send_with_prefix(self.sid, 'VERSION :%s' % self.version())
+        verstr = self.version()
+        for version_type in {'version', 'rawversion'}:
+            self._send_with_prefix(self.sid, 'SINFO %s :%s' % (version_type, verstr.split(' ', 1)[0]))
+        self._send_with_prefix(self.sid, 'SINFO fullversion :%s' % verstr)
         self._send_with_prefix(self.sid, 'ENDBURST')
 
         # Extban definitions
@@ -568,24 +527,11 @@ class InspIRCdProtocol(TS6BaseProtocol):
                 log.warning("(%s) NetLink support for InspIRCd > 4.x is experimental, "
                             "and should not be relied upon for anything important.",
                             self.name)
-            elif protocol_version >= 1206 > self.proto_ver:
-                log.warning("(%s) NetLink 3.1+ introduces native support for InspIRCd 4. "
-                            "Enable this by setting 'target_version' to 'insp4' in your InspIRCd "
-                            "server block. Otherwise, some features will not work correctly!",
-                            self.name)
-                log.warning("(%s) Falling back to InspIRCd 3 compatibility mode.", self.name)
-            elif protocol_version >= 1205 > self.proto_ver:
-                log.warning("(%s) NetLink 3.0 introduces native support for InspIRCd 3. "
-                            "You should enable this by setting the 'target_version' option in your "
-                            "InspIRCd server block to 'insp3'. Otherwise, some features will not "
-                            "work correctly!", self.name)
-                log.warning("(%s) Falling back to InspIRCd 2.0 (compatibility) mode.", self.name)
 
-            if self.proto_ver >= 1205:
-                # Clear mode lists, they will be negotiated during burst
-                self.cmodes = {'*A': '', '*B': '', '*C': '', '*D': ''}
-                self.umodes = {'*A': '', '*B': '', '*C': '', '*D': ''}
-                self.prefixmodes.clear()
+            # Clear mode lists, they will be negotiated during burst
+            self.cmodes = {'*A': '', '*B': '', '*C': '', '*D': ''}
+            self.umodes = {'*A': '', '*B': '', '*C': '', '*D': ''}
+            self.prefixmodes.clear()
 
         if args[0] in {'CHANMODES', 'USERMODES'}:
             # insp20:
@@ -625,31 +571,30 @@ class InspIRCdProtocol(TS6BaseProtocol):
             for modepair in args[-1].split():
                 name, char = modepair.rsplit('=', 1)
 
-                if self.proto_ver >= 1205:
-                    # Detect mode types from the mode type tag
-                    parts = name.split(':')
-                    modetype = parts[0]
-                    name = parts[-1]
+                # Detect mode types from the mode type tag
+                parts = name.split(':')
+                modetype = parts[0]
+                name = parts[-1]
 
-                    # Modes are divided into A, B, C, and D classes
-                    # See http://www.irc.org/tech_docs/005.html
-                    if modetype == 'simple':       # No parameter
-                        mydict['*D'] += char
-                    elif modetype == 'param-set':  # Only parameter when setting (e.g. cmode +l)
-                        mydict['*C'] += char
-                    elif modetype == 'param':      # Always has parameter (e.g. cmode +k)
-                        mydict['*B'] += char
-                    elif modetype == 'list':       # List modes like ban, except, invex, ...
-                        mydict['*A'] += char
-                    elif modetype == 'prefix':     # prefix:30000:op=@o
-                        if args[0] != 'CHANMODES':  # This should never happen...
-                            log.warning("(%s) Possible desync? Got a prefix type modepair %r but not for channel modes", self.name, modepair)
-                        else:
-                            # We don't do anything with prefix levels yet, let's just store them for future use
-                            self._prefix_levels[name] = int(parts[1])
+                # Modes are divided into A, B, C, and D classes
+                # See http://www.irc.org/tech_docs/005.html
+                if modetype == 'simple':       # No parameter
+                    mydict['*D'] += char
+                elif modetype == 'param-set':  # Only parameter when setting (e.g. cmode +l)
+                    mydict['*C'] += char
+                elif modetype == 'param':      # Always has parameter (e.g. cmode +k)
+                    mydict['*B'] += char
+                elif modetype == 'list':       # List modes like ban, except, invex, ...
+                    mydict['*A'] += char
+                elif modetype == 'prefix':     # prefix:30000:op=@o
+                    if args[0] != 'CHANMODES':  # This should never happen...
+                        log.warning("(%s) Possible desync? Got a prefix type modepair %r but not for channel modes", self.name, modepair)
+                    else:
+                        # We don't do anything with prefix levels yet, let's just store them for future use
+                        self._prefix_levels[name] = int(parts[1])
 
-                            # Map mode names to their prefixes
-                            self.prefixmodes[char[-1]] = char[0]
+                        # Map mode names to their prefixes
+                        self.prefixmodes[char[-1]] = char[0]
 
                 # Strip c_, u_ prefixes to be consistent with other protocols.
                 if name.startswith(('c_', 'u_')):
@@ -702,21 +647,6 @@ class InspIRCdProtocol(TS6BaseProtocol):
                 self.casemapping = caps['CASEMAPPING']
                 log.debug('(%s) handle_capab: updated casemapping to %s', self.name, self.casemapping)
 
-            # InspIRCd 2 only: mode & prefix definitions are sent as CAPAB CAPABILITIES CHANMODES/USERMODES/PREFIX
-            if self.proto_ver < 1205:
-                if 'CHANMODES' in caps:
-                    self.cmodes['*A'], self.cmodes['*B'], self.cmodes['*C'], self.cmodes['*D'] \
-                        = caps['CHANMODES'].split(',')
-                if 'USERMODES' in caps:
-                    self.umodes['*A'], self.umodes['*B'], self.umodes['*C'], self.umodes['*D'] \
-                        = caps['USERMODES'].split(',')
-                if 'PREFIX' in caps:
-                    # Separate the prefixes field (e.g. "(Yqaohv)!~&@%+") into a
-                    # dict mapping mode characters to mode prefixes.
-                    self.prefixmodes = self.parse_isupport_prefixes(caps['PREFIX'])
-                    log.debug('(%s) handle_capab: self.prefixmodes set to %r', self.name,
-                              self.prefixmodes)
-
         elif args[0] == 'MODSUPPORT':
             # <- CAPAB MODSUPPORT :m_alltime.so m_check.so m_chghost.so m_chgident.so m_chgname.so m_fullversion.so m_gecosban.so m_knock.so m_muteban.so m_nicklock.so m_nopartmsg.so m_opmoderated.so m_sajoin.so m_sanick.so m_sapart.so m_serverban.so m_services_account.so m_showwhois.so m_silence.so m_swhois.so m_uninvite.so m_watch.so
             for module in args[-1].split():
@@ -727,7 +657,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         # InspIRCD 3 adds membership IDs to KICK messages when forwarding across servers
         # <- :3INAAAAAA KICK #endlessvoid 3INAAAAAA :test (local)
         # <- :3INAAAAAA KICK #endlessvoid 7PYAAAAAA 0 :test (remote)
-        if self.proto_ver >= 1205 and len(args) > 3:
+        if len(args) > 3:
             del args[2]
 
         return super().handle_kick(source, command, args)
@@ -767,9 +697,8 @@ class InspIRCdProtocol(TS6BaseProtocol):
         for user in userlist:
             modeprefix, user = user.split(',', 1)
 
-            if self.proto_ver >= 1205:
-                # XXX: we don't handle membership IDs yet
-                user = user.split(':', 1)[0]
+            # XXX: we don't handle membership IDs yet
+            user = user.split(':', 1)[0]
 
             # Don't crash when we get an invalid UID.
             if user not in self.users:
@@ -830,18 +759,11 @@ class InspIRCdProtocol(TS6BaseProtocol):
         nick = args[2]
         realhost = args[3]
 
-        if getattr(self, 'remote_proto_ver', self.proto_ver) >= 1206:
-            host = args[4]
-            realident = args[5]
-            ident = args[6]
-            ip = args[7]
-            signon_idx = 8
-        else:
-            host = args[4]
-            ident = args[5]
-            realident = ident
-            ip = args[6]
-            signon_idx = 7
+        host = args[4]
+        realident = args[5]
+        ident = args[6]
+        ip = args[7]
+        signon_idx = 8
 
         self._check_nick_collision(nick)
         realname = args[-1]
@@ -868,16 +790,10 @@ class InspIRCdProtocol(TS6BaseProtocol):
         if self.uplink is None:
             # <- SERVER whatever.net abcdefgh 0 10X :some server description
             servername = args[0].lower()
-            if self.proto_ver >= 1205:
-                try:
-                    source = args[2]
-                except IndexError:
-                    raise ProtocolError('Malformed SERVER introduction from uplink (missing SID)') from None
-            else:
-                try:
-                    source = args[3]
-                except IndexError:
-                    raise ProtocolError('Malformed SERVER introduction from uplink (missing SID)') from None
+            try:
+                source = args[2]
+            except IndexError:
+                raise ProtocolError('Malformed SERVER introduction from uplink (missing SID)') from None
 
             if args[1] != self.serverdata['recvpass']:
                  # Check if recvpass is correct
@@ -890,15 +806,9 @@ class InspIRCdProtocol(TS6BaseProtocol):
             return None
 
         # Other server introductions.
-        # insp20:
-        # <- :00A SERVER test.server * 1 00C :testing raw message syntax
-        # insp3:
         # <- :3IN SERVER services.abc.local 0SV :Some server
         servername = args[0].lower()
-        if self.proto_ver >= 1205:
-            sid = args[1]  # insp3
-        else:
-            sid = args[3]  # insp20
+        sid = args[1]
         sdesc = args[-1]
         self.servers[sid] = Server(self, source, servername, desc=sdesc)
 
@@ -949,7 +859,7 @@ class InspIRCdProtocol(TS6BaseProtocol):
         # <- :00A SVSTOPIC #channel 1538402416 SomeUser :test
         channel = args[0]
 
-        if self.proto_ver >= 1205 and command == 'FTOPIC':
+        if command == 'FTOPIC':
             ts = args[2]
             setter = source if source in self.users else args[3]
         else:
