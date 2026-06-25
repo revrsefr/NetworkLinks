@@ -9,6 +9,7 @@ from netlink.plugins import automode
 class _FakeChannel:
     def __init__(self, users=None):
         self.users = set(users or [])
+        self.modes = set()
 
 
 class _FakeIRC:
@@ -17,6 +18,7 @@ class _FakeIRC:
         self.users = {}
         self.channels = {}
         self.prefixmodes = {'o': '@', 'v': '+', 'h': '%'}
+        self.cmodes = {'ban': 'b', 'op': 'o', 'voice': 'v', '*A': 'beI'}
         self.sid = '7NL'
         self.protoname = 'inspircd'
         self._caps = {'has-irc-modes'}
@@ -162,6 +164,34 @@ class MatchTest(AutomodeTestBase):
         modes = [a for a in irc.actions if a[0] == 'mode'][0][2]
         self.assertIn(('+o', 'u1'), modes)
         self.assertIn(('+v', 'u1'), modes)
+
+    def test_applies_ban_to_mask(self):
+        # issue #508: a list-mode (e.g. +b) in an entry should be set on the mask.
+        irc = _FakeIRC()
+        automode.modebot.uids['testnet'] = 'ABOT'
+        irc.users['ABOT'] = object()
+        irc.channels['#chan'] = _FakeChannel(users={'ABOT'})
+        automode.db['testnet#chan'] = {'*!*@bad.host': 'b'}
+        try:
+            automode.match(irc, '#chan')
+        finally:
+            automode.modebot.uids.pop('testnet', None)
+        modes = [a for a in irc.actions if a[0] == 'mode'][0][2]
+        self.assertIn(('+b', '*!*@bad.host'), modes)
+
+    def test_existing_ban_not_reapplied(self):
+        irc = _FakeIRC()
+        automode.modebot.uids['testnet'] = 'ABOT'
+        irc.users['ABOT'] = object()
+        chan = _FakeChannel(users={'ABOT'})
+        chan.modes.add(('b', '*!*@bad.host'))  # already banned
+        irc.channels['#chan'] = chan
+        automode.db['testnet#chan'] = {'*!*@bad.host': 'b'}
+        try:
+            automode.match(irc, '#chan')
+        finally:
+            automode.modebot.uids.pop('testnet', None)
+        self.assertFalse(irc.actions)  # nothing to do
 
     def test_no_dbentry_is_noop(self):
         irc = _FakeIRC()

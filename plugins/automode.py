@@ -117,13 +117,23 @@ def match(irc, channel, uids=None):
     # If UIDs are given, match those. Otherwise, match all users in the given channel.
     uids = uids or irc.channels[channel].users
 
+    chanobj = irc.channels[channel]
+    listmodes = irc.cmodes.get('*A', '')
+
     for mask, modes in dbentry.items():
+        # List modes (bans, ban/invite exceptions, ...) apply to the mask itself, once,
+        # regardless of who is present and only if not already set. (issue #508)
+        for mode in modes:
+            if mode in listmodes and (mode, mask) not in chanobj.modes:
+                banpair = ('+' + mode, mask)
+                if banpair not in outgoing_modes:
+                    outgoing_modes.append(banpair)
+
+        # Prefix modes (op/voice/...) are applied to each matching user.
         for uid in uids:
             if irc.match_host(mask, uid):
-                # User matched a mask. Filter the mode list given to only those that are valid
-                # prefix mode characters.
                 outgoing_modes += [('+'+mode, uid) for mode in modes if mode in irc.prefixmodes]
-                log.debug("(%s) automode: Filtered mode list of %s to %s (protocol:%s)",
+                log.debug("(%s) automode: filtered mode list of %s to %s (protocol:%s)",
                           irc.name, modes, outgoing_modes, irc.protoname)
 
     if outgoing_modes:
