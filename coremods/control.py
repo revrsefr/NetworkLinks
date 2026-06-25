@@ -199,7 +199,7 @@ def reload_coremod(name: str, irc=None):
         module.main(irc=irc)
     return module
 
-def _reload_plugins(new_plugins, errors) -> None:
+def _reload_plugins(new_plugins, errors) -> int:
     """Reconciles loaded plugins against the config's plugin list. Plugins dropped from
     the config are fully unloaded (die() runs, their service bots quit -- correct, they
     should leave). Plugins still configured are reloaded IN PLACE without disconnecting
@@ -221,36 +221,42 @@ def _reload_plugins(new_plugins, errors) -> None:
 
     utils._reset_module_dirs()
     # Reload still-configured plugins in place; load brand-new ones.
+    reloaded = 0
     for name in new_plugins:
         try:
-            log.info('rehash: reloading plugin %r.', name)
+            log.debug('rehash: reloading plugin %r.', name)
             reload_plugin(name, irc=reload_irc)
+            reloaded += 1
         except Exception as e:
             log.exception('rehash: failed to reload plugin %r', name)
             errors.append('plugin %s: %s: %s' % (name, type(e).__name__, e))
+    return reloaded
 
-def _reload_coremods(errors) -> None:
+def _reload_coremods(errors) -> int:
     """Reloads every loaded coremod in place (except the stateful ones in
     UNRELOADABLE_COREMODS) so coremod code edits go live on rehash too."""
     # Snapshot the module list first -- a reload can import others mid-iteration.
     coremods = sorted({m.split('.')[2] for m in list(sys.modules)
                        if m.startswith('netlink.coremods.') and m.count('.') == 2})
+    reloaded = 0
     for name in coremods:
         if name in UNRELOADABLE_COREMODS:
             continue
         log.debug('rehash: reloading coremod %r.', name)
         try:
             reload_coremod(name)
+            reloaded += 1
         except Exception as e:
             log.exception('rehash: failed to reload coremod %r', name)
             errors.append('coremod %s: %s: %s' % (name, type(e).__name__, e))
+    return reloaded
 
 def rehash() -> list:
     """Rehashes the NetLink daemon in place: reloads the config, all configured
     plugins and coremods, and (dis)connects added/removed networks -- WITHOUT
     dropping links that are still in the config. Returns a list of error strings
     (empty when everything reloaded cleanly)."""
-    log.info('Reloading NetLink configuration...')
+    log.debug('Reloading NetLink configuration...')
     errors: list = []
     fname = conf.fname
     new_conf = conf.load_conf(fname, errors_fatal=False, logger=log)
@@ -269,8 +275,8 @@ def rehash() -> list:
 
     # Reload plugin + coremod code and apply plugin-list changes. These only touch
     # the command/hook registries and sys.modules, never the network connections.
-    _reload_plugins(list(new_conf.get('plugins') or []), errors)
-    _reload_coremods(errors)
+    n_plugins = _reload_plugins(list(new_conf.get('plugins') or []), errors)
+    n_coremods = _reload_coremods(errors)
 
     for network, ircobj in world.networkobjects.copy().items():
         # Server was removed from the config file, disconnect them.
@@ -309,7 +315,11 @@ def rehash() -> list:
             except:
                 log.exception('Failed to initialize network %r, skipping it...', network)
 
-    log.info('Finished reloading NetLink configuration.')
+    if errors:
+        log.info('Rehash complete with %d error(s): reloaded %d plugins and %d coremods (see log).',
+                 len(errors), n_plugins, n_coremods)
+    else:
+        log.info('Rehash complete: reloaded %d plugins and %d coremods.', n_plugins, n_coremods)
     return errors
 
 if os.name == 'posix':
