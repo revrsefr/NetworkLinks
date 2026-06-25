@@ -728,6 +728,12 @@ def wrap_arguments(prefix, args, length, separator=' ', max_args_per_line=0):
             if buf != prefix:  # Only add a separator if this isn't the first argument of a line
                 buf += separator
             buf += args.pop(0)
+        elif buf == prefix:
+            # We couldn't fit even one argument on a fresh line under
+            # max_args_per_line (e.g. it's smaller than the prefix's word count).
+            # Force it on anyway so we always make progress instead of looping
+            # forever; the assert above guarantees it fits the length limit.
+            buf += args.pop(0)
         else:
             # Once this is full, add the string to the list and reset the buffer.
             strings.append(buf)
